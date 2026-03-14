@@ -37,7 +37,7 @@ WORKDIR /out
 
 COPY ./init .
 
-RUN go build -o init $INIT_BUILDFLAGS -ldflags="$INIT_LDFLAGS"
+RUN go build -o init $INIT_BUILDFLAGS -ldflags="$INIT_LDFLAGS" && chmod +x init
 
 FROM golang:1.25.5-alpine AS agent-build
 
@@ -55,16 +55,15 @@ RUN go build -o agent $AGENT_BUILDFLAGS -ldflags="$AGENT_LDFLAGS"
 
 FROM debian:stable-slim AS initramfs-build
 
-WORKDIR /out
+WORKDIR /out/initramfs
 
 RUN apt-get update && apt-get install cpio
 
-RUN bash -c 'mkdir -p /out/{bin,dev,proc,sys}'
+RUN bash -c 'mkdir -p /out/initramfs/{bin,dev,proc,sys}'
 
-COPY --from=init-build /out/init /out/bin/init
-RUN ln -s /out/bin/init /init
+COPY --from=init-build /out/init /out/initramfs/init
 
-RUN bash -c 'find . | cpio -o -H newc > initramfs.cpio'
+RUN bash -c 'find . | cpio -o -H newc > ../initramfs.cpio'
 
 FROM debian:stable-slim AS rootfs-build
 
