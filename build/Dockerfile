@@ -46,7 +46,7 @@ FROM debian:stable-slim AS initramfs-build
 RUN mkdir -p /initramfs
 WORKDIR /initramfs
 
-RUN mkdir -p /initramfs/{bin, dev, sys, proc}
+RUN bash -c 'mkdir -p /initramfs/{bin,dev,proc,sys}'
 
 COPY --from=init-build /build/init /bin/init
 RUN ln -s /bin/init /init
