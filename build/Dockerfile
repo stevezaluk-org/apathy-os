@@ -48,8 +48,8 @@ WORKDIR /initramfs
 
 RUN bash -c 'mkdir -p /initramfs/{bin,dev,proc,sys}'
 
-COPY --from=init-build /build/init /bin/init
-RUN ln -s /bin/init /init
+COPY --from=init-build /build/init /initramfs/bin/init
+RUN ln -s /initramfs/bin/init /init
 
 FROM scratch
 
