@@ -1,9 +1,9 @@
-FROM debian:stable-slim AS kernel-build
-
 ARG LINUX_VER="6.19"
 ARG LINUX_BUILD="true"
 ARG LINUX_CONF="./linuxconfig"
 ARG CORES=$(nproc)
+
+FROM debian:stable-slim AS kernel-build
 
 RUN mkdir -p /kern
 WORKDIR /kern
