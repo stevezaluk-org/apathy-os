@@ -5,13 +5,13 @@ ARG LINUX_BUILD="true"
 ARG LINUX_CONF="./build/linuxconfig"
 ARG CORES=$(nproc)
 
-WORKDIR /kern
+WORKDIR /out
 
 RUN apt-get update \
     && \
     apt-get install bc bison flex libssl-dev libelf-dev build-essential pkg-config gcc make tar gzip -y
 
-ADD https://github.com/torvalds/linux/archive/refs/tags/v$LINUX_VER.tar.gz /kern/linux.tar.gz
+ADD https://github.com/torvalds/linux/archive/refs/tags/v$LINUX_VER.tar.gz /out/linux.tar.gz
 
 RUN tar -xvf linux.tar.gz -C . --strip-components=1 \
     && \
@@ -33,7 +33,7 @@ ENV CGO_ENABLED=0 \
     GOOS=linux \
     GOARCH=amd64
 
-WORKDIR /build
+WORKDIR /out
 
 COPY ./init .
 
@@ -48,27 +48,27 @@ ENV CGO_ENABLED=0 \
     GOOS=linux \
     GOARCH=amd64
 
-WORKDIR /build
+WORKDIR /out
 
 COPY ./agent .
 RUN go build -o agent $AGENT_BUILDFLAGS -ldflags="$AGENT_LDFLAGS"
 
 FROM debian:stable-slim AS initramfs-build
 
-WORKDIR /initramfs
+WORKDIR /out
 
 RUN apt-get update && apt-get install cpio
 
-RUN bash -c 'mkdir -p /initramfs/{bin,dev,proc,sys}'
+RUN bash -c 'mkdir -p /out/{bin,dev,proc,sys}'
 
-COPY --from=init-build /build/init /initramfs/bin/init
-RUN ln -s /initramfs/bin/init /init
+COPY --from=init-build /out/init /out/bin/init
+RUN ln -s /out/bin/init /init
 
 RUN bash -c 'find . | cpio -o -H newc > initramfs.cpio'
 
 FROM debian:stable-slim AS rootfs-build
 
-WORKDIR /rootfs
+WORKDIR /out/rootfs
 
 RUN apt-get update \
     && \
@@ -76,14 +76,14 @@ RUN apt-get update \
 
 RUN bash -c 'mkdir -p /rootfs/{bin,sbin,usr/bin,etc,sys,dev,proc,tmp}'
 
-COPY --from=init-build /build/init /rootfs/usr/sbin/init
-COPY --from=agent-build /build/agent /rootfs/usr/bin/AGENT_BUILDFLAGS
+COPY --from=init-build /out/init /out/rootfs/usr/sbin/init
+COPY --from=agent-build /out/agent /out/rootfs/usr/bin/AGENT_BUILDFLAGS
 
 WORKDIR /out
-RUN tar -czvf rootfs.tar.gz /rootfs
+RUN tar -czvf rootfs.tar.gz /out/rootfs
 
 FROM scratch
 
-COPY --from=kernel-build /kern/arch/x86_64/boot/bzImage /boot/vmlinuz
-COPY --from=initramfs-build /initramfs/initramfs.cpio /initramfs/initramfs.cpio
+COPY --from=kernel-build /out/arch/x86_64/boot/bzImage /boot/vmlinuz
+COPY --from=initramfs-build /out/initramfs.cpio /initramfs/initramfs.cpio
 COPY --from=rootfs-build /out/rootfs.tar.gz /rootfs/rootfs.tar.gz
