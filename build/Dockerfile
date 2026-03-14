@@ -1,9 +1,9 @@
+FROM debian:stable-slim AS kernel-build
+
 ARG LINUX_VER="6.19"
 ARG LINUX_BUILD="true"
-ARG LINUX_CONF="./linuxconfig"
+ARG LINUX_CONF="./build/linuxconfig"
 ARG CORES=$(nproc)
-
-FROM debian:stable-slim AS kernel-build
 
 RUN mkdir -p /kern
 WORKDIR /kern
@@ -25,6 +25,33 @@ COPY $LINUX_CONF ./.config
 RUN make olddefconfig
 RUN ["make", "-j", "20"]
 
+FROM golang:1.25.5-alpine AS init-build
+
+ARG INIT_BUILDFLAGS="-v"
+ARG INIT_LDFLAGS="-s -w"
+
+ENV CGO_ENABLED=0 \
+    GOOS=linux \
+    GOARCH=amd64
+
+RUN mkdir -p /build
+WORKDIR /build
+
+COPY ./init .
+
+RUN go build -o init $INIT_BUILDFLAGS -ldflags="$INIT_LDFLAGS"
+
+FROM debian:stable-slim AS initramfs-build
+
+RUN mkdir -p /initramfs
+WORKDIR /initramfs
+
+RUN mkdir -p /initramfs/{bin, dev, sys, proc}
+
+COPY --from=init-build /build/init /bin/init
+RUN ln -s /bin/init /init
+
 FROM scratch
 
 COPY --from=kernel-build /kern/arch/x86_64/boot/bzImage /boot/vmlinuz
+COPY --from=initramfs-build /initramfs /initramfs
