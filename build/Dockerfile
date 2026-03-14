@@ -57,12 +57,16 @@ FROM debian:stable-slim AS initramfs-build
 
 WORKDIR /initramfs
 
+RUN apt-get update && apt-get install cpio
+
 RUN bash -c 'mkdir -p /initramfs/{bin,dev,proc,sys}'
 
 COPY --from=init-build /build/init /initramfs/bin/init
 RUN ln -s /initramfs/bin/init /init
 
+RUN bash -c 'find . | cpio -o -H newc > initramfs.cpio'
+
 FROM scratch
 
 COPY --from=kernel-build /kern/arch/x86_64/boot/bzImage /boot/vmlinuz
-COPY --from=initramfs-build /initramfs /initramfs
+COPY --from=initramfs-build /initramfs/initramfs.cpio /initramfs/initramfs.cpio
