@@ -39,6 +39,20 @@ COPY ./init .
 
 RUN go build -o init $INIT_BUILDFLAGS -ldflags="$INIT_LDFLAGS"
 
+FROM golang:1.25.5-alpine AS agent-build
+
+ARG AGENT_BUILDFLAGS="-v"
+ARG AGENT_LDFLAGS="-s -w"
+
+ENV CGO_ENABLED=0 \
+    GOOS=linux \
+    GOARCH=amd64
+
+WORKDIR /build
+
+COPY ./agent .
+RUN go build -o agent $AGENT_BUILDFLAGS -ldflags="$AGENT_LDFLAGS"
+
 FROM debian:stable-slim AS initramfs-build
 
 WORKDIR /initramfs
