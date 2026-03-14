@@ -9,11 +9,11 @@ WORKDIR /kern
 
 RUN apt-get update \
     && \
-    apt-get install wget git bc bison flex libssl-dev libelf-dev build-essential pkg-config gcc make tar gzip -y
+    apt-get install bc bison flex libssl-dev libelf-dev build-essential pkg-config gcc make tar gzip -y
 
-RUN wget https://github.com/torvalds/linux/archive/refs/tags/v$LINUX_VER.tar.gz -O linux.tar.gz \
-    && \
-    tar -xvf linux.tar.gz -C . --strip-components=1 \
+ADD https://github.com/torvalds/linux/archive/refs/tags/v$LINUX_VER.tar.gz /kern/linux.tar.gz
+
+RUN tar -xvf linux.tar.gz -C . --strip-components=1 \
     && \
     rm linux.tar.gz
 
