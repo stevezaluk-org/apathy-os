@@ -66,7 +66,24 @@ RUN ln -s /initramfs/bin/init /init
 
 RUN bash -c 'find . | cpio -o -H newc > initramfs.cpio'
 
+FROM debian:stable-slim AS rootfs-build
+
+WORKDIR /rootfs
+
+RUN apt-get update \
+    && \
+    apt-get install tar gzip
+
+RUN bash -c 'mkdir -p /rootfs/{bin,sbin,usr/bin,etc,sys,dev,proc,tmp}'
+
+COPY --from=init-build /build/init /rootfs/usr/sbin/init
+COPY --from=agent-build /build/agent /rootfs/usr/bin/AGENT_BUILDFLAGS
+
+WORKDIR /out
+RUN tar -czvf rootfs.tar.gz /rootfs
+
 FROM scratch
 
 COPY --from=kernel-build /kern/arch/x86_64/boot/bzImage /boot/vmlinuz
 COPY --from=initramfs-build /initramfs/initramfs.cpio /initramfs/initramfs.cpio
+COPY --from=rootfs-build /out/rootfs.tar.gz /rootfs/rootfs.tar.gz
