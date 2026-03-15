@@ -23,7 +23,8 @@ and init is started in user mode after the root filesystem has been mounted.
 
 When init starts, boot arguments are enumerated to determine the mode that it should initially start in.
 If the boot argument CONTAINER_OS_INIT=y is passed, then init is started in system mode and will automatically
-transition into user mode. Additionally, the flags --system and --user and provided as override flags.`,
+transition into user mode. Additionally, the subcommands 'system' and 'user' can be called to invoke this behavior
+directly`,
 	Run: func(cmd *cobra.Command, args []string) {
 	},
 }
