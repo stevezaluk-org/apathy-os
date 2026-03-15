@@ -8,9 +8,10 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
+	"github.com/stevezaluk/container-os/init/internal/config"
 )
 
-var cfgFile string
+var globalConfig *config.Config
 
 var rootCmd = &cobra.Command{
 	Use:   "init",
@@ -23,6 +24,8 @@ and init is started in user mode after the root filesystem has been mounted.
 When init starts, boot arguments are enumerated to determine the mode that it should initially start in.
 If the boot argument CONTAINER_OS_INIT=y is passed, then init is started in system mode and will automatically
 transition into user mode. Additionally, the flags --system and --user and provided as override flags.`,
+	Run: func(cmd *cobra.Command, args []string) {
+	},
 }
 
 func Execute() {
@@ -32,7 +35,11 @@ func Execute() {
 	}
 }
 
+func initConfig() {
+	globalConfig = config.Default()
+	globalConfig.AutomaticBootParams()
+}
+
 func init() {
-	rootCmd.Flags().BoolP("system", "s", false, "Starts init in system mode")
-	rootCmd.Flags().BoolP("user", "u", false, "Starts init in user mode")
+	cobra.OnInitialize(initConfig)
 }
