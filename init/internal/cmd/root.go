@@ -34,5 +34,5 @@ func Execute() {
 
 func init() {
 	rootCmd.Flags().BoolP("system", "s", false, "Starts init in system mode")
-	rootCmd.Flags().BoolP("user", "s", false, "Starts init in user mode")
+	rootCmd.Flags().BoolP("user", "u", false, "Starts init in user mode")
 }
