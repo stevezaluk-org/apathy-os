@@ -35,11 +35,5 @@ func Execute() {
 	}
 }
 
-func initConfig() {
-	globalConfig = config.Default()
-	globalConfig.AutomaticBootParams()
-}
-
 func init() {
-	cobra.OnInitialize(initConfig)
 }
