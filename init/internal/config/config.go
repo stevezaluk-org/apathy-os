@@ -1,6 +1,7 @@
 package config
 
 import (
+	"log"
 	"os"
 	"reflect"
 	"strings"
@@ -12,6 +13,9 @@ const (
 
 // Config Global config structure for controlling init
 type Config struct {
+	// bootParams The raw boot arguments parsed from /proc/cmdline
+	bootParams map[string]string
+
 	// Debug If set to true, initramfs will drop to a temporary BusyBox shell before starting
 	Debug bool `boot:"debug"`
 
@@ -19,23 +23,32 @@ type Config struct {
 	Quiet bool `boot:"quiet"`
 }
 
+// BootParams Returns raw boot parameters parsed from /proc/cmdline
+func (config *Config) BootParams() map[string]string {
+	return config.bootParams
+}
+
 // AutomaticBootParams Parse boot parameters from /proc/cmdline and merge them to Config
 func (config *Config) AutomaticBootParams() {
 	contents, err := os.ReadFile(BootParamsFile)
 	if err != nil {
-		panic(err) // failed to read boot params
+		log.Print("Failed to read boot params: ", err)
+		return
 	}
 
-	bootParams := make(map[string]string)
+	if config.bootParams == nil {
+		config.bootParams = make(map[string]string)
+	}
+
 	for _, param := range strings.Split(string(contents), " ") {
 		if strings.Contains(param, "=") {
 			kv := strings.SplitN(param, "=", 2)
-			bootParams[kv[0]] = kv[1]
+			config.bootParams[kv[0]] = kv[1]
 
 			continue
 		}
 
-		bootParams[param] = ""
+		config.bootParams[param] = ""
 	}
 
 	s := reflect.TypeOf(*config)
@@ -44,7 +57,7 @@ func (config *Config) AutomaticBootParams() {
 		field := s.Field(i)
 
 		if field.Tag.Get("boot") != "" {
-			param, ok := bootParams[field.Tag.Get("boot")]
+			param, ok := config.bootParams[field.Tag.Get("boot")]
 			if ok {
 				// We check to see if this is empty here as boot parameters are sometimes passed with no values. Ex:
 				// params: ro quiet splash
@@ -68,7 +81,8 @@ func (config *Config) AutomaticBootParams() {
 // Default Returns defaults for Config
 func Default() *Config {
 	return &Config{
-		Debug: false,
-		Quiet: false,
+		Debug:      false,
+		Quiet:      false,
+		bootParams: make(map[string]string),
 	}
 }
