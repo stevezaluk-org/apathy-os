@@ -9,23 +9,27 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/stevezaluk/container-os/init/internal/config"
+	"github.com/stevezaluk/container-os/init/internal/initd"
+	"github.com/stevezaluk/container-os/init/internal/phase"
 )
 
 var globalConfig *config.Config
 
 var rootCmd = &cobra.Command{
-	Use:   "init",
+	Use:   "initd",
 	Short: "Init system and service manager for container-os",
-	Long: `init acts as the PID 1 for container-os and is responsible for starting core services
-and mounting the root filesystem. Similar to systemd, init can be started in system mode or user
+	Long: `initd acts as the PID 1 for container-os and is responsible for starting core services
+and mounting the root filesystem. Similar to systemd, initd can be started in system mode or user
 mode. System mode is executed when the initramfs is mounted (before the root file system is mounted)
-and init is started in user mode after the root filesystem has been mounted.
+and initd is started in user mode after the root filesystem has been mounted.
 
-When init starts, boot arguments are enumerated to determine the mode that it should initially start in.
-If the boot argument CONTAINER_OS_INIT=y is passed, then init is started in system mode and will automatically
+When initd starts, boot arguments are enumerated to determine the mode that it should initially start in.
+If the boot argument CONTAINER_OS_INIT=y is passed, then initd is started in system mode and will automatically
 transition into user mode. Additionally, the subcommands 'system' and 'user' can be called to invoke this behavior
 directly`,
 	Run: func(cmd *cobra.Command, args []string) {
+		i := initd.New(phase.NewMountPhase())
+		i.Start()
 	},
 }
 
