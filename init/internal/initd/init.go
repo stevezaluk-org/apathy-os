@@ -26,6 +26,11 @@ func (init *Init) Start() {
 	if err != nil {
 		log.Println("Root phase failed to execute!", err)
 	}
+
+	init.config = config.Default()
+	init.config.AutomaticBootParams()
+
+	init.log.Println("Boot arguments: ", init.config.BootParams())
 }
 
 func New(rootPhase phase.Phase) *Init {
