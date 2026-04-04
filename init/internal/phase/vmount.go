@@ -39,18 +39,13 @@ func (mountPhase *MountPhase) mountAll(mounts map[string]string, flags uintptr) 
 
 // Execute Mounts /dev, /proc, and /sys
 func (mountPhase *MountPhase) Execute() error {
-	mountPhase.log.Printf("Starting bind mounts")
-	err := mountPhase.mountAll(map[string]string{"dev": "/dev:dev"}, syscall.MS_BIND)
-	if err != nil {
-		return err
-	}
-
+	mountPhase.log.Printf("Starting mounts: /dev,/sys,/proc")
 	kernMounts := map[string]string{
-		"proc":  "/proc:proc",
-		"sysfs": "/sys:sysfs",
+		"proc":     "/proc:proc",
+		"sysfs":    "/sys:sysfs",
+		"devtmpfs": "/dev:devtmpfs",
 	}
-	mountPhase.log.Printf("Starting kernel mounts")
-	err = mountPhase.mountAll(kernMounts, syscall.MS_KERNMOUNT)
+	err := mountPhase.mountAll(kernMounts, 0)
 	if err != nil {
 		return err
 	}
