@@ -17,12 +17,12 @@ type Init struct {
 	// config Global configuration values populated with /proc/cmdline after mounting occurs
 	config *config.Config
 
-	// rootPhase The first phase that is executed before Init.config is populated. Usually phase.MountPhase
+	// rootPhase The first phase that is executed after phase.MountPhase is executed
 	rootPhase phase.Phase
 }
 
 func (init *Init) Start() {
-	err := init.rootPhase.Execute()
+	err := phase.NewMountPhase().Execute()
 	if err != nil {
 		log.Println("Root phase failed to execute!", err)
 	}

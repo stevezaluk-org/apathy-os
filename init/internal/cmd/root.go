@@ -10,7 +10,6 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/stevezaluk/container-os/init/internal/config"
 	"github.com/stevezaluk/container-os/init/internal/initd"
-	"github.com/stevezaluk/container-os/init/internal/phase"
 )
 
 var globalConfig *config.Config
@@ -28,7 +27,7 @@ If the boot argument CONTAINER_OS_INIT=y is passed, then initd is started in sys
 transition into user mode. Additionally, the subcommands 'system' and 'user' can be called to invoke this behavior
 directly`,
 	Run: func(cmd *cobra.Command, args []string) {
-		i := initd.New(phase.NewMountPhase())
+		i := initd.New(nil)
 		i.Start()
 	},
 }
