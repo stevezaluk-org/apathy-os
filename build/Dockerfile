@@ -60,6 +60,8 @@ WORKDIR /out/initramfs
 RUN apt-get update && apt-get install cpio
 
 RUN bash -c 'mkdir -p /out/initramfs/{bin,dev,proc,sys}'
+# this needs to be externalized to ensure that we can build without this binary present
+COPY "./build/busybox" /out/initramfs/bin/busybox
 
 COPY --from=init-build /out/init /out/initramfs/init
 

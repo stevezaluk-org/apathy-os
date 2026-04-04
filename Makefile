@@ -3,6 +3,7 @@ OUTPUT=$(DIST)/out
 
 QEMU_BIN=/usr/bin/qemu-system-x86_64
 BOOT_ARGS="console=ttyS0 rdinit=/init"
+DEBUG_BOOT_ARGS="debug console=ttyS0 rdinit=/init"
 KERNEL_PATH=$(OUTPUT)/boot/vmlinuz
 INITRAMFS_PATH=$(OUTPUT)/initramfs/initramfs.cpio
 
@@ -33,3 +34,7 @@ build:
 .PHONY: run
 run:
 	$(QEMU_BIN) $(DEV_FLAGS) -append $(BOOT_ARGS) -nographic
+
+.PHONY: run-debug
+run-debug:
+	$(QEMU_BIN) $(DEV_FLAGS) -append $(DEBUG_BOOT_ARGS) -nographic
