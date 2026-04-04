@@ -53,20 +53,6 @@ WORKDIR /out
 COPY ./agent .
 RUN go build -o agent $AGENT_BUILDFLAGS -ldflags="$AGENT_LDFLAGS"
 
-FROM debian:stable-slim AS initramfs-build
-
-WORKDIR /out/initramfs
-
-RUN apt-get update && apt-get install cpio
-
-RUN bash -c 'mkdir -p /out/initramfs/{bin,dev,proc,sys}'
-# this needs to be externalized to ensure that we can build without this binary present
-COPY "./build/busybox" /out/initramfs/bin/busybox
-
-COPY --from=init-build /out/init /out/initramfs/init
-
-RUN bash -c 'find . | cpio -o -H newc > ../initramfs.cpio'
-
 FROM debian:stable-slim AS rootfs-build
 
 WORKDIR /out/rootfs
@@ -82,6 +68,21 @@ COPY --from=agent-build /out/agent /out/rootfs/usr/bin/AGENT_BUILDFLAGS
 
 WORKDIR /out
 RUN tar -czvf rootfs.tar.gz /out/rootfs
+
+FROM debian:stable-slim AS initramfs-build
+
+WORKDIR /out/initramfs
+
+RUN apt-get update && apt-get install cpio
+
+RUN bash -c 'mkdir -p /out/initramfs/{bin,dev,proc,sys}'
+# this needs to be externalized to ensure that we can build without this binary present
+COPY "./build/busybox" /out/initramfs/bin/busybox
+
+COPY --from=init-build /out/init /out/initramfs/init
+COPY --from=rootfs-build /out/rootfs.tar.gz /out/initramfs
+
+RUN bash -c 'find . | cpio -o -H newc > ../initramfs.cpio'
 
 FROM scratch
 
