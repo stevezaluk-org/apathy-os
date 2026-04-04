@@ -41,6 +41,36 @@ func (debugPhase *DebugPhase) Execute() error {
 
 	debugPhase.log.Println("PATH: ", os.Getenv("PATH"))
 
+	// We need to symlink here during runtime instead of when initramfs is built as docker does not play nicely
+	// with creating symlinks. Additionally, depending on how the operating system is built we don't need them
+	symlinks := []string{
+		"ps",
+		"ls",
+		"cd",
+		"cat",
+		"mkdir",
+		"chmod",
+		"chown",
+		"rm",
+		"echo",
+		"mount",
+		"umount",
+		"kill",
+		"killall",
+		"pkill",
+		"touch",
+		"which",
+	}
+
+	// Create required symlinks for BusyBox
+	debugPhase.log.Println("Creating busybox symlinks: ", symlinks)
+	for _, key := range symlinks {
+		err = os.Symlink(BusyBoxPath, "/bin/"+key)
+		if err != nil {
+			return errors.New("Failed to create symlink: " + err.Error())
+		}
+	}
+
 	// needs to go on go routine so that we can catch a signal
 	cmd := exec.Command(BusyBoxPath, "sh")
 	cmd.Stdout = os.Stdout
