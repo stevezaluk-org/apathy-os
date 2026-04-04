@@ -30,7 +30,15 @@ func (init *Init) Start() {
 	init.config = config.Default()
 	init.config.AutomaticBootParams()
 
-	init.log.Println("Boot arguments: ", init.config.BootParams())
+	init.log.Println("Enumerated the following boot arguments: ", init.config.BootParams())
+	if init.config.Debug == true {
+		init.log.Println("Got 'debug' in boot arguments. Starting debug phase...")
+
+		err := phase.NewDebugPhase().Execute()
+		if err != nil {
+			init.log.Println("Debug phase failed to execute with: ", err)
+		}
+	}
 }
 
 func New(rootPhase phase.Phase) *Init {
