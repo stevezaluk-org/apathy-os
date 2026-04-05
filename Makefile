@@ -2,6 +2,7 @@ DIST=$(shell pwd)/dist
 OUTPUT=$(DIST)/out
 
 QEMU_BIN=qemu-system-x86_64
+QEMU_IMG=qemu-img
 BOOT_ARGS="console=ttyS0 rdinit=/init"
 DEBUG_BOOT_ARGS="debug console=ttyS0 rdinit=/init"
 KERNEL_PATH=$(OUTPUT)/boot/vmlinuz
@@ -31,10 +32,15 @@ build:
 	@tar -xf $(DIST)/dist.tar -C $(OUTPUT)
 	@rm -rf $(OUTPUT)/dev $(OUTPUT)/sys $(OUTPUT)/proc $(OUTPUT)/etc $(OUTPUT)/.dockerenv
 
+.PHONY: disk
+disk:
+	@mkdir -p $(OUTPUT)/disk
+	@$(QEMU_IMG) create -f qcow2 $(OUTPUT)/disk/boot.qcow2 10G
+
 .PHONY: run
 run:
 	$(QEMU_BIN) $(DEV_FLAGS) -append $(BOOT_ARGS) -nographic
 
 .PHONY: run-debug
 run-debug:
-	$(QEMU_BIN) $(DEV_FLAGS) -drive file=$(OUTPUT)/test/test.qcow2,if=ide,format=qcow2 -append $(DEBUG_BOOT_ARGS) -nographic
+	$(QEMU_BIN) $(DEV_FLAGS) -drive file=$(OUTPUT)/disk/boot.qcow2,if=ide,format=qcow2 -append $(DEBUG_BOOT_ARGS) -nographic
