@@ -22,7 +22,7 @@ clean:
 .PHONY: build
 build:
 	@mkdir -p $(OUTPUT)
-	$(DOCKER_BIN) build . -f $(DOCKER_FILE) -t $(DOCKER_LOCAL_IMAGE)
+	$(DOCKER_BIN) build . --platform linux/amd64 -f $(DOCKER_FILE) -t $(DOCKER_LOCAL_IMAGE)
 	@$(DOCKER_BIN) create --name $(DOCKER_CONTAINER_NAME) $(DOCKER_LOCAL_IMAGE) sh
 	@$(DOCKER_BIN) export $(DOCKER_CONTAINER_NAME) > $(DIST)/dist.tar 
 	@$(DOCKER_BIN) rm $(DOCKER_CONTAINER_NAME) 
