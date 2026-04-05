@@ -1,7 +1,7 @@
 DIST=$(shell pwd)/dist
 OUTPUT=$(DIST)/out
 
-QEMU_BIN=/usr/bin/qemu-system-x86_64
+QEMU_BIN=qemu-system-x86_64
 BOOT_ARGS="console=ttyS0 rdinit=/init"
 DEBUG_BOOT_ARGS="debug console=ttyS0 rdinit=/init"
 KERNEL_PATH=$(OUTPUT)/boot/vmlinuz
@@ -9,7 +9,7 @@ INITRAMFS_PATH=$(OUTPUT)/initramfs/initramfs.cpio
 
 DEV_FLAGS=-kernel $(KERNEL_PATH) -initrd $(INITRAMFS_PATH)
 
-DOCKER_BIN=/usr/bin/docker
+DOCKER_BIN=docker
 DOCKER_FILE=build/Dockerfile
 DOCKER_LOCAL_IMAGE="container-os:$(shell date +%s)"
 DOCKER_CONTAINER_NAME="container-os"
