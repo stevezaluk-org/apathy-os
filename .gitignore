@@ -36,6 +36,10 @@ go.work.sum
 # Added by goreleaser init:
 dist/
 
+# build time dependencies
+build/deps
+build/deps/**
+
 # MacOS
 .DS_Store
 **/.DS_Store

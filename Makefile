@@ -1,5 +1,9 @@
 DIST=$(shell pwd)/dist
 OUTPUT=$(DIST)/out
+BUILD=$(shell pwd)/build
+BUILD_DEPS=$(BUILD)/deps
+
+BUSYBOX_VER=1.21.1
 
 QEMU_BIN=qemu-system-x86_64
 QEMU_IMG=qemu-img
@@ -20,6 +24,11 @@ DOCKER_CONTAINER_NAME="container-os"
 clean:
 	rm -rf $(DIST)
 
+.PHONY: clean-deps
+.SILENT:
+clean-deps:
+	rm -rf $(BUILD_DEPS)
+
 .PHONY: build
 build:
 	@mkdir -p $(OUTPUT)
@@ -31,6 +40,13 @@ build:
 	# Export and Remove additional directories that 'docker export' adds
 	@tar -xf $(DIST)/dist.tar -C $(OUTPUT)
 	@rm -rf $(OUTPUT)/dev $(OUTPUT)/sys $(OUTPUT)/proc $(OUTPUT)/etc $(OUTPUT)/.dockerenv
+
+.PHONY: deps
+deps:
+	mkdir -p $(BUILD_DEPS)
+	echo "[deps] Downloading busybox ($(BUSYBOX_VER)). Warning: This may fail due to issues with BusyBox content delivery. A mirror should really be added here"
+	@wget https://busybox.net/downloads/binaries/$(BUSYBOX_VER)/busybox-x86_64 -O $(BUILD_DEPS)/busybox-x86_64
+	@chmod +x $(BUILD_DEPS)/busybox-x86_64
 
 .PHONY: disk
 disk:
