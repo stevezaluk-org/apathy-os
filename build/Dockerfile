@@ -72,6 +72,7 @@ RUN tar -czvf rootfs.tar.gz /out/rootfs
 FROM debian:stable-slim AS initramfs-build
 
 ARG E2FSPROGS_VER="1.47.4"
+ARG BTRFSPROGS_VER="6.19.1"
 
 RUN apt-get update \
     && \
@@ -85,6 +86,11 @@ RUN tar -xvf e2fsprogs.tar.gz -C . --strip-components=1
 RUN ./configure LDFLAGS="-static" CFLAGS="-static"
 RUN make -j $(nproc)
 
+WORKDIR /out/build/btrfsprogs
+
+ADD https://github.com/kdave/btrfs-progs/releases/download/v$BTRFSPROGS_VER/btrfs.box.static mkfs.btrfs
+RUN chmod +x mkfs.btrfs
+
 WORKDIR /out/initramfs
 
 RUN bash -c 'mkdir -p /out/initramfs/{bin,dev,proc,sys}'
@@ -92,6 +98,7 @@ RUN bash -c 'mkdir -p /out/initramfs/{bin,dev,proc,sys}'
 COPY "./build/busybox" /out/initramfs/bin/busybox
 
 RUN mv /out/build/e2fsprogs/misc/mke2fs /out/initramfs/bin
+RUN mv /out/build/btrfsprogs/mkfs.btrfs /out/initramfs/bin
 
 COPY --from=init-build /out/init /out/initramfs/init
 COPY --from=rootfs-build /out/rootfs.tar.gz /out/initramfs
