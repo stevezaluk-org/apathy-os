@@ -97,8 +97,8 @@ RUN bash -c 'mkdir -p /out/initramfs/{bin,dev,proc,sys}'
 # this needs to be externalized to ensure that we can build without this binary present
 COPY "./build/busybox" /out/initramfs/bin/busybox
 
-RUN mv /out/build/e2fsprogs/misc/mke2fs /out/initramfs/bin
-RUN mv /out/build/btrfsprogs/mkfs.btrfs /out/initramfs/bin
+RUN mv /out/build/e2fsprogs/misc/mke2fs /out/initramfs/bin/mkfs.ext4
+RUN mv /out/build/btrfsprogs/mkfs.btrfs /out/initramfs/bin/mkfs.btrfs
 
 COPY --from=init-build /out/init /out/initramfs/init
 COPY --from=rootfs-build /out/rootfs.tar.gz /out/initramfs
