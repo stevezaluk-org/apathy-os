@@ -73,16 +73,17 @@ FROM debian:stable-slim AS initramfs-build
 
 ARG E2FSPROGS_VER="1.47.4"
 
-RUN apt-get update && apt-get install cpio build-essential tar gzip -y
+RUN apt-get update \
+    && \
+    apt-get install cpio build-essential tar gzip -y
 
 WORKDIR /out/build/e2fsprogs
 
 ADD https://github.com/tytso/e2fsprogs/archive/refs/tags/v$E2FSPROGS_VER.tar.gz e2fsprogs.tar.gz
 RUN tar -xvf e2fsprogs.tar.gz -C . --strip-components=1
 
-RUN ./configure LDFLAGS="-static" CFLAGS="-static" \
-    && \
-    make
+RUN ./configure LDFLAGS="-static" CFLAGS="-static"
+RUN make -j $(nproc)
 
 WORKDIR /out/initramfs
 
