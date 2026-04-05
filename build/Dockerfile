@@ -22,7 +22,7 @@ COPY $LINUX_CONF ./.config
 
 # merge old config with paramters introduced in newer versions
 RUN make olddefconfig
-RUN ["make", "-j", "20"]
+RUN make -j $(nproc)
 
 FROM golang:1.25.5-alpine AS init-build
 
