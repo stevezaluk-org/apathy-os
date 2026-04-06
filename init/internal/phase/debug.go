@@ -5,6 +5,9 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"strings"
+
+	"github.com/stevezaluk/container-os/init/internal/shell"
 )
 
 const (
@@ -41,34 +44,21 @@ func (debugPhase *DebugPhase) Execute() error {
 
 	debugPhase.log.Println("PATH: ", os.Getenv("PATH"))
 
-	// We need to symlink here during runtime instead of when initramfs is built as docker does not play nicely
-	// with creating symlinks. Additionally, depending on how the operating system is built we don't need them
-	symlinks := []string{
-		"ps",
-		"ls",
-		"cd",
-		"cp",
-		"ln",
-		"mv",
-		"switch_root",
-		"cat",
-		"mkdir",
-		"chmod",
-		"chown",
-		"rm",
-		"echo",
-		"mount",
-		"umount",
-		"kill",
-		"killall",
-		"pkill",
-		"touch",
-		"which",
+	output, err := shell.RunCmd(BusyBoxPath, "--list")
+	if err != nil {
+		return errors.New("failed to expand busybox commands: " + err.Error())
 	}
 
+	availableCommands := strings.Split(output, "\n")
+
 	// Create required symlinks for BusyBox
-	debugPhase.log.Println("Creating busybox symlinks: ", symlinks)
-	for _, key := range symlinks {
+	debugPhase.log.Printf("Creating busybox symlinks. %d available commands", len(availableCommands))
+	for _, key := range availableCommands {
+		if key == "busybox" || key == "" {
+			continue
+		}
+		debugPhase.log.Printf("Executing busybox symlink: %s", key)
+
 		err = os.Symlink(BusyBoxPath, "/bin/"+key)
 		if err != nil {
 			return errors.New("Failed to create symlink: " + err.Error())
