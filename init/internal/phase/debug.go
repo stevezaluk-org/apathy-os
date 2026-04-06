@@ -4,7 +4,6 @@ import (
 	"errors"
 	"log"
 	"os"
-	"os/exec"
 	"strings"
 
 	"github.com/stevezaluk/container-os/init/internal/shell"
@@ -57,21 +56,13 @@ func (debugPhase *DebugPhase) Execute() error {
 		if key == "busybox" || key == "" {
 			continue
 		}
-		debugPhase.log.Printf("Executing busybox symlink: %s", key)
-
 		err = os.Symlink(BusyBoxPath, "/bin/"+key)
 		if err != nil {
 			return errors.New("Failed to create symlink: " + err.Error())
 		}
 	}
 
-	// needs to go on go routine so that we can catch a signal
-	cmd := exec.Command(BusyBoxPath, "sh")
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	cmd.Stdin = os.Stdin
-
-	if err := cmd.Run(); err != nil {
+	if err := shell.MapCmd(BusyBoxPath, "sh"); err != nil {
 		return errors.New("Failed to execute busybox: " + err.Error())
 	}
 
