@@ -6,6 +6,7 @@ import (
 	"os"
 	"strings"
 
+	internalLog "github.com/stevezaluk/container-os/init/internal/log"
 	"github.com/stevezaluk/container-os/init/internal/shell"
 )
 
@@ -71,6 +72,6 @@ func (debugPhase *DebugPhase) Execute() error {
 
 func NewDebugPhase() *DebugPhase {
 	return &DebugPhase{
-		log: log.New(os.Stdout, "phase/debug: ", log.Lshortfile|log.LstdFlags),
+		log: internalLog.New("phase/debug"),
 	}
 }

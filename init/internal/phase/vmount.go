@@ -2,9 +2,10 @@ package phase
 
 import (
 	"log"
-	"os"
 	"strings"
 	"syscall"
+
+	internalLog "github.com/stevezaluk/container-os/init/internal/log"
 )
 
 type MountPhase struct {
@@ -55,6 +56,6 @@ func (mountPhase *MountPhase) Execute() error {
 
 func NewMountPhase() *MountPhase {
 	return &MountPhase{
-		log: log.New(os.Stdout, "phase/vmount: ", log.Lshortfile|log.LstdFlags),
+		log: internalLog.New("phase/rmount"),
 	}
 }
