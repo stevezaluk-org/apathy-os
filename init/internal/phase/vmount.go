@@ -17,8 +17,8 @@ func (mountPhase *MountPhase) Log() *log.Logger {
 	return mountPhase.log
 }
 
-// Dependent Returns a Phase that should be executed before this one
-func (mountPhase *MountPhase) Dependent() Phase {
+// Next The next phase that should be executed after this one
+func (mountPhase *MountPhase) Next() Phase {
 	return nil
 }
 

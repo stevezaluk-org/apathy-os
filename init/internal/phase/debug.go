@@ -25,8 +25,9 @@ func (debugPhase *DebugPhase) Log() *log.Logger {
 	return debugPhase.log
 }
 
-// Dependent A phase that this one depends on
-func (debugPhase *DebugPhase) Dependent() Phase {
+// Next The next phase that should be executed after this one. Next on DebugPhase is always nil as the phase executor
+// will always handle inserting this one directly after vmount
+func (debugPhase *DebugPhase) Next() Phase {
 	return nil
 }
 
