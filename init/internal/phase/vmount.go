@@ -56,6 +56,6 @@ func (mountPhase *MountPhase) Execute() error {
 
 func NewMountPhase() *MountPhase {
 	return &MountPhase{
-		log: internalLog.New("phase/rmount"),
+		log: internalLog.New("phase/vmount"),
 	}
 }

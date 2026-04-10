@@ -48,6 +48,8 @@ func (executor *Executor) initialize() error {
 		// catching debug in the boot arguments means the user wants to invoke the debug shell. Always executed
 		// after virtual filesystem mounting
 
+		executor.log.Printf("Got 'debug' in /proc/cmdline. Debug phase starting shortly")
+
 		// TODO: Maybe think about removing this as a phase
 		if err := NewDebugPhase().Execute(); err != nil {
 			return err
