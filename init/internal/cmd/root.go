@@ -28,7 +28,7 @@ transition into user mode. Additionally, the subcommands 'system' and 'user' can
 directly`,
 	Run: func(cmd *cobra.Command, args []string) {
 		i := initd.New(nil)
-		i.Start()
+		i.StartPhases()
 	},
 }
 

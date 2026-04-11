@@ -1,13 +1,12 @@
 package phase
 
-import "log"
-
 // Phase Represents a phase in starting the operating system
 type Phase interface {
-	Log() *log.Logger
+	// Next Set the next phase in the execution chain
+	Next(Phase)
 
-	// Dependent A phase that this one depends on
-	Dependent() Phase
+	// Continue The next phase that should be executed after this one
+	Continue() Phase
 
 	// Execute Start the phase and return any errors that occur
 	Execute() error

@@ -19,19 +19,23 @@ const (
 // initramfs must be built with the BusyBox binary present at /bin/busybox
 type DebugPhase struct {
 	log *log.Logger
+
+	next Phase
 }
 
-func (debugPhase *DebugPhase) Log() *log.Logger {
-	return debugPhase.log
+// Next Set the next phase in the execution chain
+func (phase *DebugPhase) Next(next Phase) {
+	phase.next = next
 }
 
-// Dependent A phase that this one depends on
-func (debugPhase *DebugPhase) Dependent() Phase {
+// Continue The next phase that should be executed after this one. Next on DebugPhase is always nil as the phase executor
+// will always handle inserting this one directly after vmount
+func (phase *DebugPhase) Continue() Phase {
 	return nil
 }
 
 // Execute Start the phase and return any errors that occur
-func (debugPhase *DebugPhase) Execute() error {
+func (phase *DebugPhase) Execute() error {
 	_, err := os.Stat(BusyBoxPath)
 	if errors.Is(err, os.ErrNotExist) {
 		return errors.New("BusyBox does not exist at the path: " + BusyBoxPath)
@@ -42,7 +46,7 @@ func (debugPhase *DebugPhase) Execute() error {
 		return errors.New("Could not set PATH environment variable: " + err.Error())
 	}
 
-	debugPhase.log.Println("PATH: ", os.Getenv("PATH"))
+	phase.log.Println("PATH: ", os.Getenv("PATH"))
 
 	output, err := shell.RunCmd(BusyBoxPath, "--list")
 	if err != nil {
@@ -52,7 +56,7 @@ func (debugPhase *DebugPhase) Execute() error {
 	availableCommands := strings.Split(output, "\n")
 
 	// Create required symlinks for BusyBox
-	debugPhase.log.Printf("Creating busybox symlinks. %d available commands", len(availableCommands))
+	phase.log.Printf("Creating busybox symlinks. %d available commands", len(availableCommands))
 	for _, key := range availableCommands {
 		if key == "busybox" || key == "" {
 			continue

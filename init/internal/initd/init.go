@@ -17,33 +17,20 @@ type Init struct {
 	// config Global configuration values populated with /proc/cmdline after mounting occurs
 	config *config.Config
 
-	// rootPhase The first phase that is executed after phase.MountPhase is executed
-	rootPhase phase.Phase
+	// executor Responsible for executing init phases
+	executor *phase.Executor
 }
 
-func (init *Init) Start() {
-	err := phase.NewMountPhase().Execute()
-	if err != nil {
-		log.Println("Root phase failed to execute!", err)
-	}
-
-	init.config = config.Default()
-	init.config.AutomaticBootParams()
-
-	init.log.Println("Enumerated the following boot arguments: ", init.config.BootParams())
-	if init.config.Debug == true {
-		init.log.Println("Got 'debug' in boot arguments. Starting debug phase...")
-
-		err := phase.NewDebugPhase().Execute()
-		if err != nil {
-			init.log.Println("Debug phase failed to execute with: ", err)
-		}
+// StartPhases Starts init phase execution
+func (init *Init) StartPhases() {
+	if err := init.executor.Start(); err != nil {
+		init.log.Fatalf("Phase executor returned with the following error: %s", err.Error())
 	}
 }
 
 func New(rootPhase phase.Phase) *Init {
 	return &Init{
-		log:       log.New(os.Stdout, "initd: ", log.Lshortfile|log.LstdFlags),
-		rootPhase: rootPhase,
+		log:      log.New(os.Stdout, "initd: ", log.Lshortfile|log.LstdFlags),
+		executor: phase.NewExecutor(),
 	}
 }
