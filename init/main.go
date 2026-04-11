@@ -50,6 +50,16 @@ func early() {
 	if err != nil {
 		log.Fatal("got fatal error when trying to mount rootfs: ", err)
 	}
+
+	err = mount.MoveVirtualMounts()
+	if err != nil {
+		log.Fatalf("moving virtual filesystems failed with %v", err)
+	}
+
+	err = mount.SwitchRoot()
+	if err != nil {
+		log.Fatalf("failed to switch to rootfs: %v", err)
+	}
 }
 
 func late() {

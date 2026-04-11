@@ -34,8 +34,8 @@ func findFs(uuid string) (string, string, error) {
 	return strings.TrimSpace(device), strings.TrimSpace(fstype), nil
 }
 
-// switchRoot Calls switch_root on /root and sets /sbin/init [late] as its new init process
-func switchRoot() error {
+// SwitchRoot Calls switch_root on /root and sets /sbin/init [late] as its new init process
+func SwitchRoot() error {
 	err := syscall.Exec(
 		"/bin/switch_root",
 		[]string{"/bin/switch_root", "/root", "/usr/sbin/init"},
@@ -78,16 +78,6 @@ func MountRootfs(config *config.Config) error {
 	err = syscall.Mount(device, "/root", fstype, 0, "")
 	if err != nil {
 		return fmt.Errorf("mounting rootfs failed with device %s (%s): %v", device, fstype, err)
-	}
-
-	err = MoveVirtualMounts()
-	if err != nil {
-		return fmt.Errorf("moving virtual filesystems failed with %v", err)
-	}
-
-	err = switchRoot()
-	if err != nil {
-		return fmt.Errorf("failed to switch to rootfs: %v", err)
 	}
 
 	return nil
