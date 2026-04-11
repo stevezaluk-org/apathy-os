@@ -1,7 +1,6 @@
 package config
 
 import (
-	"log"
 	"os"
 	"reflect"
 	"strings"
@@ -29,13 +28,12 @@ func (config *Config) BootParams() map[string]string {
 }
 
 // New Parse boot parameters from /proc/cmdline and merge them
-func New() *Config {
+func New() (*Config, error) {
 	config := new(Config)
 
 	contents, err := os.ReadFile(BootParamsFile)
 	if err != nil {
-		log.Print("Failed to read boot params: ", err)
-		return nil
+		return nil, err
 	}
 
 	if config.bootParams == nil {
@@ -79,5 +77,5 @@ func New() *Config {
 		}
 	}
 
-	return config
+	return config, nil
 }
