@@ -28,12 +28,14 @@ func (config *Config) BootParams() map[string]string {
 	return config.bootParams
 }
 
-// AutomaticBootParams Parse boot parameters from /proc/cmdline and merge them to Config
-func (config *Config) AutomaticBootParams() {
+// New Parse boot parameters from /proc/cmdline and merge them
+func New() *Config {
+	config := new(Config)
+
 	contents, err := os.ReadFile(BootParamsFile)
 	if err != nil {
 		log.Print("Failed to read boot params: ", err)
-		return
+		return nil
 	}
 
 	if config.bootParams == nil {
@@ -76,13 +78,6 @@ func (config *Config) AutomaticBootParams() {
 			}
 		}
 	}
-}
 
-// Default Returns defaults for Config
-func Default() *Config {
-	return &Config{
-		Debug:      false,
-		Quiet:      false,
-		bootParams: make(map[string]string),
-	}
+	return config
 }
