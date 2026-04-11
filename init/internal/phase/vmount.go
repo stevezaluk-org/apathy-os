@@ -12,11 +12,6 @@ type MountPhase struct {
 	log *log.Logger
 }
 
-// Log Returns a pointer to the phases logger
-func (mountPhase *MountPhase) Log() *log.Logger {
-	return mountPhase.log
-}
-
 // Next The next phase that should be executed after this one
 func (mountPhase *MountPhase) Next() Phase {
 	return nil

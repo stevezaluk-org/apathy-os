@@ -21,10 +21,6 @@ type DebugPhase struct {
 	log *log.Logger
 }
 
-func (debugPhase *DebugPhase) Log() *log.Logger {
-	return debugPhase.log
-}
-
 // Next The next phase that should be executed after this one. Next on DebugPhase is always nil as the phase executor
 // will always handle inserting this one directly after vmount
 func (debugPhase *DebugPhase) Next() Phase {
