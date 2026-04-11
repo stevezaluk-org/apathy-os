@@ -5,11 +5,13 @@ Copyright © 2026 Steven A. Zaluk
 package cmd
 
 import (
+	"log"
 	"os"
 
 	"github.com/spf13/cobra"
 	"github.com/stevezaluk/container-os/init/internal/config"
-	"github.com/stevezaluk/container-os/init/internal/initd"
+	"github.com/stevezaluk/container-os/init/internal/debug"
+	"github.com/stevezaluk/container-os/init/internal/mount"
 )
 
 var globalConfig *config.Config
@@ -26,9 +28,27 @@ When initd starts, boot arguments are enumerated to determine the mode that it s
 If the boot argument CONTAINER_OS_INIT=y is passed, then initd is started in system mode and will automatically
 transition into user mode. Additionally, the subcommands 'system' and 'user' can be called to invoke this behavior
 directly`,
+	PreRun: func(cmd *cobra.Command, args []string) {
+		log.SetPrefix("initd ")
+	},
 	Run: func(cmd *cobra.Command, args []string) {
-		i := initd.New(nil)
-		i.StartPhases()
+		log.Printf("Init has started. Starting virtual filesystem mount")
+		err := mount.MountVirtualFS()
+		if err != nil {
+			log.Fatal("got fatal error when trying to mount virtual filesystem: ", err)
+		}
+
+		// now that we have /proc mounted we can parse boot arguments
+		globalConfig = config.New()
+
+		// force into BusyBox shell if we get debug
+		if globalConfig.Debug {
+			log.Printf("'debug' was present in boot arguments. BusyBox shell will start shortly")
+			err := debug.StartDebug()
+			if err != nil {
+				log.Fatal("got fatal error when trying to start debug: ", err)
+			}
+		}
 	},
 }
 
