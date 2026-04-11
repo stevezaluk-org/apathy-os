@@ -34,4 +34,9 @@ func main() {
 			log.Fatal("got fatal error when trying to start debug: ", err)
 		}
 	}
+
+	err = mount.MountRootfs(globalConfig)
+	if err != nil {
+		log.Fatal("got fatal error when trying to mount rootfs: ", err)
+	}
 }

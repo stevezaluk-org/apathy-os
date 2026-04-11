@@ -20,6 +20,9 @@ type Config struct {
 
 	// Quiet Suppress all logging
 	Quiet bool `boot:"quiet"`
+
+	// Root A hint towards the root filesystem. Usually contains a string like UUID=<UUIDHERE> that represents the UUID of the filesystem
+	Root string `boot:"root"`
 }
 
 // BootParams Returns raw boot parameters parsed from /proc/cmdline
