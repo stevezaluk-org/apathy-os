@@ -36,7 +36,7 @@ func (executor *Executor) initialize() error {
 		return err
 	}
 	// bump up execution to ensure that we don't execute the same phase twice
-	executor.Root = executor.Root.Next()
+	executor.Root = executor.Root.Continue()
 
 	// after we have successfully mounted virtual filesystems we can call Config.AutomaticBootParams(). This will
 	// automatically read /proc/cmdline and us reflection to hydrate executor.Config with configuration values.
@@ -48,12 +48,12 @@ func (executor *Executor) initialize() error {
 		// catching debug in the boot arguments means the user wants to invoke the debug shell. Always executed
 		// after virtual filesystem mounting
 
-		executor.log.Printf("Got 'debug' in /proc/cmdline. Debug phase starting shortly")
+		executor.log.Printf("Got 'debug' in /proc/cmdline. Debug phase added to execution chain")
 
-		// TODO: Maybe think about removing this as a phase
-		if err := NewDebugPhase().Execute(); err != nil {
-			return err
-		}
+		debugPhase := NewDebugPhase()
+		debugPhase.Next(executor.Root)
+
+		executor.Root = debugPhase
 	}
 
 	return nil
@@ -66,13 +66,14 @@ func (executor *Executor) Start() error {
 		return err
 	}
 
+	executor.log.Printf("Pre-flight finished. Starting execution chain")
 	currentPhase := executor.Root
 	for currentPhase != nil {
 		if err := currentPhase.Execute(); err != nil {
 			return err
 		}
 
-		currentPhase = currentPhase.Next()
+		currentPhase = currentPhase.Continue()
 	}
 
 	return nil
@@ -83,6 +84,6 @@ func (executor *Executor) Start() error {
 func NewExecutor() *Executor {
 	return &Executor{
 		Root: NewMountPhase(),
-		log:  internalLog.New("phase/executor"),
+		log:  internalLog.New("executor"),
 	}
 }

@@ -10,10 +10,17 @@ import (
 
 type MountPhase struct {
 	log *log.Logger
+
+	next Phase
 }
 
-// Next The next phase that should be executed after this one
-func (phase *MountPhase) Next() Phase {
+// Next Set the next phase in the execution chain
+func (phase *MountPhase) Next(next Phase) {
+	phase.next = next
+}
+
+// Continue The next phase that should be executed after this one
+func (phase *MountPhase) Continue() Phase {
 	return nil
 }
 

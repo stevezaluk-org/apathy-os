@@ -19,11 +19,18 @@ const (
 // initramfs must be built with the BusyBox binary present at /bin/busybox
 type DebugPhase struct {
 	log *log.Logger
+
+	next Phase
 }
 
-// Next The next phase that should be executed after this one. Next on DebugPhase is always nil as the phase executor
+// Next Set the next phase in the execution chain
+func (phase *DebugPhase) Next(next Phase) {
+	phase.next = next
+}
+
+// Continue The next phase that should be executed after this one. Next on DebugPhase is always nil as the phase executor
 // will always handle inserting this one directly after vmount
-func (phase *DebugPhase) Next() Phase {
+func (phase *DebugPhase) Continue() Phase {
 	return nil
 }
 
