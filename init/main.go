@@ -65,8 +65,6 @@ func late() {
 }
 
 func main() {
-	fmt.Println(os.Args)
-
 	if len(os.Args) < 2 || len(os.Args) > 2 {
 		usage()
 	}

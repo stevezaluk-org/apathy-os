@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"os"
 	"strings"
 	"syscall"
 
@@ -18,6 +19,7 @@ const (
 )
 
 // findFs Returns the filesystem type and device path for a filesystem UUID
+// TODO: This flat exits when no filesystem is found under the provided UUID
 func findFs(uuid string) (string, string, error) {
 	device, err := shell.RunCmd(FindfsPath, uuid)
 	if err != nil {
@@ -34,9 +36,13 @@ func findFs(uuid string) (string, string, error) {
 
 // switchRoot Calls switch_root on /root and sets /sbin/init [late] as its new init process
 func switchRoot() error {
-	_, err := shell.RunCmd(SwitchrootPath, "/root", "/sbin/init", "late")
+	err := syscall.Exec(
+		"/bin/switch_root",
+		[]string{"/bin/switch_root", "/root", "/usr/sbin/init"},
+		os.Environ(),
+	)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to switch_root to rootfs: %v", err)
 	}
 
 	return nil
@@ -72,6 +78,11 @@ func MountRootfs(config *config.Config) error {
 	err = syscall.Mount(device, "/root", fstype, 0, "")
 	if err != nil {
 		return fmt.Errorf("mounting rootfs failed with device %s (%s): %v", device, fstype, err)
+	}
+
+	err = MoveVirtualMounts()
+	if err != nil {
+		return fmt.Errorf("moving virtual filesystems failed with %v", err)
 	}
 
 	err = switchRoot()
