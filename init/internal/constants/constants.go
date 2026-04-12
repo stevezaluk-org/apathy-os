@@ -1,14 +1,26 @@
 package constants
 
 const (
-	BlkidPath      string = "/bin/blkid"
-	FindfsPath     string = "/bin/findfs"
+	// BlkidPath The path to blkid on initramfs
+	BlkidPath string = "/bin/blkid"
+
+	// FindfsPath The path to findfs on initramfs
+	FindfsPath string = "/bin/findfs"
+
+	// SwitchrootPath The path to switch_root on initramfs
 	SwitchrootPath string = "/bin/switch_root"
-	BusyBoxPath    string = "/bin/busybox"
+
+	// BusyBoxPath The path to busybox on initramfs
+	BusyBoxPath string = "/bin/busybox"
 )
 
 const (
-	BootParamsFile     string = "/proc/cmdline"
+	// BootParamsFile Unix standard file path on where boot parameters are exposed
+	BootParamsFile string = "/proc/cmdline"
+
+	// TemporaryRootMount Absolute path for where rootfs is temporarily mounted before switch_root is invoked
 	TemporaryRootMount string = "/root"
-	LateInitPath       string = "/usr/sbin/init"
+
+	// LateInitPath Absolute path to where init is located on the rootfs
+	LateInitPath string = "/usr/sbin/init"
 )
