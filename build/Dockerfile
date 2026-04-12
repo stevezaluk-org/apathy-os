@@ -55,13 +55,27 @@ RUN go build -o agent $AGENT_BUILDFLAGS -ldflags="$AGENT_LDFLAGS"
 
 FROM debian:stable-slim AS rootfs-build
 
-WORKDIR /out
+ARG GLIBC_VER="2.43"
 
 RUN apt-get update \
     && \
-    apt-get install tar gzip
+    apt-get install tar gzip gcc make gawk bison python3 -y
+
+WORKDIR /out
 
 RUN bash -c 'mkdir -p /out/rootfs/{bin,sbin,usr/bin,etc,sys,dev,proc,tmp}'
+
+WORKDIR /out/build/glibc
+
+ADD https://ftp.gnu.org/gnu/glibc/glibc-2.43.tar.gz glibc.tar.gz
+
+RUN mkdir build && tar -xvf glibc.tar.gz -C build/ --strip-components=1
+
+RUN ./build/configure --prefix=/out/rootfs/usr --datadir=$(pwd)
+RUN make -j $(nproc)
+RUN make install
+
+WORKDIR /out
 
 COPY --from=init-build /out/init /out/rootfs/usr/sbin/init
 COPY --from=agent-build /out/agent /out/rootfs/usr/bin/agent
