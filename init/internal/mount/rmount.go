@@ -33,7 +33,7 @@ func findFs(uuid string) (string, string, error) {
 func SwitchRoot() error {
 	err := syscall.Exec(
 		constants.SwitchrootPath,
-		[]string{constants.SwitchrootPath, "/root", "/usr/sbin/init", "late"},
+		[]string{constants.SwitchrootPath, "/root", constants.LateInitPath, "late"},
 		os.Environ(),
 	)
 	if err != nil {
@@ -70,7 +70,7 @@ func MountRootfs(config *config.Config) error {
 		fstype = "ext4"
 	}
 
-	err = syscall.Mount(device, "/root", fstype, 0, "")
+	err = syscall.Mount(device, constants.TemporaryRootMount, fstype, 0, "")
 	if err != nil {
 		return fmt.Errorf("mounting rootfs failed with device %s (%s): %v", device, fstype, err)
 	}

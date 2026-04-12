@@ -4,11 +4,11 @@ import (
 	"os"
 	"reflect"
 	"strings"
+
+	"github.com/stevezaluk/container-os/init/internal/constants"
 )
 
-const (
-	BootParamsFile string = "/proc/cmdline"
-)
+const ()
 
 // Config Global config structure for controlling init
 type Config struct {
@@ -34,7 +34,7 @@ func (config *Config) BootParams() map[string]string {
 func New() (*Config, error) {
 	config := new(Config)
 
-	contents, err := os.ReadFile(BootParamsFile)
+	contents, err := os.ReadFile(constants.BootParamsFile)
 	if err != nil {
 		return nil, err
 	}
