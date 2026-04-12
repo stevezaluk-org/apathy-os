@@ -84,34 +84,15 @@ RUN tar -czvf rootfs.tar.gz /out/rootfs
 
 FROM debian:stable-slim AS initramfs-build
 
-ARG E2FSPROGS_VER="1.47.4"
-ARG BTRFSPROGS_VER="6.19.1"
-
 RUN apt-get update \
     && \
     apt-get install cpio build-essential tar gzip -y
-
-WORKDIR /out/build/e2fsprogs
-
-ADD https://github.com/tytso/e2fsprogs/archive/refs/tags/v$E2FSPROGS_VER.tar.gz e2fsprogs.tar.gz
-RUN tar -xvf e2fsprogs.tar.gz -C . --strip-components=1
-
-RUN ./configure LDFLAGS="-static" CFLAGS="-static"
-RUN make -j $(nproc)
-
-WORKDIR /out/build/btrfsprogs
-
-ADD https://github.com/kdave/btrfs-progs/releases/download/v$BTRFSPROGS_VER/btrfs.box.static mkfs.btrfs
-RUN chmod +x mkfs.btrfs
 
 WORKDIR /out/initramfs
 
 RUN bash -c 'mkdir -p /out/initramfs/{bin,dev,proc,sys}'
 # this needs to be externalized to ensure that we can build without this binary present
 COPY "./build/deps/busybox-x86_64" /out/initramfs/bin/busybox
-
-RUN mv /out/build/e2fsprogs/misc/mke2fs /out/initramfs/bin/mkfs.ext4
-RUN mv /out/build/btrfsprogs/mkfs.btrfs /out/initramfs/bin/mkfs.btrfs
 
 COPY --from=init-build /out/init /out/initramfs/init
 COPY --from=rootfs-build /out/rootfs.tar.gz /out/initramfs
