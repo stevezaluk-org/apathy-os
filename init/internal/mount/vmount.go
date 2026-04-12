@@ -30,3 +30,20 @@ func MountVirtualFS() error {
 
 	return nil
 }
+
+// MoveVirtualMounts - Move virtual filesystem mounts after the root file system has been mounted in its temporary
+// location
+func MoveVirtualMounts() error {
+	log.Printf("Moving virtual mounts to new root")
+
+	for _, value := range []string{"/proc", "/sys", "/dev"} {
+
+		log.Printf("moving %s mount to %s", value, "/root"+value)
+		err := syscall.Mount(value, "/root"+value, "", syscall.MS_MOVE, "")
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}

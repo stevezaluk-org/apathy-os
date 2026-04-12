@@ -55,18 +55,17 @@ RUN go build -o agent $AGENT_BUILDFLAGS -ldflags="$AGENT_LDFLAGS"
 
 FROM debian:stable-slim AS rootfs-build
 
-WORKDIR /out/rootfs
+WORKDIR /out
 
 RUN apt-get update \
     && \
     apt-get install tar gzip
 
-RUN bash -c 'mkdir -p /rootfs/{bin,sbin,usr/bin,etc,sys,dev,proc,tmp}'
+RUN bash -c 'mkdir -p /out/rootfs/{bin,sbin,usr/bin,etc,sys,dev,proc,tmp}'
 
 COPY --from=init-build /out/init /out/rootfs/usr/sbin/init
-COPY --from=agent-build /out/agent /out/rootfs/usr/bin/AGENT_BUILDFLAGS
+COPY --from=agent-build /out/agent /out/rootfs/usr/bin/agent
 
-WORKDIR /out
 RUN tar -czvf rootfs.tar.gz /out/rootfs
 
 FROM debian:stable-slim AS initramfs-build
