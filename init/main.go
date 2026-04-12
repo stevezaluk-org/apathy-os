@@ -46,6 +46,11 @@ func early() {
 		}
 	}
 
+	// the symlinks created by this function call are required for mounting rootfs (blkid, findfs, and switch_root)
+	if err := shell.CreateSymlinks(); err != nil {
+		log.Fatal("got fatal error when trying to create symlinks: ", err)
+	}
+
 	err = mount.MountRootfs(globalConfig)
 	if err != nil {
 		log.Fatal("got fatal error when trying to mount rootfs: ", err)
