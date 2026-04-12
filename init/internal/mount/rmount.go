@@ -37,8 +37,8 @@ func findFs(uuid string) (string, string, error) {
 // SwitchRoot Calls switch_root on /root and sets /sbin/init [late] as its new init process
 func SwitchRoot() error {
 	err := syscall.Exec(
-		"/bin/switch_root",
-		[]string{"/bin/switch_root", "/root", "/usr/sbin/init"},
+		SwitchrootPath,
+		[]string{SwitchrootPath, "/root", "/usr/sbin/init", "late"},
 		os.Environ(),
 	)
 	if err != nil {

@@ -53,7 +53,7 @@ func early() {
 
 	err = mount.MoveVirtualMounts()
 	if err != nil {
-		log.Fatalf("moving virtual filesystems failed with %v", err)
+		log.Fatalf("moving virtual filesystems failed with: %v", err)
 	}
 
 	err = mount.SwitchRoot()
