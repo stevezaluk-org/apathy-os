@@ -84,9 +84,6 @@ RUN tar -czvf rootfs.tar.gz /out/rootfs
 
 FROM debian:stable-slim AS initramfs-build
 
-ARG E2FSPROGS_VER="1.47.4"
-ARG BTRFSPROGS_VER="6.19.1"
-
 RUN apt-get update \
     && \
     apt-get install cpio build-essential tar gzip -y
