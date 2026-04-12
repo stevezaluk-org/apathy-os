@@ -9,24 +9,19 @@ import (
 	"syscall"
 
 	"github.com/stevezaluk/container-os/init/internal/config"
+	"github.com/stevezaluk/container-os/init/internal/constants"
 	"github.com/stevezaluk/container-os/init/internal/shell"
-)
-
-const (
-	BlkidPath      = "/bin/blkid"
-	FindfsPath     = "/bin/findfs"
-	SwitchrootPath = "/bin/switch_root"
 )
 
 // findFs Returns the filesystem type and device path for a filesystem UUID
 // TODO: This flat exits when no filesystem is found under the provided UUID
 func findFs(uuid string) (string, string, error) {
-	device, err := shell.RunCmd(FindfsPath, uuid)
+	device, err := shell.RunCmd(constants.FindfsPath, uuid)
 	if err != nil {
 		return "", "", err
 	}
 
-	fstype, err := shell.RunCmd(BlkidPath, "-o value", "-s TYPE", device)
+	fstype, err := shell.RunCmd(constants.BlkidPath, "-o value", "-s TYPE", device)
 	if err != nil {
 		return "", "", err
 	}
@@ -37,8 +32,8 @@ func findFs(uuid string) (string, string, error) {
 // SwitchRoot Calls switch_root on /root and sets /sbin/init [late] as its new init process
 func SwitchRoot() error {
 	err := syscall.Exec(
-		SwitchrootPath,
-		[]string{SwitchrootPath, "/root", "/usr/sbin/init", "late"},
+		constants.SwitchrootPath,
+		[]string{constants.SwitchrootPath, "/root", constants.LateInitPath, "late"},
 		os.Environ(),
 	)
 	if err != nil {
@@ -75,7 +70,7 @@ func MountRootfs(config *config.Config) error {
 		fstype = "ext4"
 	}
 
-	err = syscall.Mount(device, "/root", fstype, 0, "")
+	err = syscall.Mount(device, constants.TemporaryRootMount, fstype, 0, "")
 	if err != nil {
 		return fmt.Errorf("mounting rootfs failed with device %s (%s): %v", device, fstype, err)
 	}

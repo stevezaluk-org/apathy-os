@@ -37,13 +37,9 @@ func early() {
 		log.Fatal("got fatal error when trying to read boot arguments: ", err)
 	}
 
-	// force into BusyBox shell if we get debug
-	if globalConfig.Debug {
-		log.Printf("'debug' was present in boot arguments. BusyBox shell will start shortly")
-		err := debug.StartDebug()
-		if err != nil {
-			log.Fatal("got fatal error when trying to start debug: ", err)
-		}
+	// the symlinks created by this function call are required for mounting rootfs (blkid, findfs, and switch_root)
+	if err := shell.CreateSymlinks(); err != nil {
+		log.Fatal("got fatal error when trying to create symlinks: ", err)
 	}
 
 	err = mount.MountRootfs(globalConfig)
@@ -66,12 +62,19 @@ func late() {
 	log.SetPrefix("initd/late ")
 	log.Printf("welcome to late init")
 
-	rootls, err := shell.RunCmd("/usr/bin/ls", "/")
+	globalConfig, err := config.New()
 	if err != nil {
-		log.Fatal("got fatal error when trying to list rootfs: ", err)
+		log.Fatal("got fatal error when trying to read boot arguments: ", err)
 	}
 
-	log.Printf("rootfs contents: %v", rootls)
+	// force into BusyBox shell if we get debug
+	if globalConfig.Debug {
+		log.Printf("'debug' was present in boot arguments. BusyBox shell will start shortly")
+		err := debug.StartDebug()
+		if err != nil {
+			log.Fatal("got fatal error when trying to start debug: ", err)
+		}
+	}
 }
 
 func main() {

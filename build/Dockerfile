@@ -77,6 +77,7 @@ RUN make install
 
 WORKDIR /out
 
+COPY "./build/deps/busybox-x86_64" /out/rootfs/bin/busybox
 COPY --from=init-build /out/init /out/rootfs/usr/sbin/init
 COPY --from=agent-build /out/agent /out/rootfs/usr/bin/agent
 
@@ -91,11 +92,10 @@ RUN apt-get update \
 WORKDIR /out/initramfs
 
 RUN bash -c 'mkdir -p /out/initramfs/{bin,dev,proc,sys}'
-# this needs to be externalized to ensure that we can build without this binary present
+
 COPY "./build/deps/busybox-x86_64" /out/initramfs/bin/busybox
 
 COPY --from=init-build /out/init /out/initramfs/init
-COPY --from=rootfs-build /out/rootfs.tar.gz /out/initramfs
 
 RUN bash -c 'find . | cpio -o -H newc > ../initramfs.cpio'
 
