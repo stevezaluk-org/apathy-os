@@ -6,17 +6,16 @@ import (
 	"os"
 	"strings"
 
+	"github.com/stevezaluk/container-os/init/internal/constants"
 	"github.com/stevezaluk/container-os/init/internal/shell"
 )
-
-const BusyBoxPath string = "/bin/busybox"
 
 // initializeBusyBox Validates that the BusyBox binary actually exists and creates symlinks at /bin to all available
 // commands. Any command available with 'buysbox --list' is symlinked to the original buysbox binary
 func initializeBusyBox() error {
-	_, err := os.Stat(BusyBoxPath)
+	_, err := os.Stat(constants.BusyBoxPath)
 	if errors.Is(err, os.ErrNotExist) {
-		return errors.New("BusyBox does not exist at the path: " + BusyBoxPath)
+		return errors.New("BusyBox does not exist at the path: " + constants.BusyBoxPath)
 	}
 
 	err = os.Setenv("PATH", "/bin:/sbin:/usr/bin:/usr/local/bin")
@@ -26,7 +25,7 @@ func initializeBusyBox() error {
 
 	log.Println("PATH: ", os.Getenv("PATH"))
 
-	output, err := shell.RunCmd(BusyBoxPath, "--list")
+	output, err := shell.RunCmd(constants.BusyBoxPath, "--list")
 	if err != nil {
 		return errors.New("failed to expand busybox commands: " + err.Error())
 	}
@@ -39,7 +38,7 @@ func initializeBusyBox() error {
 		if key == "busybox" || key == "" {
 			continue
 		}
-		err = os.Symlink(BusyBoxPath, "/bin/"+key)
+		err = os.Symlink(constants.BusyBoxPath, "/bin/"+key)
 		if err != nil {
 			return errors.New("Failed to create symlink: " + err.Error())
 		}
@@ -56,7 +55,7 @@ func StartDebug() error {
 		return errors.New("Failed to initialize busybox: " + err.Error())
 	}
 
-	if err := shell.MapCmd(BusyBoxPath, "sh"); err != nil {
+	if err := shell.MapCmd(constants.BusyBoxPath, "sh"); err != nil {
 		return errors.New("Failed to execute busybox: " + err.Error())
 	}
 
