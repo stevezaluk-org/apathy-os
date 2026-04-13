@@ -19,6 +19,9 @@ DOCKER_FILE=build/Dockerfile
 DOCKER_LOCAL_IMAGE="container-os:$(shell date +%s)"
 DOCKER_CONTAINER_NAME="container-os"
 
+UKIFY_BIN=ukify
+GENIMG_BIN=genimage
+
 .PHONY: clean
 .SILENT:
 clean:
@@ -52,6 +55,31 @@ deps:
 disk:
 	@mkdir -p $(OUTPUT)/disk
 	@$(QEMU_IMG) create -f qcow2 $(OUTPUT)/disk/boot.qcow2 10G
+
+.PHONY: image
+.PHONY: img
+image:
+	mkdir -p /tmp/container_os/esp/EFI/BOOT
+	mkdir -p /tmp/container_os/root
+	mkdir -p $(DIST)/out/img
+
+	$(UKIFY_BIN) build \
+		--linux=$(DIST)/out/boot/vmlinuz \
+		--initrd=$(DIST)/out/initramfs/initramfs.cpio \
+		--cmdline=$(BOOT_ARGS) \
+		--output=/tmp/container_os/esp/EFI/BOOT/BOOTX64.EFI
+
+	cp $(DIST)/out/rootfs/rootfs.tar.gz /tmp/container_os/root
+	tar -xvf /tmp/container_os/root/rootfs.tar.gz -C /tmp/container_os/root --strip-components 2
+
+	$(GENIMG_BIN) \
+		--config $(BUILD)/genimage.cfg \
+		--rootpath=/tmp/container_os/root \
+		--tmppath=/tmp/genimage-tmp \
+		--inputpath=/tmp/container_os/esp \
+		--outputpath=$(DIST)/out/img
+
+	rm -rf /tmp/container_os
 
 .PHONY: run
 run:
