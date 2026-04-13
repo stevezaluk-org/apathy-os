@@ -93,4 +93,4 @@ run:
 
 .PHONY: run-debug
 run-debug:
-	$(QEMU_BIN) $(DEV_FLAGS) -drive file=$(OUTPUT)/disk/boot.qcow2,if=ide,format=qcow2 -append $(DEBUG_BOOT_ARGS) -nographic
+	$(QEMU_BIN) $(DEV_FLAGS) -append $(DEBUG_BOOT_ARGS) -nographic
