@@ -25,7 +25,7 @@ GENIMG_BIN=genimage
 .PHONY: clean
 .SILENT:
 clean:
-	rm -rf $(DIST)
+	rm -rf $(OUTPUT)
 
 .PHONY: clean-deps
 .SILENT:
@@ -74,6 +74,18 @@ image:
 		--outputpath=$(DIST)/out/img
 
 	rm -rf /tmp/container_os
+
+.PHONY: uefi
+uefi:
+	bash -c ' \
+		if [ ! -f "/usr/share/OVMF/OVMF_CODE.fd" ] || [ ! -f "/usr/share/OVMF/OVMF_VARS.fd" ]; then \
+			echo "[error] OVMF firmware files do not exist at: /usr/share/OVMF"; \
+			echo "Install them through your package manager"; \
+		else \
+			mkdir -p $(DIST)/uefi; \
+			cp /usr/share/OVMF/OVMF_CODE.fd $(DIST)/uefi; \
+			cp /usr/share/OVMF/OVMF_VARS.fd $(DIST)/uefi; \
+		fi'
 
 .PHONY: run
 run:
