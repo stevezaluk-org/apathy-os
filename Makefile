@@ -94,3 +94,12 @@ run:
 .PHONY: run-debug
 run-debug:
 	$(QEMU_BIN) $(DEV_FLAGS) -append $(DEBUG_BOOT_ARGS) -nographic
+
+.PHONY: run-img
+run-img:
+	$(QEMU_BIN) -machine type=q35,accel=kvm \
+				-drive if=pflash,format=raw,readonly=on,file=$(DIST)/uefi/OVMF_CODE.fd \
+				-drive if=pflash,format=raw,readonly=on,file=$(DIST)/uefi/OVMF_VARS.fd \
+				-drive file=$(OUTPUT)/img/disk.img,format=raw,if=virtio \
+				-m 2G \
+				-smp 1
