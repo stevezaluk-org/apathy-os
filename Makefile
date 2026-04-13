@@ -75,6 +75,32 @@ image:
 
 	rm -rf /tmp/container_os
 
+# This really needs to be condensed as we are repeating way too much from .PHONY: image
+# This will do for the time being, but is subjected to change in a later commit
+.PHONY: debug-image
+debug-image:
+	mkdir -p /tmp/container_os/esp/EFI/BOOT
+	mkdir -p /tmp/container_os/root
+	mkdir -p $(DIST)/out/img
+
+	$(UKIFY_BIN) build \
+		--linux=$(DIST)/out/boot/vmlinuz \
+		--initrd=$(DIST)/out/initramfs/initramfs.cpio \
+		--cmdline=$(DEBUG_BOOT_ARGS) \
+		--output=/tmp/container_os/esp/EFI/BOOT/BOOTX64.EFI
+
+	cp $(DIST)/out/rootfs/rootfs.tar.gz /tmp/container_os/root
+	tar -xvf /tmp/container_os/root/rootfs.tar.gz -C /tmp/container_os/root --strip-components 2
+
+	$(GENIMG_BIN) \
+		--config $(BUILD)/genimage.debug.cfg \
+		--rootpath=/tmp/container_os/root \
+		--tmppath=/tmp/genimage-tmp \
+		--inputpath=/tmp/container_os/esp \
+		--outputpath=$(DIST)/out/img
+
+	rm -rf /tmp/container_os
+
 .PHONY: uefi
 uefi:
 	bash -c ' \
