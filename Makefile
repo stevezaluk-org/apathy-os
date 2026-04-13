@@ -51,13 +51,7 @@ deps:
 	@wget https://busybox.net/downloads/binaries/$(BUSYBOX_VER)/busybox-x86_64 -O $(BUILD_DEPS)/busybox-x86_64
 	@chmod +x $(BUILD_DEPS)/busybox-x86_64
 
-.PHONY: disk
-disk:
-	@mkdir -p $(OUTPUT)/disk
-	@$(QEMU_IMG) create -f qcow2 $(OUTPUT)/disk/boot.qcow2 10G
-
 .PHONY: image
-.PHONY: img
 image:
 	mkdir -p /tmp/container_os/esp/EFI/BOOT
 	mkdir -p /tmp/container_os/root
