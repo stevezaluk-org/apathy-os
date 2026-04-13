@@ -7,8 +7,8 @@ BUSYBOX_VER=1.21.1
 
 QEMU_BIN=qemu-system-x86_64
 QEMU_IMG=qemu-img
-BOOT_ARGS="console=ttyS0 rdinit=/init early"
-DEBUG_BOOT_ARGS="debug console=ttyS0 rdinit=/init early"
+BOOT_ARGS="root=UUID=87965c58-36e0-11f1-8de9-0242ac120002 console=ttyS0 rdinit=/init early"
+DEBUG_BOOT_ARGS="debug root=UUID=87965c58-36e0-11f1-8de9-0242ac120002 console=ttyS0 rdinit=/init early"
 KERNEL_PATH=$(OUTPUT)/boot/vmlinuz
 INITRAMFS_PATH=$(OUTPUT)/initramfs/initramfs.cpio
 
