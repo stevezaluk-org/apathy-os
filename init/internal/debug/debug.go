@@ -35,14 +35,15 @@ func initializeBusyBox() error {
 	// Create required symlinks for BusyBox
 	log.Printf("Creating busybox symlinks. %d available commands", len(availableCommands))
 	for _, key := range availableCommands {
-		if key == "busybox" || key == "" {
+		if key == "busybox" || key == "" || key == "[" || key == "[[" {
 			continue
 		}
 
 		dest := "/bin/" + key
 
 		// if we don't skip on pre-existing symlinks, then debug will fail to enter after its first invocation on a debug image
-		if _, err := os.Lstat(dest); os.IsExist(err) {
+		if _, err := os.Lstat(dest); !errors.Is(err, os.ErrNotExist) {
+			log.Printf("%s already exists, skipping...", dest)
 			continue
 		}
 
