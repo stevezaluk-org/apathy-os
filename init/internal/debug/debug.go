@@ -38,6 +38,14 @@ func initializeBusyBox() error {
 		if key == "busybox" || key == "" {
 			continue
 		}
+
+		dest := "/bin/" + key
+
+		// if we don't skip on pre-existing symlinks, then debug will fail to enter after its first invocation on a debug image
+		if _, err := os.Lstat(dest); os.IsExist(err) {
+			continue
+		}
+
 		err = os.Symlink(constants.BusyBoxPath, "/bin/"+key)
 		if err != nil {
 			return errors.New("Failed to create symlink: " + err.Error())
