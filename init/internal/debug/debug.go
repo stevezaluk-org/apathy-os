@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"strings"
+	"syscall"
 
 	"github.com/stevezaluk/container-os/init/internal/constants"
 	"github.com/stevezaluk/container-os/init/internal/shell"
@@ -64,7 +65,7 @@ func StartDebug() error {
 		return errors.New("Failed to initialize busybox: " + err.Error())
 	}
 
-	if err := shell.MapCmd(constants.BusyBoxPath, "sh"); err != nil {
+	if err := syscall.Exec(constants.BusyBoxPath, []string{constants.BusyBoxPath, "sh"}, os.Environ()); err != nil {
 		return errors.New("Failed to execute busybox: " + err.Error())
 	}
 
