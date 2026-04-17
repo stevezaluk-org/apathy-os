@@ -74,7 +74,7 @@ func (reaper *ProcessReaper) reapProcess(ctx context.Context, pid uint32) {
 
 	select {
 	default:
-		log.Printf("\rSending SIGTERM (reaper): %d", pid)
+		log.Printf("Sending SIGTERM (reaper): %d", pid)
 		err := syscall.Kill(int(pid), syscall.SIGTERM)
 		if err != nil {
 			log.Fatalf("Failed to send SIGTERM to PID: %d (%v). Trying SIGKILL in 60 seconds", pid, err)
@@ -82,7 +82,7 @@ func (reaper *ProcessReaper) reapProcess(ctx context.Context, pid uint32) {
 
 		<-timer.C
 		if reaper.checkForPid(pid) {
-			log.Printf("\rProcess did not respond to SIGTERM. Sending SIGKILL: %d", pid)
+			log.Printf("Process did not respond to SIGTERM. Sending SIGKILL: %d", pid)
 			err = syscall.Kill(int(pid), syscall.SIGKILL)
 			if err != nil {
 				log.Fatalf("Failed to send SIGKILL to PID: %d (%v). This may result in failing to unmount the root filesystem", pid, err)
