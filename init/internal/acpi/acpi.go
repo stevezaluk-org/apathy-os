@@ -44,7 +44,7 @@ func checkEvent(buf []byte) (bool, error) {
 // here is that we are not dynamically identifying which devices map to which event handlers so there is a chance that
 // on other systems, /dev/input/event0 will be mapped to a different device entirely, and we won't actually receive an ACPI
 // event. This will be rectified in a future commit
-func Wait() {
+func Wait(sig chan<- bool) {
 	for {
 		fd, err := os.Open(constants.ACPIEventPath)
 		if err != nil {
@@ -64,7 +64,8 @@ func Wait() {
 		}
 
 		if isAcpi {
-			log.Printf("ACPI event received")
+			log.Printf("ACPI event received. Notifying parent goroutine")
+			sig <- true
 		}
 	}
 }
