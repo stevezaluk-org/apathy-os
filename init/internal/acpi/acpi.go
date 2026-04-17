@@ -3,6 +3,7 @@ package acpi
 import (
 	"bytes"
 	"encoding/binary"
+	"fmt"
 	"log"
 	"os"
 	"syscall"
@@ -10,11 +11,32 @@ import (
 	"github.com/stevezaluk/container-os/init/internal/constants"
 )
 
+const (
+	KeyPower uint16 = 116
+	EvKey    uint16 = 1
+)
+
 type InputEvent struct {
 	Time  syscall.Timeval
 	Type  uint16
 	Code  uint16
 	Value int32
+}
+
+// checkEvent Marshals an input event and checks to make sure that a received event is actually an ACPI event
+func checkEvent(buf []byte) (bool, error) {
+	event := new(InputEvent)
+
+	err := binary.Read(bytes.NewBuffer(buf), binary.LittleEndian, event)
+	if err != nil {
+		return false, err
+	}
+
+	if event.Type != EvKey && event.Code != KeyPower {
+		return false, fmt.Errorf("event was not an ACPI event (Type: %d, Code %d)", event.Type, event.Code)
+	}
+
+	return true, nil
 }
 
 // Wait An event loop that persistently reads for ACPI events from event handlers exposed at /dev/input/event0. This
@@ -36,13 +58,13 @@ func Wait() {
 			log.Fatal("Got error trying to read ACPI event file: ", err)
 		}
 
-		event := &InputEvent{}
-
-		err = binary.Read(bytes.NewBuffer(buffer[:n]), binary.LittleEndian, event)
+		isAcpi, err := checkEvent(buffer[:n])
 		if err != nil {
-			log.Fatal("Got error trying to marshal ACPI event: ", err)
+			log.Fatal("Got error trying to check ACPI event: ", err)
 		}
 
-		log.Println("Event read: ", event)
+		if isAcpi {
+			log.Printf("ACPI event received")
+		}
 	}
 }
