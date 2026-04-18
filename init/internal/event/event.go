@@ -5,6 +5,7 @@ import (
 	"log"
 
 	"github.com/stevezaluk/container-os/init/internal/acpi"
+	"github.com/stevezaluk/container-os/init/internal/reaper"
 )
 
 // Loop Core event loop for init. Blocks on powerEvent until an ACPI event is received. Once an ACPI event is received,
@@ -18,7 +19,11 @@ func Loop(ctx context.Context) {
 	for {
 		select {
 		case <-acpiSig:
-			log.Println("ACPI event received")
+			log.Println("ACPI event received. Initiating shutdown")
+			err := reaper.ReapProcesses()
+			if err != nil {
+				log.Fatalf("Error reaping processes: %v", err)
+			}
 		case <-ctx.Done():
 			return
 		}
