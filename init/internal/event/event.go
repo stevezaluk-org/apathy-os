@@ -24,6 +24,7 @@ func Loop(ctx context.Context) {
 			if err != nil {
 				log.Fatalf("Error reaping processes: %v", err)
 			}
+			return
 		case <-ctx.Done():
 			return
 		}

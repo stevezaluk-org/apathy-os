@@ -4,12 +4,16 @@ Copyright © 2026 Steven A. Zaluk
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"os"
+	"sync"
+	"syscall"
 
 	"github.com/stevezaluk/container-os/init/internal/config"
 	"github.com/stevezaluk/container-os/init/internal/debug"
+	"github.com/stevezaluk/container-os/init/internal/event"
 	"github.com/stevezaluk/container-os/init/internal/mount"
 	"github.com/stevezaluk/container-os/init/internal/shell"
 )
@@ -74,6 +78,15 @@ func late() {
 		if err != nil {
 			log.Fatal("got fatal error when trying to start debug: ", err)
 		}
+	}
+
+	wg := new(sync.WaitGroup)
+	wg.Go(func() { event.Loop(context.Background()) })
+	wg.Wait()
+
+	err = syscall.Reboot(syscall.LINUX_REBOOT_CMD_POWER_OFF)
+	if err != nil {
+		log.Fatalf("got fatal error when trying to reboot: %v. You should force a shutdown", err)
 	}
 }
 
