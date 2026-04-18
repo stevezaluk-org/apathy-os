@@ -12,10 +12,11 @@ import (
 func Loop() {
 	powerEvent := make(chan bool)
 
+	go acpi.Wait(powerEvent)
 	for {
-		go acpi.Wait(powerEvent)
-		<-powerEvent
-		
-		log.Println("Event received")
+		select {
+		case <-powerEvent:
+			log.Println("ACPI event received")
+		}
 	}
 }
