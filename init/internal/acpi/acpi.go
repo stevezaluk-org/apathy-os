@@ -49,6 +49,8 @@ func readEvent() (bool, error) {
 		return false, fmt.Errorf("event was not an ACPI event (Type: %d, Code %d)", event.Type, event.Code)
 	}
 
+	defer fd.Close()
+
 	return true, nil
 }
 
