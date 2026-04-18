@@ -2,6 +2,7 @@ package acpi
 
 import (
 	"bytes"
+	"context"
 	"encoding/binary"
 	"fmt"
 	"log"
@@ -23,11 +24,23 @@ type InputEvent struct {
 	Value int32
 }
 
-// checkEvent Marshals an input event and checks to make sure that a received event is actually an ACPI event
-func checkEvent(buf []byte) (bool, error) {
+// readEvent Marshals an input event and checks to make sure that a received event is actually an ACPI event
+func readEvent() (bool, error) {
+	fd, err := os.Open(constants.ACPIEventPath)
+	if err != nil {
+		log.Fatal("Got error trying to open ACPI event file: ", err)
+	}
+
+	buffer := make([]byte, 4096)
+
+	n, err := fd.Read(buffer)
+	if err != nil {
+		log.Fatal("Got error trying to read ACPI event file: ", err)
+	}
+
 	event := new(InputEvent)
 
-	err := binary.Read(bytes.NewBuffer(buf), binary.LittleEndian, event)
+	err = binary.Read(bytes.NewBuffer(buffer[:n]), binary.LittleEndian, event)
 	if err != nil {
 		return false, err
 	}
@@ -44,28 +57,22 @@ func checkEvent(buf []byte) (bool, error) {
 // here is that we are not dynamically identifying which devices map to which event handlers so there is a chance that
 // on other systems, /dev/input/event0 will be mapped to a different device entirely, and we won't actually receive an ACPI
 // event. This will be rectified in a future commit
-func Wait(sig chan<- bool) {
+func Wait(ctx context.Context, sig chan<- bool) {
 	for {
-		fd, err := os.Open(constants.ACPIEventPath)
-		if err != nil {
-			log.Fatal("Got error trying to open ACPI event file: ", err)
-		}
+		select {
+		default:
+			check, err := readEvent()
+			if err != nil {
+				log.Println("Got error trying to read ACPI event file: ", err)
+			}
 
-		buffer := make([]byte, 4096)
-
-		n, err := fd.Read(buffer)
-		if err != nil {
-			log.Fatal("Got error trying to read ACPI event file: ", err)
-		}
-
-		isAcpi, err := checkEvent(buffer[:n])
-		if err != nil {
-			log.Fatal("Got error trying to check ACPI event: ", err)
-		}
-
-		if isAcpi {
-			log.Printf("ACPI event received. Notifying parent goroutine")
-			sig <- true
+			// if we get an ACPI event then notify the parent goroutine so that we can initialize shutdown
+			if check {
+				sig <- true
+				return
+			}
+		case <-ctx.Done():
+			return
 		}
 	}
 }
