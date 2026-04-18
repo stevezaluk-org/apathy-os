@@ -84,6 +84,11 @@ func late() {
 	wg.Go(func() { event.Loop(context.Background()) })
 	wg.Wait()
 
+	err = mount.RemountRootfs()
+	if err != nil {
+		log.Fatalf("got fatal error when trying to remove rootfs: %v", err)
+	}
+
 	err = syscall.Reboot(syscall.LINUX_REBOOT_CMD_POWER_OFF)
 	if err != nil {
 		log.Fatalf("got fatal error when trying to reboot: %v. You should force a shutdown", err)

@@ -77,3 +77,17 @@ func MountRootfs(config *config.Config) error {
 
 	return nil
 }
+
+// RemountRootfs Remounts the root filesystem as read only
+func RemountRootfs() error {
+	syscall.Sync()
+
+	// hardcoding filesystem type here as findFs always fails to determine the filesystem type and defaults to ext4
+	// rootfs is going to be converted to squashfs later down the line anyway
+	err := syscall.Mount("/", "/", "ext4", syscall.MS_REMOUNT|syscall.MS_RDONLY, "")
+	if err != nil {
+		return fmt.Errorf("remounting rootfs failed with mount failure: %v", err)
+	}
+
+	return nil
+}
