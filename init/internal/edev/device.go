@@ -1,9 +1,7 @@
 package edev
 
 import (
-	"bytes"
 	"context"
-	"encoding/binary"
 	"errors"
 	"os"
 )
@@ -27,18 +25,16 @@ func (device *Device) blockingRead() (*InputEvent, error) {
 	defer fd.Close()
 
 	data := make([]byte, 4096)
-	event := new(InputEvent)
 
 	n, err := fd.Read(data)
 	if err != nil {
 		return nil, err
 	}
 
-	err = binary.Read(bytes.NewBuffer(data[:n]), binary.LittleEndian, event)
+	event, err := NewEvent(data[:n])
 	if err != nil {
 		return nil, err
 	}
-
 	return event, nil
 }
 
