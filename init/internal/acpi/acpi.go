@@ -7,22 +7,15 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"syscall"
 
 	"github.com/stevezaluk/container-os/init/internal/constants"
+	"github.com/stevezaluk/container-os/init/internal/edev"
 )
 
 const (
 	KeyPower uint16 = 116
 	EvKey    uint16 = 1
 )
-
-type InputEvent struct {
-	Time  syscall.Timeval
-	Type  uint16
-	Code  uint16
-	Value int32
-}
 
 // readEvent Marshals an input event and checks to make sure that a received event is actually an ACPI event
 func readEvent() (bool, error) {
@@ -38,7 +31,7 @@ func readEvent() (bool, error) {
 		log.Fatal("Got error trying to read ACPI event file: ", err)
 	}
 
-	event := new(InputEvent)
+	event := new(edev.InputEvent)
 
 	err = binary.Read(bytes.NewBuffer(buffer[:n]), binary.LittleEndian, event)
 	if err != nil {
