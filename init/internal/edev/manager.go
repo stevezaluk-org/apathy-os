@@ -45,6 +45,17 @@ func (manager *DeviceManager) getName(fd uintptr) (string, error) {
 	return string(buffer[:bytes.IndexByte(buffer[:], 0)]), nil
 }
 
+// Device Get a device by its name
+func (manager *DeviceManager) Device(name string) (*Device, error) {
+	for _, device := range manager.Devices {
+		if device.Name == name {
+			return device, nil
+		}
+	}
+
+	return nil, fmt.Errorf("device not found")
+}
+
 // Enumerate Iterates through each event handler under /dev/input and enumerates basic information about the device. This
 // includes the name, bus, product, version, and vendor. This function call is bound to be re-worked in the future as
 // it makes an excessive amount of raw system calls to enumerate each device. This can instead be implemented by reading
@@ -72,6 +83,7 @@ func (manager *DeviceManager) Enumerate() error {
 			manager.Devices = append(manager.Devices, &Device{
 				Name:    devName,
 				Handler: "/dev/input/" + info.Name(),
+				C:       make(chan *InputEvent),
 			})
 		}
 
