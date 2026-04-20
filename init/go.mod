@@ -1,3 +1,5 @@
 module github.com/stevezaluk/container-os/init
 
 go 1.25.5
+
+require golang.org/x/sys v0.43.0 // indirect
