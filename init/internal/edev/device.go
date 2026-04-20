@@ -65,3 +65,12 @@ func (device *Device) Watch(ctx context.Context) error {
 	}()
 	return nil
 }
+
+// NewDevice Constructs a new device and returns a handler to it
+func NewDevice(name string, handler string) *Device {
+	return &Device{
+		Name:    name,
+		Handler: handler,
+		C:       make(chan *InputEvent),
+	}
+}
