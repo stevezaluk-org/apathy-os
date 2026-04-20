@@ -18,6 +18,8 @@ const (
 )
 
 // readEvent Marshals an input event and checks to make sure that a received event is actually an ACPI event
+//
+// Deprecated: Use the functions available under the 'edev' package
 func readEvent() (bool, error) {
 	fd, err := os.Open(constants.ACPIEventPath)
 	if err != nil {
@@ -52,6 +54,8 @@ func readEvent() (bool, error) {
 // here is that we are not dynamically identifying which devices map to which event handlers so there is a chance that
 // on other systems, /dev/input/event0 will be mapped to a different device entirely, and we won't actually receive an ACPI
 // event. This will be rectified in a future commit
+//
+// Deprecated: Use the functions available under the 'edev' package
 func Wait(ctx context.Context, sig chan<- bool) {
 	for {
 		select {
