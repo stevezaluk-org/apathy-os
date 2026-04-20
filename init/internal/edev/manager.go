@@ -69,8 +69,9 @@ func (manager *DeviceManager) Enumerate() error {
 		}
 
 		if !info.IsDir() && strings.Contains(info.Name(), "event") {
-			fmt.Println("/dev/input/" + info.Name())
-			file, err := os.OpenFile("/dev/input/"+info.Name(), unix.O_RDONLY|unix.O_NONBLOCK, 0)
+			handler := "/dev/input/" + info.Name()
+
+			file, err := os.OpenFile(handler, unix.O_RDONLY|unix.O_NONBLOCK, 0)
 			if err != nil {
 				return err
 			}
@@ -80,11 +81,7 @@ func (manager *DeviceManager) Enumerate() error {
 				return err
 			}
 
-			manager.Devices = append(manager.Devices, &Device{
-				Name:    devName,
-				Handler: "/dev/input/" + info.Name(),
-				C:       make(chan *InputEvent),
-			})
+			manager.Devices = append(manager.Devices, NewDevice(devName, handler))
 		}
 
 		return nil
