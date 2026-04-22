@@ -8,8 +8,8 @@ import (
 	"log"
 	"os"
 
-	"github.com/stevezaluk/immutable-os/init/internal/constants"
-	"github.com/stevezaluk/immutable-os/init/internal/edev"
+	"github.com/stevezaluk/immutable-os/initd/internal/constants"
+	"github.com/stevezaluk/immutable-os/initd/internal/edev"
 )
 
 const (

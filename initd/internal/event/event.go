@@ -4,8 +4,8 @@ import (
 	"context"
 	"log"
 
-	"github.com/stevezaluk/immutable-os/init/internal/acpi"
-	"github.com/stevezaluk/immutable-os/init/internal/reaper"
+	"github.com/stevezaluk/immutable-os/initd/internal/acpi"
+	"github.com/stevezaluk/immutable-os/initd/internal/reaper"
 )
 
 // Loop Core event loop for init. Blocks on powerEvent until an ACPI event is received. Once an ACPI event is received,

@@ -5,7 +5,7 @@ import (
 	"os"
 	"os/exec"
 
-	"github.com/stevezaluk/immutable-os/init/internal/constants"
+	"github.com/stevezaluk/immutable-os/initd/internal/constants"
 )
 
 // RunCmd Execute a single command and capture its output

@@ -11,11 +11,11 @@ import (
 	"sync"
 	"syscall"
 
-	"github.com/stevezaluk/immutable-os/init/internal/config"
-	"github.com/stevezaluk/immutable-os/init/internal/debug"
-	"github.com/stevezaluk/immutable-os/init/internal/event"
-	"github.com/stevezaluk/immutable-os/init/internal/mount"
-	"github.com/stevezaluk/immutable-os/init/internal/shell"
+	"github.com/stevezaluk/immutable-os/initd/internal/config"
+	"github.com/stevezaluk/immutable-os/initd/internal/debug"
+	"github.com/stevezaluk/immutable-os/initd/internal/event"
+	"github.com/stevezaluk/immutable-os/initd/internal/mount"
+	"github.com/stevezaluk/immutable-os/initd/internal/shell"
 )
 
 func usage() {
