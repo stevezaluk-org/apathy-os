@@ -110,10 +110,10 @@ COPY "./build/deps/busybox-x86_64" /out/initramfs/bin/busybox
 
 COPY --from=init-build /out/init /out/initramfs/init
 
-RUN bash -c 'find . | cpio -o -H newc > ../initramfs.cpio'
+RUN bash -c 'find . | cpio -o -H newc > ../initrd.cpio'
 
 FROM scratch
 
 COPY --from=rootfs-build /out/rootfs /
 COPY --from=kernel-build /out/arch/x86_64/boot/bzImage /boot/vmlinuz
-COPY --from=initramfs-build /out/initramfs.cpio /boot/initramfs.img
+COPY --from=initramfs-build /out/initrd.cpio /boot/initrd.img

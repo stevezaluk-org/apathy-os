@@ -47,7 +47,7 @@ image:
 
 	ukify build \
 		--linux=$(DIST)/out/$(RELEASE)-$(LIBC_FLAVOR)/boot/vmlinuz \
-		--initrd=$(DIST)/out/$(RELEASE)-$(LIBC_FLAVOR)/boot/initramfs.img \
+		--initrd=$(DIST)/out/$(RELEASE)-$(LIBC_FLAVOR)/boot/initrd.img \
 		--cmdline=$(BOOT_ARGS) \
 		--output=/tmp/container_os/esp/EFI/BOOT/BOOTX64.EFI
 
