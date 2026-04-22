@@ -31,16 +31,16 @@ the above:
 * qemu - Required if you plan on virtualizing an x86-64 machine running immutable-os
 
 ### Variants
-immutable-os offers two primary variants: release and development. The names of each of these variants are pretty self-explanatory,
+immutable-os offers two primary variants: ```release``` and ```development```. The names of each of these variants are pretty self-explanatory,
 however one important consideration to be aware of is that the development release will drop you into a busybox shell
 after the root filesystem is mounted. This is provided to ensure that you have a way of properly testing new features
 that are implemented. Otherwise, the two releases are identical. This may change in the future.
 
 In addition to the variants provided above, you have the ability to select the flavor of libc that you would like to
 bundle with your installation. There are three flavors available:
-* static (default) - No libc implementation
-* glibc - Builds/installs the standard GNU libc implementation
-* musl - Builds/installs the musl libc implementation
+* ```static``` (default) - No libc implementation
+* ```glibc``` - Builds/installs the standard GNU libc implementation
+* ```musl``` - Builds/installs the musl libc implementation
 
 ### Build
 Building immutable-os is very simple:
