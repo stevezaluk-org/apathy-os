@@ -1,6 +1,6 @@
 version: 2
 
-project_name: container-os-initd
+project_name: immutable-os
 
 before:
   hooks:
@@ -8,8 +8,8 @@ before:
     - go generate ./...
 
 builds:
-  - id: "init"
-    main: "./cmd"
+  - id: "initd"
+    main: "./main.go"
     binary: init
     goos:
     - linux

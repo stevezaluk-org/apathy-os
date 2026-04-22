@@ -8,9 +8,9 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/stevezaluk/container-os/init/internal/config"
-	"github.com/stevezaluk/container-os/init/internal/constants"
-	"github.com/stevezaluk/container-os/init/internal/shell"
+	"github.com/stevezaluk/immutable-os/initd/internal/config"
+	"github.com/stevezaluk/immutable-os/initd/internal/constants"
+	"github.com/stevezaluk/immutable-os/initd/internal/shell"
 )
 
 // findFs Returns the filesystem type and device path for a filesystem UUID
