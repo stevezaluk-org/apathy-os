@@ -44,7 +44,7 @@ ARG GLIBC_VER="2.43"
 
 WORKDIR /out
 
-RUN bash -c 'mkdir -p /out/rootfs/{bin,sbin,usr/bin,etc,sys,dev,proc,tmp}'
+RUN bash -c 'mkdir -p /out/rootfs/{bin,sbin,usr/bin,etc,sys,dev,proc,tmp,boot}'
 
 WORKDIR /out/build/glibc
 
@@ -66,7 +66,7 @@ ARG MUSL_VER="1.2.6"
 
 WORKDIR /out
 
-RUN bash -c 'mkdir -p /out/rootfs/{bin,sbin,usr/bin,etc,sys,dev,proc,tmp}'
+RUN bash -c 'mkdir -p /out/rootfs/{bin,sbin,usr/bin,etc,sys,dev,proc,tmp,boot}'
 
 WORKDIR /out/build/musl
 
@@ -87,7 +87,7 @@ FROM debian:stable-slim AS rootfs-static
 WORKDIR /out
 
 # not much really needed here as the whole point of a static build is not needing a libc implementation
-RUN bash -c 'mkdir -p /out/rootfs/{bin,sbin,usr/bin,etc,sys,dev,proc,tmp}'
+RUN bash -c 'mkdir -p /out/rootfs/{bin,sbin,usr/bin,etc,sys,dev,proc,tmp,boot}'
 
 FROM rootfs-${LIBC_FLAVOR} AS rootfs-build
 
@@ -95,8 +95,6 @@ WORKDIR /out
 
 COPY "./build/deps/busybox-x86_64" /out/rootfs/bin/busybox
 COPY --from=init-build /out/init /out/rootfs/usr/sbin/init
-
-RUN tar -czvf rootfs.tar.gz /out/rootfs
 
 FROM debian:stable-slim AS initramfs-build
 
@@ -116,7 +114,6 @@ RUN bash -c 'find . | cpio -o -H newc > ../initramfs.cpio'
 
 FROM scratch
 
-# think about removing the artifacts here and just building this like a normal container image
+COPY --from=rootfs-build /out/rootfs /
 COPY --from=kernel-build /out/arch/x86_64/boot/bzImage /boot/vmlinuz
-COPY --from=initramfs-build /out/initramfs.cpio /initramfs/initramfs.cpio
-COPY --from=rootfs-build /out/rootfs.tar.gz /rootfs/rootfs.tar.gz
+COPY --from=initramfs-build /out/initramfs.cpio /boot/initramfs.img
