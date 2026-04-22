@@ -1,3 +1,6 @@
+RELEASE ?= "release"
+LIBC_FLAVOR ?= "static"
+
 DIST=$(shell pwd)/dist
 OUTPUT=$(DIST)/out
 BUILD=$(shell pwd)/build
@@ -5,22 +8,8 @@ BUILD_DEPS=$(BUILD)/deps
 
 BUSYBOX_VER=1.21.1
 
-QEMU_BIN=qemu-system-x86_64
-QEMU_IMG=qemu-img
 BOOT_ARGS="root=UUID=87965c58-36e0-11f1-8de9-0242ac120002 console=ttyS0 rdinit=/init early"
-DEBUG_BOOT_ARGS="debug root=UUID=87965c58-36e0-11f1-8de9-0242ac120002 console=ttyS0 rdinit=/init early"
-KERNEL_PATH=$(OUTPUT)/boot/vmlinuz
-INITRAMFS_PATH=$(OUTPUT)/initramfs/initramfs.cpio
-
-DEV_FLAGS=-kernel $(KERNEL_PATH) -initrd $(INITRAMFS_PATH)
-
-DOCKER_BIN=docker
-DOCKER_FILE=build/Dockerfile
-DOCKER_LOCAL_IMAGE="container-os:$(shell date +%s)"
-DOCKER_CONTAINER_NAME="container-os"
-
-UKIFY_BIN=ukify
-GENIMG_BIN=genimage
+DEVELOPMENT_BOOT_ARGS="debug root=UUID=87965c58-36e0-11f1-8de9-0242ac120002 console=ttyS0 rdinit=/init early"
 
 .PHONY: clean
 .SILENT:
@@ -35,14 +24,11 @@ clean-deps:
 .PHONY: build
 build:
 	@mkdir -p $(OUTPUT)
-	$(DOCKER_BIN) build . --platform linux/amd64 -f $(DOCKER_FILE) -t $(DOCKER_LOCAL_IMAGE)
-	@$(DOCKER_BIN) create --name $(DOCKER_CONTAINER_NAME) $(DOCKER_LOCAL_IMAGE) sh
-	@$(DOCKER_BIN) export $(DOCKER_CONTAINER_NAME) > $(DIST)/dist.tar 
-	@$(DOCKER_BIN) rm $(DOCKER_CONTAINER_NAME) 
-	
-	# Export and Remove additional directories that 'docker export' adds
-	@tar -xf $(DIST)/dist.tar -C $(OUTPUT)
-	@rm -rf $(OUTPUT)/dev $(OUTPUT)/sys $(OUTPUT)/proc $(OUTPUT)/etc $(OUTPUT)/.dockerenv
+	docker buildx bake \
+		--file build/docker-bake.hcl \
+		--set "_common.args.RELEASE=$(RELEASE)" \
+		--set "_common.args.LIBC_FLAVOR=$(LIBC_FLAVOR)" \
+		_common
 
 .PHONY: deps
 deps:
@@ -57,43 +43,16 @@ image:
 	mkdir -p /tmp/container_os/root
 	mkdir -p $(DIST)/out/img
 
-	$(UKIFY_BIN) build \
-		--linux=$(DIST)/out/boot/vmlinuz \
-		--initrd=$(DIST)/out/initramfs/initramfs.cpio \
-		--cmdline=$(BOOT_ARGS) \
+	ukify build \
+		--linux=$(DIST)/out/$(RELEASE)-$(LIBC_FLAVOR)/boot/vmlinuz \
+		--initrd=$(DIST)/out/$(RELEASE)-$(LIBC_FLAVOR)/boot/initramfs.img \
+		--cmdline=$($(RELEASE)_BOOT_ARGS) \
 		--output=/tmp/container_os/esp/EFI/BOOT/BOOTX64.EFI
 
-	cp $(DIST)/out/rootfs/rootfs.tar.gz /tmp/container_os/root
-	tar -xvf /tmp/container_os/root/rootfs.tar.gz -C /tmp/container_os/root --strip-components 2
+	cp -r $(DIST)/out/$(RELEASE)-$(LIBC_FLAVOR) /tmp/container_os/root
 
-	$(GENIMG_BIN) \
-		--config $(BUILD)/genimage.cfg \
-		--rootpath=/tmp/container_os/root \
-		--tmppath=/tmp/genimage-tmp \
-		--inputpath=/tmp/container_os/esp \
-		--outputpath=$(DIST)/out/img
-
-	rm -rf /tmp/container_os
-
-# This really needs to be condensed as we are repeating way too much from .PHONY: image
-# This will do for the time being, but is subjected to change in a later commit
-.PHONY: debug-image
-debug-image:
-	mkdir -p /tmp/container_os/esp/EFI/BOOT
-	mkdir -p /tmp/container_os/root
-	mkdir -p $(DIST)/out/img
-
-	$(UKIFY_BIN) build \
-		--linux=$(DIST)/out/boot/vmlinuz \
-		--initrd=$(DIST)/out/initramfs/initramfs.cpio \
-		--cmdline=$(DEBUG_BOOT_ARGS) \
-		--output=/tmp/container_os/esp/EFI/BOOT/BOOTX64.EFI
-
-	cp $(DIST)/out/rootfs/rootfs.tar.gz /tmp/container_os/root
-	tar -xvf /tmp/container_os/root/rootfs.tar.gz -C /tmp/container_os/root --strip-components 2
-
-	$(GENIMG_BIN) \
-		--config $(BUILD)/genimage.debug.cfg \
+	genimage \
+		--config $(BUILD)/genimage/release.cfg \
 		--rootpath=/tmp/container_os/root \
 		--tmppath=/tmp/genimage-tmp \
 		--inputpath=/tmp/container_os/esp \
@@ -115,22 +74,13 @@ uefi:
 
 .PHONY: run
 run:
-	$(QEMU_BIN) -machine type=q35,accel=kvm \
+	qemu-system-x86_64 -machine type=q35,accel=kvm \
 				-drive if=pflash,format=raw,readonly=on,file=$(DIST)/uefi/OVMF_CODE.fd \
 				-drive if=pflash,format=raw,readonly=on,file=$(DIST)/uefi/OVMF_VARS.fd \
 				-drive file=$(OUTPUT)/img/disk.img,format=raw,if=virtio \
 				-m 2G \
 				-smp 1
 
-.PHONY: run-debug
-run-debug:
-	$(QEMU_BIN) -machine type=q35,accel=kvm \
-				-drive if=pflash,format=raw,readonly=on,file=$(DIST)/uefi/OVMF_CODE.fd \
-				-drive if=pflash,format=raw,readonly=on,file=$(DIST)/uefi/OVMF_VARS.fd \
-				-drive file=$(OUTPUT)/img/debug-disk.img,format=raw,if=virtio \
-				-m 2G \
-				-smp 1
-
 .PHONY: run
 run-simple:
-	$(QEMU_BIN) $(DEV_FLAGS) -append $(DEBUG_BOOT_ARGS) -nographic
+	qemu $(DEV_FLAGS) -append $(DEBUG_BOOT_ARGS) -nographic
