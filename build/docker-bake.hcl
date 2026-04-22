@@ -37,6 +37,8 @@ group "matrix" {
   targets = [
     "release-glibc",
     "development-glibc",
+    "release-musl",
+    "development-musl",
     "release-static",
     "development-static"
   ]
@@ -57,6 +59,24 @@ target "development-glibc" {
   args = {
     RELEASE = "development"
     LIBC_FLAVOR = "glibc"
+  }
+}
+
+target "release-musl" {
+  inherits = ["_common"]
+  output = ["type=local,dest=dist/out/release-musl"]
+  args = {
+    RELEASE = "release"
+    LIBC_FLAVOR = "musl"
+  }
+}
+
+target "development-musl" {
+  inherits = ["_common"]
+  output = ["type=local,dest=dist/out/development-musl"]
+  args = {
+    RELEASE = "development"
+    LIBC_FLAVOR = "musl"
   }
 }
 

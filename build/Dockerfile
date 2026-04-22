@@ -63,6 +63,28 @@ RUN ./build/configure --prefix=/out/rootfs/usr --datadir=$(pwd)
 RUN make -j $(nproc)
 RUN make install
 
+FROM debian:stable-slim AS rootfs-musl
+
+ARG MUSL_VER="1.2.6"
+
+WORKDIR /out
+
+RUN bash -c 'mkdir -p /out/rootfs/{bin,sbin,usr/bin,etc,sys,dev,proc,tmp}'
+
+WORKDIR /out/build/musl
+
+RUN apt-get update \
+    && \
+    apt-get install tar gzip gcc make gawk bison python3 -y
+
+ADD https://git.musl-libc.org/cgit/musl/snapshot/musl-$MUSL_VER.tar.gz musl.tar.gz
+
+RUN tar -xvf musl.tar.gz -C . --strip-components=1 && rm -rf musl.tar.gz
+
+RUN ./configure --prefix=/out/rootfs/usr
+RUN make -j $(nproc)
+RUN make install
+
 FROM debian:stable-slim AS rootfs-static
 
 WORKDIR /out
