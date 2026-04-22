@@ -82,7 +82,3 @@ run:
 				-drive file=$(OUTPUT)/img/disk.img,format=raw,if=virtio \
 				-m 2G \
 				-smp 1
-
-.PHONY: run
-run-simple:
-	qemu $(DEV_FLAGS) -append $(DEBUG_BOOT_ARGS) -nographic
