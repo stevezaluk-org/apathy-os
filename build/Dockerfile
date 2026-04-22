@@ -34,7 +34,7 @@ ENV CGO_ENABLED=0 \
 
 WORKDIR /out
 
-COPY ./init .
+COPY ./initd .
 
 RUN go build -o init $INIT_BUILDFLAGS -ldflags="$INIT_LDFLAGS" && chmod +x init
 
