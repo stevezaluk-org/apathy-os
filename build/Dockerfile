@@ -4,7 +4,6 @@ ARG LIBC_FLAVOR="static"
 FROM debian:stable-slim AS kernel-build
 
 ARG LINUX_VER="6.19"
-ARG LINUX_BUILD="true"
 ARG LINUX_CONF="./build/kernel/config.default"
 ARG CORES=$(nproc)
 
