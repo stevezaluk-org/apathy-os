@@ -55,7 +55,7 @@ RUN apt-get update \
     && \
     apt-get install tar gzip gcc make gawk bison python3 -y
 
-ADD https://ftp.gnu.org/gnu/glibc/glibc-2.43.tar.gz glibc.tar.gz
+ADD https://ftp.gnu.org/gnu/glibc/glibc-$GLIBC_VER.tar.gz glibc.tar.gz
 
 RUN mkdir build && tar -xvf glibc.tar.gz -C build/ --strip-components=1
 
