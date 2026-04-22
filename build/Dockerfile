@@ -1,9 +1,8 @@
-FROM debian:stable-slim AS kernel-build
+ARG RELEASE="release"
+ARG LIBC_FLAVOR="static"
 
+FROM debian:stable-slim AS kernel-build
 ARG LINUX_VER="6.19"
-ARG LINUX_BUILD="true"
-ARG LINUX_CONF="./build/linuxconfig"
-ARG CORES=$(nproc)
 
 WORKDIR /out
 
@@ -18,7 +17,7 @@ RUN tar -xvf linux.tar.gz -C . --strip-components=1 \
     rm linux.tar.gz
 
 # Doing an entire build here probs wont make sense long term but it will do for now
-COPY $LINUX_CONF ./.config
+COPY "./build/kernel/config.default" ./.config
 
 # merge old config with paramters introduced in newer versions
 RUN make olddefconfig
@@ -39,35 +38,21 @@ COPY ./init .
 
 RUN go build -o init $INIT_BUILDFLAGS -ldflags="$INIT_LDFLAGS" && chmod +x init
 
-FROM golang:1.25.5-alpine AS agent-build
+FROM debian:stable-slim AS rootfs-glibc
 
-ARG AGENT_BUILDFLAGS="-v"
-ARG AGENT_LDFLAGS="-s -w"
-
-ENV CGO_ENABLED=0 \
-    GOOS=linux \
-    GOARCH=amd64
+ARG GLIBC_VER="2.43"
 
 WORKDIR /out
 
-COPY ./agent .
-RUN go build -o agent $AGENT_BUILDFLAGS -ldflags="$AGENT_LDFLAGS"
+RUN bash -c 'mkdir -p /out/rootfs/{bin,sbin,usr/bin,etc,sys,dev,proc,tmp,boot}'
 
-FROM debian:stable-slim AS rootfs-build
-
-ARG GLIBC_VER="2.43"
+WORKDIR /out/build/glibc
 
 RUN apt-get update \
     && \
     apt-get install tar gzip gcc make gawk bison python3 -y
 
-WORKDIR /out
-
-RUN bash -c 'mkdir -p /out/rootfs/{bin,sbin,usr/bin,etc,sys,dev,proc,tmp}'
-
-WORKDIR /out/build/glibc
-
-ADD https://ftp.gnu.org/gnu/glibc/glibc-2.43.tar.gz glibc.tar.gz
+ADD https://ftp.gnu.org/gnu/glibc/glibc-$GLIBC_VER.tar.gz glibc.tar.gz
 
 RUN mkdir build && tar -xvf glibc.tar.gz -C build/ --strip-components=1
 
@@ -75,13 +60,41 @@ RUN ./build/configure --prefix=/out/rootfs/usr --datadir=$(pwd)
 RUN make -j $(nproc)
 RUN make install
 
+FROM debian:stable-slim AS rootfs-musl
+
+ARG MUSL_VER="1.2.6"
+
+WORKDIR /out
+
+RUN bash -c 'mkdir -p /out/rootfs/{bin,sbin,usr/bin,etc,sys,dev,proc,tmp,boot}'
+
+WORKDIR /out/build/musl
+
+RUN apt-get update \
+    && \
+    apt-get install tar gzip gcc make gawk bison python3 -y
+
+ADD https://git.musl-libc.org/cgit/musl/snapshot/musl-$MUSL_VER.tar.gz musl.tar.gz
+
+RUN tar -xvf musl.tar.gz -C . --strip-components=1 && rm -rf musl.tar.gz
+
+RUN ./configure --prefix=/out/rootfs/usr
+RUN make -j $(nproc)
+RUN make install
+
+FROM debian:stable-slim AS rootfs-static
+
+WORKDIR /out
+
+# not much really needed here as the whole point of a static build is not needing a libc implementation
+RUN bash -c 'mkdir -p /out/rootfs/{bin,sbin,usr/bin,etc,sys,dev,proc,tmp,boot}'
+
+FROM rootfs-${LIBC_FLAVOR} AS rootfs-build
+
 WORKDIR /out
 
 COPY "./build/deps/busybox-x86_64" /out/rootfs/bin/busybox
 COPY --from=init-build /out/init /out/rootfs/usr/sbin/init
-COPY --from=agent-build /out/agent /out/rootfs/usr/bin/agent
-
-RUN tar -czvf rootfs.tar.gz /out/rootfs
 
 FROM debian:stable-slim AS initramfs-build
 
@@ -97,10 +110,10 @@ COPY "./build/deps/busybox-x86_64" /out/initramfs/bin/busybox
 
 COPY --from=init-build /out/init /out/initramfs/init
 
-RUN bash -c 'find . | cpio -o -H newc > ../initramfs.cpio'
+RUN bash -c 'find . | cpio -o -H newc > ../initrd.cpio'
 
 FROM scratch
 
+COPY --from=rootfs-build /out/rootfs /
 COPY --from=kernel-build /out/arch/x86_64/boot/bzImage /boot/vmlinuz
-COPY --from=initramfs-build /out/initramfs.cpio /initramfs/initramfs.cpio
-COPY --from=rootfs-build /out/rootfs.tar.gz /rootfs/rootfs.tar.gz
+COPY --from=initramfs-build /out/initrd.cpio /boot/initrd.img
