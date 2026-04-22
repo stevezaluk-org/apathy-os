@@ -25,7 +25,7 @@ variable "MUSL_VER" {
 
 // LINUX_VER The version of of the linux kernel that should be built
 variable "LINUX_VER" {
-  default = ""
+  default = "6.19"
 }
 
 
