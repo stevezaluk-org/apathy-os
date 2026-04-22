@@ -2,10 +2,7 @@ ARG RELEASE="release"
 ARG LIBC_FLAVOR="static"
 
 FROM debian:stable-slim AS kernel-build
-
 ARG LINUX_VER="6.19"
-ARG LINUX_CONF="./build/kernel/config.default"
-ARG CORES=$(nproc)
 
 WORKDIR /out
 
@@ -20,7 +17,7 @@ RUN tar -xvf linux.tar.gz -C . --strip-components=1 \
     rm linux.tar.gz
 
 # Doing an entire build here probs wont make sense long term but it will do for now
-COPY $LINUX_CONF ./.config
+COPY "./build/kernel/config.default" ./.config
 
 # merge old config with paramters introduced in newer versions
 RUN make olddefconfig
@@ -119,6 +116,7 @@ RUN bash -c 'find . | cpio -o -H newc > ../initramfs.cpio'
 
 FROM scratch
 
+# think about removing the artifacts here and just building this like a normal container image
 COPY --from=kernel-build /out/arch/x86_64/boot/bzImage /boot/vmlinuz
 COPY --from=initramfs-build /out/initramfs.cpio /initramfs/initramfs.cpio
 COPY --from=rootfs-build /out/rootfs.tar.gz /rootfs/rootfs.tar.gz
