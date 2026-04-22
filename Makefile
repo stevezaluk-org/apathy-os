@@ -8,8 +8,10 @@ BUILD_DEPS=$(BUILD)/deps
 
 BUSYBOX_VER=1.21.1
 
-BOOT_ARGS="root=UUID=87965c58-36e0-11f1-8de9-0242ac120002 console=ttyS0 rdinit=/init early"
-DEVELOPMENT_BOOT_ARGS="debug root=UUID=87965c58-36e0-11f1-8de9-0242ac120002 console=ttyS0 rdinit=/init early"
+BOOT_ARGS_release="root=UUID=87965c58-36e0-11f1-8de9-0242ac120002 console=ttyS0 rdinit=/init early"
+BOOT_ARGS_development="debug root=UUID=87965c58-36e0-11f1-8de9-0242ac120002 console=ttyS0 rdinit=/init early"
+
+BOOT_ARGS=$(BOOT_ARGS_$(RELEASE))
 
 .PHONY: clean
 .SILENT:
@@ -46,10 +48,10 @@ image:
 	ukify build \
 		--linux=$(DIST)/out/$(RELEASE)-$(LIBC_FLAVOR)/boot/vmlinuz \
 		--initrd=$(DIST)/out/$(RELEASE)-$(LIBC_FLAVOR)/boot/initramfs.img \
-		--cmdline=$($(RELEASE)_BOOT_ARGS) \
+		--cmdline=$(BOOT_ARGS) \
 		--output=/tmp/container_os/esp/EFI/BOOT/BOOTX64.EFI
 
-	cp -r $(DIST)/out/$(RELEASE)-$(LIBC_FLAVOR) /tmp/container_os/root
+	cp -r $(DIST)/out/$(RELEASE)-$(LIBC_FLAVOR)/* /tmp/container_os/root
 
 	genimage \
 		--config $(BUILD)/genimage/release.cfg \
