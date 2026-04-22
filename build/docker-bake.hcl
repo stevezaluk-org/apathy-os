@@ -13,6 +13,22 @@ variable "TAG" {
   default = "latest"
 }
 
+// GLIBC_VER The version of glibc that you want to use when building glibc flavors
+variable "GLIBC_VER" {
+  default = "2.43"
+}
+
+// MUSL_VER The version of musl that you want to use when building musl flavors
+variable "MUSL_VER" {
+  default = "1.2.6"
+}
+
+// LINUX_VER The version of of the linux kernel that should be built
+variable "LINUX_VER" {
+  default = ""
+}
+
+
 // _common The base for all builds
 target "_common" {
   dockerfile = "build/Dockerfile"
@@ -30,6 +46,7 @@ target "_common" {
   args = {
     RELEASE = RELEASE
     LIBC_FLAVOR = LIBC_FLAVOR
+    LINUX_VER = LINUX_VER
   }
 }
 
@@ -50,6 +67,7 @@ target "release-glibc" {
   args = {
     RELEASE = "release"
     LIBC_FLAVOR = "glibc"
+    GLIBC_VER = GLIBC_VER
   }
 }
 
@@ -59,6 +77,7 @@ target "development-glibc" {
   args = {
     RELEASE = "development"
     LIBC_FLAVOR = "glibc"
+    GLIBC_VER = GLIBC_VER
   }
 }
 
@@ -68,6 +87,7 @@ target "release-musl" {
   args = {
     RELEASE = "release"
     LIBC_FLAVOR = "musl"
+    MUSL_VER = MUSL_VER
   }
 }
 
@@ -77,6 +97,7 @@ target "development-musl" {
   args = {
     RELEASE = "development"
     LIBC_FLAVOR = "musl"
+    MUSL_VER = MUSL_VER
   }
 }
 
