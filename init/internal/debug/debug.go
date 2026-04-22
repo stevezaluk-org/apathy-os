@@ -7,8 +7,8 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/stevezaluk/container-os/init/internal/constants"
-	"github.com/stevezaluk/container-os/init/internal/shell"
+	"github.com/stevezaluk/immutable-os/init/internal/constants"
+	"github.com/stevezaluk/immutable-os/init/internal/shell"
 )
 
 // initializeBusyBox Validates that the BusyBox binary actually exists and creates symlinks at /bin to all available
