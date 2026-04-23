@@ -30,6 +30,7 @@ build:
 		--file build/docker-bake.hcl \
 		--set "_common.args.RELEASE=$(RELEASE)" \
 		--set "_common.args.LIBC_FLAVOR=$(LIBC_FLAVOR)" \
+		--set "_common.args.BOOT_ARGS=$(shell echo $(BOOT_ARGS) | tr -d '"')" \
 		_common
 
 .PHONY: deps
@@ -41,26 +42,16 @@ deps:
 
 .PHONY: image
 image:
-	mkdir -p /tmp/container_os/esp/EFI/BOOT
-	mkdir -p /tmp/container_os/root
 	mkdir -p $(DIST)/out/img
-
-	ukify build \
-		--linux=$(DIST)/out/$(RELEASE)-$(LIBC_FLAVOR)/boot/vmlinuz \
-		--initrd=$(DIST)/out/$(RELEASE)-$(LIBC_FLAVOR)/boot/initrd.img \
-		--cmdline=$(BOOT_ARGS) \
-		--output=/tmp/container_os/esp/EFI/BOOT/BOOTX64.EFI
-
-	cp -r $(DIST)/out/$(RELEASE)-$(LIBC_FLAVOR)/* /tmp/container_os/root
 
 	genimage \
 		--config $(BUILD)/genimage/release.cfg \
-		--rootpath=/tmp/container_os/root \
+		--rootpath=$(DIST)/out/$(RELEASE)-$(LIBC_FLAVOR) \
 		--tmppath=/tmp/genimage-tmp \
-		--inputpath=/tmp/container_os/esp \
+		--inputpath=$(DIST)/out/$(RELEASE)-$(LIBC_FLAVOR)/boot/efi \
 		--outputpath=$(DIST)/out/img
 
-	rm -rf /tmp/container_os
+	rm -rf /tmp/genimage-tmp
 
 .PHONY: uefi
 uefi:
@@ -76,7 +67,7 @@ uefi:
 
 .PHONY: run
 run:
-	qemu-system-x86_64 -machine type=q35,accel=kvm \
+	qemu-system-x86_64 -machine type=q35 \
 				-drive if=pflash,format=raw,readonly=on,file=$(DIST)/uefi/OVMF_CODE.fd \
 				-drive if=pflash,format=raw,readonly=on,file=$(DIST)/uefi/OVMF_VARS.fd \
 				-drive file=$(OUTPUT)/img/disk.img,format=raw,if=virtio \
