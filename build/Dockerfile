@@ -128,7 +128,7 @@ RUN apt-get update \
 RUN ukify build \
         --linux=/out/uki/vmlinuz \
         --initrd=/out/uki/initrd.img \
-        --cmdline=$(BOOT_ARGS) \
+        --cmdline="$BOOT_ARGS" \
         --output=/out/uki/uki.efi
 
 FROM scratch

@@ -30,7 +30,7 @@ build:
 		--file build/docker-bake.hcl \
 		--set "_common.args.RELEASE=$(RELEASE)" \
 		--set "_common.args.LIBC_FLAVOR=$(LIBC_FLAVOR)" \
-		--set "_common.args.BOOT_ARGS=$(shell echo $(BOOT_ARGS) | tr -d '"')" \
+		--set "_common.args.BOOT_ARGS=$(shell echo $(patsubst "%",%,$(BOOT_ARGS)))" \
 		_common
 
 .PHONY: deps
