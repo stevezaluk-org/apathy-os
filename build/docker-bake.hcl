@@ -28,9 +28,6 @@ variable "LINUX_VER" {
   default = "6.19"
 }
 
-variable "BOOT_ARGS" {
-  default = "root=UUID=87965c58-36e0-11f1-8de9-0242ac120002 console=ttyS0 rdinit=/init early"
-}
 
 // _common The base for all builds
 target "_common" {
@@ -50,7 +47,6 @@ target "_common" {
     RELEASE = RELEASE
     LIBC_FLAVOR = LIBC_FLAVOR
     LINUX_VER = LINUX_VER
-    BOOT_ARGS = BOOT_ARGS
   }
 }
 

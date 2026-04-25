@@ -112,28 +112,8 @@ COPY --from=init-build /out/init /out/initramfs/init
 
 RUN bash -c 'find . | cpio -o -H newc > ../initrd.cpio'
 
-FROM debian:stable-slim AS uki-build
-
-ARG BOOT_ARGS
-
-WORKDIR /out/uki
-
-COPY --from=initramfs-build /out/initrd.cpio /out/uki/initrd.img
-COPY --from=kernel-build /out/arch/x86_64/boot/bzImage /out/uki/vmlinuz
-
-RUN apt-get update \
-    && \
-    apt-get install systemd-ukify -y
-
-RUN ukify build \
-        --linux=/out/uki/vmlinuz \
-        --initrd=/out/uki/initrd.img \
-        --cmdline="$BOOT_ARGS" \
-        --output=/out/uki/uki.efi
-
 FROM scratch
 
 COPY --from=rootfs-build /out/rootfs /
 COPY --from=kernel-build /out/arch/x86_64/boot/bzImage /boot/vmlinuz
 COPY --from=initramfs-build /out/initrd.cpio /boot/initrd.img
-COPY --from=uki-build /out/uki/uki.efi /boot/efi/EFI/BOOT/BOOTX64.EFI
