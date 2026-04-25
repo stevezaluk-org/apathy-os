@@ -1,0 +1,51 @@
+name: bug
+description: An aspect of a subsystem is broken and needs to be resolved
+labels: ["bug"]
+body:
+  - type: dropdown
+    id: subsystem
+    attributes:
+      label: Subsystem
+      options:
+        - rootfs
+        - initramfs
+        - kernel-build
+        - initd
+        - serviced
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: A full description of the issue
+    validations:
+      required: true
+
+  - type: textarea
+    id: repro
+    attributes:
+      label: Reproduction Steps
+      value: |
+        1. 
+        2.
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected vs Actual
+      value: |
+        **Expected:** 
+        **Actual:**
+    validations:
+      required: true
+
+  - type: textarea
+    id: debug
+    attributes:
+      label: Debug Output
+      description: Serial log, debugcon output, OVMF messages, etc.
+      render: shell
