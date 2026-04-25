@@ -12,7 +12,7 @@ import (
 func SwitchRoot(root string) error {
 	err := syscall.Exec(
 		constants.SwitchrootPath,
-		[]string{constants.SwitchrootPath, root, constants.LateInitPath, "late"},
+		[]string{constants.SwitchrootPath, root, constants.LateInitPath, "--late"},
 		os.Environ(),
 	)
 	if err != nil {
