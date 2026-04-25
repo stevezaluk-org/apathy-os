@@ -4,8 +4,8 @@ import (
 	"errors"
 	"log"
 	"os"
+	"os/exec"
 	"strings"
-	"syscall"
 
 	"github.com/stevezaluk/immutable-os/initd/internal/constants"
 	"github.com/stevezaluk/immutable-os/initd/internal/shell"
@@ -65,8 +65,18 @@ func StartDebug() error {
 		return errors.New("Failed to initialize busybox: " + err.Error())
 	}
 
-	if err := syscall.Exec(constants.BusyBoxPath, []string{constants.BusyBoxPath, "sh"}, os.Environ()); err != nil {
-		return errors.New("Failed to execute busybox: " + err.Error())
+	log.Println("Starting busybox")
+	cmd := exec.Command(constants.BusyBoxPath, "sh")
+	cmd.Stdout = os.Stdout
+	cmd.Stdin = os.Stdin
+	cmd.Stderr = os.Stderr
+
+	if err := cmd.Start(); err != nil {
+		return errors.New("Failed to start busybox: " + err.Error())
+	}
+
+	if err := cmd.Wait(); err != nil {
+		return errors.New("Failed to wait busybox: " + err.Error())
 	}
 
 	return nil
