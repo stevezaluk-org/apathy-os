@@ -3,10 +3,12 @@ package initd
 import (
 	"fmt"
 	"log"
+	"os"
 	"syscall"
 
 	"github.com/stevezaluk/immutable-os/initd/internal/config"
 	"github.com/stevezaluk/immutable-os/initd/internal/constants"
+	"github.com/stevezaluk/immutable-os/initd/internal/debug"
 	"github.com/stevezaluk/immutable-os/initd/internal/edev"
 	"github.com/stevezaluk/immutable-os/initd/internal/mount"
 	"github.com/stevezaluk/immutable-os/initd/internal/reaper"
@@ -77,6 +79,32 @@ func (init *Init) Early() error {
 		return fmt.Errorf("got fatal error when trying to switch rootfs: %v", err)
 	}
 
+	return nil
+}
+
+func (init *Init) Late() error {
+	// we need to re-read boot arguments here as switch_root exec's us
+	globalConfig, err := config.New()
+	if err != nil {
+		return fmt.Errorf("got fatal error when trying to read boot arguments: %v", err)
+	}
+	init.config = globalConfig
+
+	// force into BusyBox shell if we get debug
+	if globalConfig.Debug {
+		log.Printf("'debug' was present in boot arguments. BusyBox shell will start shortly")
+		err := debug.StartDebug()
+		if err != nil {
+			return fmt.Errorf("got fatal error when trying to start debug: %v", err)
+		}
+	}
+
+	err = syscall.Exec(constants.LateInitPath, []string{constants.LateInitPath, "--event-loop"}, os.Environ())
+	if err != nil {
+		return fmt.Errorf("got fatal error when trying exec to event_loop: %v", err)
+	}
+
+	// more tasks will need to live here in the future
 	return nil
 }
 
