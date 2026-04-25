@@ -10,7 +10,7 @@ import (
 // FindFilesystem Identifies the filesystem type and device mapping for a given filesystem UUID. Wraps calls to 'blkid'
 // and 'findfs'
 func FindFilesystem(uuid string) (string, string, error) {
-	device, err := shell.RunCmd(constants.FindfsPath, uuid)
+	device, err := shell.RunCmd(constants.FindfsPath, "UUID="+uuid)
 	if err != nil {
 		return "", "", err
 	}
