@@ -36,6 +36,7 @@ func (init *Init) Shutdown() error {
 		return fmt.Errorf("got error when trying to reap processes: %v", err)
 	}
 
+	init.log.Println("Remounting root filesystem")
 	// TODO: ext4 support to be removed
 	if err := mount.RemountReadOnly("/", "ext4"); err != nil {
 		return fmt.Errorf("got fatal error when trying to remove rootfs: %v", err)
@@ -49,6 +50,7 @@ func (init *Init) Shutdown() error {
 }
 
 func (init *Init) EventLoop() error {
+	init.log.Println("Enumerating edev's")
 	if err := init.devices.Enumerate(); err != nil {
 		return fmt.Errorf("got error when trying to enumerate devices: %v", err)
 	}
@@ -62,6 +64,7 @@ func (init *Init) EventLoop() error {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
+	init.log.Println("Starting late phase event loop")
 	go device.Watch(ctx)
 
 	wg := new(sync.WaitGroup)
@@ -70,6 +73,7 @@ func (init *Init) EventLoop() error {
 			select {
 			case event := <-device.C:
 				if event.Code == edev.KeyPower && event.Type == edev.EvKey {
+					init.log.Printf("Got ACPI event from edev: %s. Transitioning to shutdown", device.Handler)
 					cancel()
 					return
 				}
@@ -93,6 +97,7 @@ func (init *Init) Early() error {
 		"devtmpfs": "/dev:devtmpfs",
 	}
 
+	init.log.Println("Mounting virutal filesystems")
 	if err := mount.Mount(mounts); err != nil {
 		return fmt.Errorf("got fatal error when trying to mount virtual filesystem: %v", err)
 	}
@@ -103,15 +108,18 @@ func (init *Init) Early() error {
 	}
 	init.config = conf
 
+	init.log.Println("Creating required symlinks for rootfs mount: blkid, findfs, switch_root")
 	if err := shell.CreateSymlinks(); err != nil {
 		return fmt.Errorf("got fatal error when trying to create symlinks: %v", err)
 	}
 
+	init.log.Printf("Enumerating filesystem type of partition: %s", init.config.Root)
 	device, fstype, err := mount.FindFilesystem(init.config.Root)
 	if err != nil {
 		return fmt.Errorf("got fatal error when trying to find filesystem: %v", err)
 	}
 
+	init.log.Println("Mounting root filesystem on device %s at temporary mount point %s", device, init.config.Root)
 	if err := mount.Mount(map[string]string{device: constants.TemporaryRootMount + ":" + fstype}); err != nil {
 		return fmt.Errorf("got fatal error when trying to mount filesystem: %v", err)
 	}
@@ -120,6 +128,7 @@ func (init *Init) Early() error {
 		return fmt.Errorf("got fatal error when trying to move virtual filesystems: %v", err)
 	}
 
+	init.log.Println("switch_root'ing to root filesystem")
 	if err := mount.SwitchRoot(constants.TemporaryRootMount); err != nil {
 		return fmt.Errorf("got fatal error when trying to switch rootfs: %v", err)
 	}
