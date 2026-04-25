@@ -1,0 +1,40 @@
+name: feature
+description: A new feature/task that should be implemented into an existing system
+labels: ["feature"]
+body:
+  - type: dropdown
+    id: subsystem
+    attributes:
+      label: Subsystem
+      options:
+        - rootfs
+        - initramfs
+        - kernel-build
+        - initd
+        - serviced
+    validations:
+      required: true
+
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: A summary of the feature that should be implemented
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance Criteria
+      value: |
+        - [ ] 
+        - [ ]
+    validations:
+      required: true
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notes / References
+      description: Links to prior issues, relevant docs, etc.
