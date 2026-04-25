@@ -97,7 +97,7 @@ func (init *Init) Early() error {
 		return fmt.Errorf("got fatal error when trying to find filesystem: %v", err)
 	}
 
-	if err := mount.Mount(map[string]string{device: "/" + fstype}); err != nil {
+	if err := mount.Mount(map[string]string{device: constants.TemporaryRootMount + ":" + fstype}); err != nil {
 		return fmt.Errorf("got fatal error when trying to mount filesystem: %v", err)
 	}
 
