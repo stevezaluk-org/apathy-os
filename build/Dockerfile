@@ -93,7 +93,7 @@ FROM rootfs-${LIBC_FLAVOR} AS rootfs-build
 
 WORKDIR /out
 
-COPY "./build/deps/busybox-x86_64" /out/rootfs/bin/busybox
+COPY "./build/deps/busybox-x86_64" /out/rootfs/usr/sbin/busybox
 COPY --from=init-build /out/init /out/rootfs/usr/sbin/init
 
 FROM debian:stable-slim AS initramfs-build
@@ -104,9 +104,9 @@ RUN apt-get update \
 
 WORKDIR /out/initramfs
 
-RUN bash -c 'mkdir -p /out/initramfs/{bin,dev,proc,sys}'
+RUN bash -c 'mkdir -p /out/initramfs/{sbin,usr/sbin,dev,proc,sys}'
 
-COPY "./build/deps/busybox-x86_64" /out/initramfs/bin/busybox
+COPY "./build/deps/busybox-x86_64" /out/initramfs/usr/sbin/busybox
 
 COPY --from=init-build /out/init /out/initramfs/init
 

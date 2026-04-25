@@ -30,7 +30,7 @@ func CreateSymlinks() error {
 	}
 
 	for _, link := range required {
-		if err := os.Symlink(constants.BusyBoxPath, "/bin/"+link); err != nil {
+		if err := os.Symlink(constants.BusyBoxPath, "/sbin/"+link); err != nil {
 			return fmt.Errorf("failed to create required symlink (%s) for rootfs mount: %v", link, err.Error())
 		}
 	}

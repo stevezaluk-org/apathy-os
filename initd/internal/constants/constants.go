@@ -2,16 +2,16 @@ package constants
 
 const (
 	// BlkidPath The path to blkid on initramfs
-	BlkidPath string = "/bin/blkid"
+	BlkidPath string = "/sbin/blkid"
 
 	// FindfsPath The path to findfs on initramfs
-	FindfsPath string = "/bin/findfs"
+	FindfsPath string = "/sbin/findfs"
 
 	// SwitchrootPath The path to switch_root on initramfs
-	SwitchrootPath string = "/bin/switch_root"
+	SwitchrootPath string = "/sbin/switch_root"
 
 	// BusyBoxPath The path to busybox on initramfs
-	BusyBoxPath string = "/bin/busybox"
+	BusyBoxPath string = "/usr/sbin/busybox"
 )
 
 const (
