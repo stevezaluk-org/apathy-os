@@ -140,5 +140,8 @@ func (init *Init) Late() error {
 
 // New Instantiates an Init struct and returns a pointer to it
 func New() *Init {
-	return &Init{}
+	return &Init{
+		devices: edev.NewManager(),
+		log:     log.New(os.Stderr, "initd: ", log.LstdFlags),
+	}
 }
