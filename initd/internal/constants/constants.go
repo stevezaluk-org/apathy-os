@@ -23,8 +23,4 @@ const (
 
 	// LateInitPath Absolute path to where init is located on the rootfs
 	LateInitPath string = "/usr/sbin/init"
-
-	// ACPIEventPath Unix path to the event handler for the power button. This is bad and will be replaced in a future
-	// version as realistically the init system should dynamically find which event handler maps to the power button
-	ACPIEventPath string = "/dev/input/event0"
 )
