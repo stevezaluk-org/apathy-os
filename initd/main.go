@@ -6,6 +6,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log"
 	"os"
 
 	"github.com/stevezaluk/immutable-os/initd/pkg/initd"
@@ -42,25 +43,25 @@ func main() {
 	init := initd.New()
 	if *early {
 		if err := init.Early(); err != nil {
-			panic(err)
+			log.Fatalf("Got fatal error from early: %v", err)
 		}
 	}
 
 	if *late {
 		if err := init.Late(); err != nil {
-			panic(err)
+			log.Fatalf("Got fatal error from late: %v", err)
 		}
 	}
 
 	if *eventLoop {
 		if err := init.EventLoop(); err != nil {
-			panic(err)
+			log.Fatalf("Got fatal error from event-loop: %v", err)
 		}
 	}
 
 	if *shutdown {
 		if err := init.Shutdown(); err != nil {
-			panic(err)
+			log.Fatalf("Got fatal error from shutdown: %v", err)
 		}
 	}
 }
