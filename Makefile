@@ -76,7 +76,9 @@ uefi:
 
 .PHONY: run
 run:
-	qemu-system-x86_64 -machine type=q35,accel=kvm \
+	qemu-system-x86_64 \
+				-display gtk,show-tabs=on \
+				-machine type=q35,accel=kvm \
 				-drive if=pflash,format=raw,readonly=on,file=$(DIST)/uefi/OVMF_CODE.fd \
 				-drive if=pflash,format=raw,readonly=on,file=$(DIST)/uefi/OVMF_VARS.fd \
 				-drive file=$(OUTPUT)/img/disk.img,format=raw,if=virtio \
