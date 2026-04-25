@@ -20,5 +20,10 @@ func FindFilesystem(uuid string) (string, string, error) {
 		return "", "", err
 	}
 
+	// default to ext4 if the filesystem type cannot be found
+	if fstype == "" {
+		fstype = "ext4"
+	}
+
 	return strings.TrimSpace(device), strings.TrimSpace(fstype), nil
 }
