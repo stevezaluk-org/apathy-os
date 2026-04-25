@@ -4,8 +4,8 @@ import (
 	"errors"
 	"log"
 	"os"
+	"os/exec"
 	"strings"
-	"syscall"
 
 	"github.com/stevezaluk/immutable-os/initd/internal/constants"
 	"github.com/stevezaluk/immutable-os/initd/internal/shell"
@@ -19,7 +19,7 @@ func initializeBusyBox() error {
 		return errors.New("BusyBox does not exist at the path: " + constants.BusyBoxPath)
 	}
 
-	err = os.Setenv("PATH", "/bin:/sbin:/usr/bin:/usr/local/bin")
+	err = os.Setenv("PATH", "/bin:/sbin:/usr/sbin:/usr/bin:/usr/local/bin")
 	if err != nil {
 		return errors.New("Could not set PATH environment variable: " + err.Error())
 	}
@@ -40,7 +40,7 @@ func initializeBusyBox() error {
 			continue
 		}
 
-		dest := "/bin/" + key
+		dest := "/sbin/" + key
 
 		// if we don't skip on pre-existing symlinks, then debug will fail to enter after its first invocation on a debug image
 		if _, err := os.Lstat(dest); !errors.Is(err, os.ErrNotExist) {
@@ -48,7 +48,7 @@ func initializeBusyBox() error {
 			continue
 		}
 
-		err = os.Symlink(constants.BusyBoxPath, "/bin/"+key)
+		err = os.Symlink(constants.BusyBoxPath, "/sbin/"+key)
 		if err != nil {
 			return errors.New("Failed to create symlink: " + err.Error())
 		}
@@ -65,8 +65,18 @@ func StartDebug() error {
 		return errors.New("Failed to initialize busybox: " + err.Error())
 	}
 
-	if err := syscall.Exec(constants.BusyBoxPath, []string{constants.BusyBoxPath, "sh"}, os.Environ()); err != nil {
-		return errors.New("Failed to execute busybox: " + err.Error())
+	log.Println("Starting busybox")
+	cmd := exec.Command(constants.BusyBoxPath, "sh")
+	cmd.Stdout = os.Stdout
+	cmd.Stdin = os.Stdin
+	cmd.Stderr = os.Stderr
+
+	if err := cmd.Start(); err != nil {
+		return errors.New("Failed to start busybox: " + err.Error())
+	}
+
+	if err := cmd.Wait(); err != nil {
+		return errors.New("Failed to wait busybox: " + err.Error())
 	}
 
 	return nil

@@ -8,8 +8,8 @@ BUILD_DEPS=$(BUILD)/deps
 
 BUSYBOX_VER=1.21.1
 
-BOOT_ARGS_release="root=UUID=87965c58-36e0-11f1-8de9-0242ac120002 console=ttyS0 rdinit=/init early"
-BOOT_ARGS_development="debug root=UUID=87965c58-36e0-11f1-8de9-0242ac120002 console=ttyS0 rdinit=/init early"
+BOOT_ARGS_release="root=87965c58-36e0-11f1-8de9-0242ac120002 console=ttyS0 rdinit=/init --early"
+BOOT_ARGS_development="debug root=87965c58-36e0-11f1-8de9-0242ac120002 console=ttyS0 rdinit=/init --early"
 
 BOOT_ARGS=$(BOOT_ARGS_$(RELEASE))
 
@@ -76,7 +76,9 @@ uefi:
 
 .PHONY: run
 run:
-	qemu-system-x86_64 -machine type=q35,accel=kvm \
+	qemu-system-x86_64 \
+				-display gtk,show-tabs=on \
+				-machine type=q35,accel=kvm \
 				-drive if=pflash,format=raw,readonly=on,file=$(DIST)/uefi/OVMF_CODE.fd \
 				-drive if=pflash,format=raw,readonly=on,file=$(DIST)/uefi/OVMF_VARS.fd \
 				-drive file=$(OUTPUT)/img/disk.img,format=raw,if=virtio \

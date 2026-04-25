@@ -6,6 +6,11 @@ import (
 	"syscall"
 )
 
+const (
+	KeyPower uint16 = 116
+	EvKey    uint16 = 1
+)
+
 // InputEvent Represents an input event that would be received from event device
 type InputEvent struct {
 	Time  syscall.Timeval

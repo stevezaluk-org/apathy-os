@@ -4,109 +4,64 @@ Copyright © 2026 Steven A. Zaluk
 package main
 
 import (
-	"context"
+	"flag"
 	"fmt"
 	"log"
 	"os"
-	"sync"
-	"syscall"
 
-	"github.com/stevezaluk/immutable-os/initd/internal/config"
-	"github.com/stevezaluk/immutable-os/initd/internal/debug"
-	"github.com/stevezaluk/immutable-os/initd/internal/event"
-	"github.com/stevezaluk/immutable-os/initd/internal/mount"
-	"github.com/stevezaluk/immutable-os/initd/internal/shell"
+	"github.com/stevezaluk/immutable-os/initd/pkg/initd"
 )
 
 func usage() {
-	fmt.Println("Usage: initd [late] [early] ARGS")
-	fmt.Println("\tearly - Handles the early boot process of mounting virtual filesystems, establishing an early debug shell, and mounting the rootfs")
-	fmt.Println("\tlate - Handles the late boot process of establishing networking, starting other processes, and processing shutdown events")
+	fmt.Println("Usage: initd [flags]")
+	fmt.Println("Args:")
+	fmt.Println("\t-h, --help - Shows this help message")
+	fmt.Println("Phases:")
+	fmt.Println("\t--early - Handles the early boot process of mounting virtual filesystems, and mounting the rootfs")
+	fmt.Println("\t--late - Handles the late boot process of establishing networking, starting other processes, and processing shutdown events")
+	fmt.Println("\t--event-loop - Start initd's event loop and listen for ACPI events and signals")
+	fmt.Println("\t--shutdown - Reap processes, remount rootfs as read only, and shutdown")
 
 	os.Exit(1)
 }
 
-func early() {
-	log.SetPrefix("initd/early ")
+func main() {
+	flagSet := flag.NewFlagSet("initd", flag.ExitOnError)
+	flagSet.Usage = usage
 
-	log.Printf("Init has started. Starting virtual filesystem mount")
-	err := mount.MountVirtualFS()
+	early := flagSet.Bool("early", false, "")
+	late := flagSet.Bool("late", false, "")
+	eventLoop := flagSet.Bool("event-loop", false, "")
+	shutdown := flagSet.Bool("shutdown", false, "")
+
+	err := flagSet.Parse(os.Args[1:])
 	if err != nil {
-		log.Fatal("got fatal error when trying to mount virtual filesystem: ", err)
+		fmt.Printf("Error parsing flags: %v\n", err)
+		os.Exit(1)
 	}
 
-	// now that we have /proc mounted we can parse boot arguments
-	globalConfig, err := config.New()
-	if err != nil {
-		log.Fatal("got fatal error when trying to read boot arguments: ", err)
-	}
-
-	// the symlinks created by this function call are required for mounting rootfs (blkid, findfs, and switch_root)
-	if err := shell.CreateSymlinks(); err != nil {
-		log.Fatal("got fatal error when trying to create symlinks: ", err)
-	}
-
-	err = mount.MountRootfs(globalConfig)
-	if err != nil {
-		log.Fatal("got fatal error when trying to mount rootfs: ", err)
-	}
-
-	err = mount.MoveVirtualMounts()
-	if err != nil {
-		log.Fatalf("moving virtual filesystems failed with: %v", err)
-	}
-
-	err = mount.SwitchRoot()
-	if err != nil {
-		log.Fatalf("failed to switch to rootfs: %v", err)
-	}
-}
-
-func late() {
-	log.SetPrefix("initd/late ")
-	log.Printf("welcome to late init")
-
-	globalConfig, err := config.New()
-	if err != nil {
-		log.Fatal("got fatal error when trying to read boot arguments: ", err)
-	}
-
-	// force into BusyBox shell if we get debug
-	if globalConfig.Debug {
-		log.Printf("'debug' was present in boot arguments. BusyBox shell will start shortly")
-		err := debug.StartDebug()
-		if err != nil {
-			log.Fatal("got fatal error when trying to start debug: ", err)
+	init := initd.New()
+	if *early {
+		if err := init.Early(); err != nil {
+			log.Fatalf("Got fatal error from early: %v", err)
 		}
 	}
 
-	wg := new(sync.WaitGroup)
-	wg.Go(func() { event.Loop(context.Background()) })
-	wg.Wait()
-
-	err = mount.RemountRootfs()
-	if err != nil {
-		log.Fatalf("got fatal error when trying to remove rootfs: %v", err)
+	if *late {
+		if err := init.Late(); err != nil {
+			log.Fatalf("Got fatal error from late: %v", err)
+		}
 	}
 
-	err = syscall.Reboot(syscall.LINUX_REBOOT_CMD_POWER_OFF)
-	if err != nil {
-		log.Fatalf("got fatal error when trying to reboot: %v. You should force a shutdown", err)
-	}
-}
-
-func main() {
-	if len(os.Args) < 2 || len(os.Args) > 2 {
-		usage()
+	if *eventLoop {
+		if err := init.EventLoop(); err != nil {
+			log.Fatalf("Got fatal error from event-loop: %v", err)
+		}
 	}
 
-	switch os.Args[1] {
-	case "early":
-		early()
-	case "late":
-		late()
-	default:
-		usage()
+	if *shutdown {
+		if err := init.Shutdown(); err != nil {
+			log.Fatalf("Got fatal error from shutdown: %v", err)
+		}
 	}
-
 }

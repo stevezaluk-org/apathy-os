@@ -2,7 +2,6 @@ package edev
 
 import (
 	"context"
-	"errors"
 	"os"
 )
 
@@ -38,28 +37,22 @@ func (device *Device) blockingRead() (*InputEvent, error) {
 	return event, nil
 }
 
-// Watch Start a go-routine that streams received input events to Device.C. As of the moment, this performs a basic
-// blocking read and should eventually be migrated over to inotify
-func (device *Device) Watch(ctx context.Context) error {
-	if device.Handler == "" {
-		return errors.New("device handler is empty")
-	}
-	go func() {
-		for {
-			select {
-			default:
-				event, err := device.blockingRead()
-				if err != nil {
-					return
-				}
-
-				device.C <- event
-			case <-ctx.Done():
+// Watch Streams received input events to Device.C. Performs a basic blocking read and should eventually be migrated
+// over to inotify. If an error is received, then the go-routine is canceled and the function returns
+func (device *Device) Watch(ctx context.Context) {
+	for {
+		select {
+		default:
+			event, err := device.blockingRead()
+			if err != nil {
 				return
 			}
+
+			device.C <- event
+		case <-ctx.Done():
+			return
 		}
-	}()
-	return nil
+	}
 }
 
 // NewDevice Constructs a new device and returns a handler to it
