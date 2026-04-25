@@ -10,24 +10,7 @@ import (
 
 	"github.com/stevezaluk/immutable-os/initd/internal/config"
 	"github.com/stevezaluk/immutable-os/initd/internal/constants"
-	"github.com/stevezaluk/immutable-os/initd/internal/shell"
 )
-
-// findFs Returns the filesystem type and device path for a filesystem UUID
-// TODO: This flat exits when no filesystem is found under the provided UUID
-func findFs(uuid string) (string, string, error) {
-	device, err := shell.RunCmd(constants.FindfsPath, uuid)
-	if err != nil {
-		return "", "", err
-	}
-
-	fstype, err := shell.RunCmd(constants.BlkidPath, "-o value", "-s TYPE", device)
-	if err != nil {
-		return "", "", err
-	}
-
-	return strings.TrimSpace(device), strings.TrimSpace(fstype), nil
-}
 
 // SwitchRoot Calls switch_root on /root and sets /sbin/init [late] as its new init process
 func SwitchRoot() error {
@@ -58,7 +41,7 @@ func MountRootfs(config *config.Config) error {
 		return fmt.Errorf("'root' hint was malformed in /proc/cmdline: %s", config.Root)
 	}
 
-	device, fstype, err := findFs(config.Root)
+	device, fstype, err := FindFilesystem(config.Root)
 	if err != nil {
 		return err
 	}
