@@ -13,6 +13,7 @@ import (
 	"github.com/stevezaluk/immutable-os/initd/internal/edev"
 	"github.com/stevezaluk/immutable-os/initd/internal/mount"
 	"github.com/stevezaluk/immutable-os/initd/internal/reaper"
+	"github.com/stevezaluk/immutable-os/initd/internal/shell"
 )
 
 // Init Abstraction representing PID 1
@@ -86,6 +87,10 @@ func (init *Init) Early() error {
 		return fmt.Errorf("got fatal error when trying to read boot arguments from /proc/cmdline: %v", err)
 	}
 	init.config = conf
+
+	if err := shell.CreateSymlinks(); err != nil {
+		return fmt.Errorf("got fatal error when trying to create symlinks: %v", err)
+	}
 
 	device, fstype, err := mount.FindFilesystem(init.config.Root)
 	if err != nil {
