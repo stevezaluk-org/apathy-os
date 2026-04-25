@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"sync"
 	"syscall"
 
 	"github.com/stevezaluk/immutable-os/initd/internal/config"
@@ -58,14 +59,28 @@ func (init *Init) EventLoop() error {
 		return fmt.Errorf("got error when trying to enumerate power button: %v", err)
 	}
 
-	go device.Watch(context.Background())
-	event := <-device.C
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
-	if event.Type == edev.KeyPower && event.Code == edev.EvKey {
-		err := syscall.Exec(constants.LateInitPath, []string{constants.LateInitPath, "--shutdown"}, os.Environ())
-		if err != nil {
-			return fmt.Errorf("got error when trying to transition to shutdown: %v", err)
+	go device.Watch(ctx)
+
+	wg := new(sync.WaitGroup)
+	wg.Go(func() {
+		for {
+			select {
+			case event := <-device.C:
+				if event.Code == edev.KeyPower && event.Type == edev.EvKey {
+					cancel()
+					return
+				}
+			}
 		}
+	})
+	wg.Wait()
+
+	err = syscall.Exec(constants.LateInitPath, []string{constants.LateInitPath, "--shutdown"}, os.Environ())
+	if err != nil {
+		return fmt.Errorf("got error when trying to transition to shutdown: %v", err)
 	}
 
 	return nil
