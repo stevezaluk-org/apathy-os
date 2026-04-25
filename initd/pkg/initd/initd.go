@@ -1,6 +1,7 @@
 package initd
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"os"
@@ -40,6 +41,30 @@ func (init *Init) Shutdown() error {
 
 	if err := syscall.Reboot(syscall.LINUX_REBOOT_CMD_POWER_OFF); err != nil {
 		return fmt.Errorf("got fatal error when trying to reboot: %v. You should force a shutdown", err)
+	}
+
+	return nil
+}
+
+func (init *Init) EventLoop() error {
+	if err := init.devices.Enumerate(); err != nil {
+		return fmt.Errorf("got error when trying to enumerate devices: %v", err)
+	}
+
+	// we really shouldn't be enumerating off of a name here. Use type instead
+	device, err := init.devices.Device("Power Button")
+	if err != nil {
+		return fmt.Errorf("got error when trying to enumerate power button: %v", err)
+	}
+
+	go device.Watch(context.Background())
+	event := <-device.C
+
+	if event.Type == edev.KeyPower && event.Code == edev.EvKey {
+		err := syscall.Exec(constants.LateInitPath, []string{constants.LateInitPath, "--shutdown"}, os.Environ())
+		if err != nil {
+			return fmt.Errorf("got error when trying to transition to shutdown: %v", err)
+		}
 	}
 
 	return nil
