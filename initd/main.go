@@ -12,6 +12,7 @@ import (
 	"syscall"
 
 	"github.com/stevezaluk/immutable-os/initd/internal/config"
+	"github.com/stevezaluk/immutable-os/initd/internal/constants"
 	"github.com/stevezaluk/immutable-os/initd/internal/debug"
 	"github.com/stevezaluk/immutable-os/initd/internal/event"
 	"github.com/stevezaluk/immutable-os/initd/internal/mount"
@@ -56,7 +57,7 @@ func early() {
 		log.Fatalf("moving virtual filesystems failed with: %v", err)
 	}
 
-	err = mount.SwitchRoot()
+	err = mount.SwitchRoot(constants.TemporaryRootMount)
 	if err != nil {
 		log.Fatalf("failed to switch to rootfs: %v", err)
 	}
