@@ -6,4 +6,7 @@ type Config struct {
 
 	// Mounts User and system defined mounts. An equivalent of /etc/fstab
 	Mounts *MountConfig `yaml:"mounts"`
+
+	// Network User defined networking for the machine
+	Network *NetworkConfig `yaml:"network"`
 }
