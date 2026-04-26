@@ -2,6 +2,7 @@ package mount
 
 import (
 	"fmt"
+	"slices"
 
 	"github.com/stevezaluk/immutable-os/initd/pkg/config"
 	"golang.org/x/sys/unix"
@@ -53,19 +54,32 @@ func (handler *Handler) Mount(mountPoint *config.MountPoint, flags ...uintptr) e
 	return nil
 }
 
-// MountAll Process all system and user mounts
-// TODO: May need to add a "failFast" field in config.Mounts to determine if additional mounts should be processed if one fails
-func (handler *Handler) MountAll() error {
-	// system mounts are always handled first in the event that user mounts depend on them
-	// TODO: Adding a priority field here may be useful to control the order of how mounts are processed
-	for _, value := range handler.config.System {
-		if err := handler.Mount(value); err != nil {
-			return err
-		}
+// MountAll Processes all user and system defined mounts. By default, system mounts are processed unless remountRo is set
+// to true. In that case, user mounts are processed first.
+func (handler *Handler) MountAll(remountRo bool) error {
+	// Mount points are generally processed in system first order, unless we are in system shutdown (and we are remounting
+	// as read only). If that is the case we process user mounts first
+	mountPoints := slices.Concat(handler.config.System, handler.config.User)
+	if remountRo {
+		slices.Reverse(mountPoints)
+		unix.Sync() // Required to ensure that we don't miss any uncommited writes
 	}
 
-	for _, value := range handler.config.User {
-		if err := handler.Mount(value); err != nil {
+	// TODO: May need to add a "failFast" field in config.Mounts to determine if additional mounts should be processed if one fails
+	// TODO: I still think a priority field would make sense here to determine the order in which mounts are processed
+	for _, value := range mountPoints {
+		flags := uintptr(0)
+		if remountRo {
+			// if remountRo is set, that means we are in system shutdown, and we gain nothing by trying to remount an already
+			// mounted read only filesystem as read only. Would be completely wasting system calls
+			if value.ReadOnly {
+				continue
+			}
+
+			flags = unix.MS_REMOUNT
+		}
+
+		if err := handler.Mount(value, flags); err != nil {
 			return err
 		}
 	}
