@@ -7,21 +7,31 @@ import (
 	"golang.org/x/sys/unix"
 )
 
+// Handler Processes the config.Mounts section. Holds the responsibility of processing user/system mounts
 type Handler struct {
 	// config Defines the desired configuration for mounting filesystems
 	config *config.MountConfig
 }
 
+// findDevice Finds the actual device path under /dev for a mount point
+func (handler *Handler) findDevice(mountPoint *config.MountPoint) (string, error) {
+	if mountPoint.FilesystemUUID == "" { // always value filesystem UUIDs over raw device paths as they are more stable
+		return mountPoint.Device, nil
+	}
+
+	device, err := FindFilesystem(mountPoint.FilesystemUUID)
+	if err != nil {
+		return "", fmt.Errorf("failed to find filesystem: %v", err)
+	}
+
+	return device, nil
+}
+
 // Mount Mounts a mount point defined in Handler.config.Mounts
 func (handler *Handler) Mount(mountPoint *config.MountPoint) error {
-	source := mountPoint.Device
-	if mountPoint.FilesystemUUID != "" { // always value filesystem UUIDs over raw device paths as they are more stable
-		device, err := FindFilesystem(mountPoint.FilesystemUUID)
-		if err != nil {
-			return fmt.Errorf("failed to find filesystem: %v", err)
-		}
-
-		source = device
+	source, err := handler.findDevice(mountPoint)
+	if err != nil {
+		return err
 	}
 
 	// uintptr(0) == no mount flags
