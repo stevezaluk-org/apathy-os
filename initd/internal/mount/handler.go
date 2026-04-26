@@ -28,8 +28,8 @@ func (handler *Handler) findDevice(mountPoint *config.MountPoint) (string, error
 	return device, nil
 }
 
-// Mount Mounts a mount point defined in Handler.config.Mounts
-func (handler *Handler) Mount(mountPoint *config.MountPoint, flags ...uintptr) error {
+// mount Mounts a mount point defined in Handler.config.Mounts
+func (handler *Handler) mount(mountPoint *config.MountPoint, flags ...uintptr) error {
 	source, err := handler.findDevice(mountPoint)
 	if err != nil {
 		return err
@@ -79,7 +79,7 @@ func (handler *Handler) MountAll(remountRo bool) error {
 			flags = unix.MS_REMOUNT
 		}
 
-		if err := handler.Mount(value, flags); err != nil {
+		if err := handler.mount(value, flags); err != nil {
 			return err
 		}
 	}
