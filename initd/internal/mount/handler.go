@@ -28,16 +28,20 @@ func (handler *Handler) findDevice(mountPoint *config.MountPoint) (string, error
 }
 
 // Mount Mounts a mount point defined in Handler.config.Mounts
-func (handler *Handler) Mount(mountPoint *config.MountPoint) error {
+func (handler *Handler) Mount(mountPoint *config.MountPoint, flags ...uintptr) error {
 	source, err := handler.findDevice(mountPoint)
 	if err != nil {
 		return err
 	}
 
-	// uintptr(0) == no mount flags
 	mountFlags := uintptr(0)
+	if len(flags) != 0 {
+		for _, flag := range flags {
+			mountFlags |= flag
+		}
+	}
+
 	if mountPoint.ReadOnly {
-		// additional mount flags can be passed to unix.Mount with the | operator
 		mountFlags |= unix.MS_RDONLY
 	}
 
