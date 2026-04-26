@@ -1,5 +1,10 @@
 package config
 
+import (
+	"cmp"
+	"slices"
+)
+
 type MountPoint struct {
 	// Device Mount based on an absolute path to a Unix block device. Ex: /dev/sda
 	Device string `yaml:"device"`
@@ -18,4 +23,13 @@ type MountPoint struct {
 
 	// Priority Controls the order in which mount points are processed. See docs
 	Priority int `yaml:"priority"`
+}
+
+type MountConfig []MountPoint
+
+// Sort Sorts a list of mount points based on Priority
+func (mountConfig MountConfig) Sort() {
+	slices.SortFunc(mountConfig, func(a, b MountPoint) int {
+		return cmp.Compare(a.Priority, b.Priority)
+	})
 }

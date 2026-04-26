@@ -1,14 +1,20 @@
 package mount
 
-import "github.com/stevezaluk/immutable-os/manifest/pkg/config"
+import (
+	"errors"
+
+	"github.com/stevezaluk/immutable-os/manifest/pkg/config"
+)
+
+var ErrMountFailed = errors.New("mount failed")
 
 // Handler Controls the processing of a list of mount points
 type Handler struct {
 	// mountPoints A list of mount points to process
-	mountPoints []*config.MountPoint
+	mounts config.MountConfig
 }
 
 // NewHandler Initialize a new mount.Handler and return a pointer to it
-func NewHandler() *Handler {
-	return &Handler{mountPoints: make([]*config.MountPoint, 0)}
+func NewHandler(mounts config.MountConfig) *Handler {
+	return &Handler{mounts: mounts}
 }
