@@ -23,13 +23,13 @@ type BootArgs struct {
 	Root string `boot:"root"`
 }
 
-// BootParams Returns raw boot parameters parsed from /proc/cmdline
+// BootParams Returns raw boot arguments parsed from /proc/cmdline
 func (bootArgs *BootArgs) BootParams() map[string]string {
 	return bootArgs.bootParams
 }
 
-// New Parse boot parameters from /proc/cmdline and merge them
-func New() (*BootArgs, error) {
+// ParseBootArgs Parse boot arguments from /proc/cmdline and merge them
+func ParseBootArgs() (*BootArgs, error) {
 	config := new(BootArgs)
 
 	contents, err := os.ReadFile(constants.BootParamsFile)
