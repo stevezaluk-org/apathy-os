@@ -9,13 +9,13 @@ type NetworkInterfaceConfig struct {
 	DHCP bool `yaml:"dhcp"`
 
 	// IPAddress A static IP address to assign to the NIC. Cannot coexist with NetworkInterfaceConfig.Dhcp == true
-	IPAddress string `yaml:"ip_address"`
+	IPAddress string `yaml:"ipAddress"`
 
 	// Gateway Your networks gateway/router
 	Gateway string `yaml:"gateway"`
 
 	// VLANTag The VLAN tag that you want to assign to this network interface
-	VLANTag int `yaml:"vlan_tag"`
+	VLANTag int `yaml:"vlanTag"`
 }
 
 // NetworkConfig Configuration block for defining your networking settings
@@ -24,7 +24,7 @@ type NetworkConfig struct {
 	Interfaces []*NetworkInterfaceConfig `yaml:"interfaces"`
 
 	// DNSServers Any DNS Servers
-	DNSServers []string `yaml:"dns_servers"`
+	DNSServers []string `yaml:"dnsServers"`
 
 	// Hostname The hostname to assign the machine
 	Hostname string `yaml:"hostname"`
