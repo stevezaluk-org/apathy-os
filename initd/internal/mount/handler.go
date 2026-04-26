@@ -39,6 +39,26 @@ func (handler *Handler) Mount(mountPoint *config.MountPoint) error {
 	return nil
 }
 
+// Go Process all system and user mounts
+// TODO: May need to add a "failFast" field in config.Mounts to determine if additional mounts should be processed if one fails
+func (handler *Handler) Go() error {
+	// system mounts are always handled first in the event that user mounts depend on them
+	// TODO: Adding a priority field here may be useful to control the order of how mounts are processed
+	for _, value := range handler.config.System {
+		if err := handler.Mount(value); err != nil {
+			return err
+		}
+	}
+
+	for _, value := range handler.config.User {
+		if err := handler.Mount(value); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 // NewHandler Initializes a mount.Handler and returns a pointer to it
 func NewHandler(config *config.MountConfig) *Handler {
 	return &Handler{
