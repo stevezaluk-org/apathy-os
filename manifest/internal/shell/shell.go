@@ -1,19 +1,26 @@
 package shell
 
-import "os/exec"
+import (
+	"errors"
+	"os/exec"
+
+	internalErrors "github.com/stevezaluk/immutable-os/manifest/internal/errors"
+)
+
+var ErrCommandFailed = errors.New("command failed")
 
 // RunCmd Execute a single command and capture its output
 func RunCmd(cmd string, args ...string) (string, error) {
 	path, err := exec.LookPath(cmd)
 	if err != nil {
-		return "", err
+		return "", internalErrors.Wrap(err, ErrCommandFailed)
 	}
 
 	out := exec.Command(path, args...)
 
 	output, err := out.CombinedOutput()
 	if err != nil {
-		return "", err
+		return "", internalErrors.Wrap(err, ErrCommandFailed)
 	}
 
 	return string(output), nil
