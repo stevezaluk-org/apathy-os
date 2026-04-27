@@ -13,14 +13,14 @@ var ErrCommandFailed = errors.New("command failed")
 func RunCmd(cmd string, args ...string) (string, error) {
 	path, err := exec.LookPath(cmd)
 	if err != nil {
-		return "", internalErrors.Wrap(err, ErrCommandFailed)
+		return "", internalErrors.Wrap(ErrCommandFailed, err)
 	}
 
 	out := exec.Command(path, args...)
 
 	output, err := out.CombinedOutput()
 	if err != nil {
-		return "", internalErrors.Wrap(err, ErrCommandFailed)
+		return "", internalErrors.Wrap(ErrCommandFailed, err)
 	}
 
 	return string(output), nil
