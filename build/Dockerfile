@@ -23,7 +23,7 @@ COPY "./build/kernel/config.default" ./.config
 RUN make olddefconfig
 RUN make -j $(nproc)
 
-FROM golang:1.25.5-alpine AS init-build
+FROM golang:1.26.1-alpine AS init-build
 
 ARG INIT_BUILDFLAGS="-v"
 ARG INIT_LDFLAGS="-s -w"
@@ -34,9 +34,13 @@ ENV CGO_ENABLED=0 \
 
 WORKDIR /out
 
-COPY ./initd .
+COPY ./initd initd/
+COPY ./manifest manifest/
 
-RUN go build -o init $INIT_BUILDFLAGS -ldflags="$INIT_LDFLAGS" && chmod +x init
+# this can be removed once this goes public
+RUN go work init ./initd ./manifest
+
+RUN go build -o init $INIT_BUILDFLAGS -ldflags="$INIT_LDFLAGS" ./initd && chmod +x init
 
 FROM debian:stable-slim AS rootfs-glibc
 
@@ -104,11 +108,13 @@ RUN apt-get update \
 
 WORKDIR /out/initramfs
 
-RUN bash -c 'mkdir -p /out/initramfs/{usr/sbin,newroot,dev,proc,sys}'
+RUN bash -c 'mkdir -p /out/initramfs/{usr/sbin,usr/share/manifest.d,newroot,dev,proc,sys}'
 RUN bash -c 'mkdir -p /out/initramfs/newroot/{etc,var,mnt}'
 
 COPY "./build/deps/busybox-x86_64" /out/initramfs/usr/sbin/busybox
 COPY --from=init-build /out/init /out/initramfs/usr/sbin/init
+
+COPY "./build/manifest.d/early-boot.yaml" /out/initramfs/usr/share/manifest.d/early-boot.yaml
 
 RUN bash -c 'find . | cpio -o -H newc > ../initrd.cpio'
 
