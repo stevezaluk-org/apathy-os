@@ -30,7 +30,7 @@ services:
   processes:
     - bin: "/usr/sbin/switch_root" # switch_root launches agentd which handles late setup and our event loop
       args:
-      - "/root"
+      - "/newroot"
       - "/usr/sbin/agentd"
       exec: true
 
