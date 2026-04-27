@@ -1,11 +1,15 @@
 package env
 
 import (
+	"errors"
 	"os"
 
+	internalErrors "github.com/stevezaluk/immutable-os/manifest/internal/errors"
 	"github.com/stevezaluk/immutable-os/manifest/pkg/config"
 	"golang.org/x/sync/errgroup"
 )
+
+var ErrSetEnvFailed = errors.New("set environment variable failed")
 
 // Handler Processes the `env` section of a config file. Concurrently sets system wide environment variables
 type Handler struct {
@@ -19,7 +23,7 @@ func (handler *Handler) SetAll() error {
 	for _, env := range handler.envs {
 		wg.Go(func() error {
 			if err := os.Setenv(env.Key, env.Value); err != nil {
-				return err
+				return internalErrors.Wrap(ErrSetEnvFailed, err)
 			}
 
 			return nil
