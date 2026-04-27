@@ -1,8 +1,12 @@
 package mount
 
 import (
+	"context"
 	"errors"
+	"log"
+	"maps"
 	"slices"
+	"sync"
 
 	internalErrors "github.com/stevezaluk/immutable-os/manifest/internal/errors"
 	"github.com/stevezaluk/immutable-os/manifest/pkg/config"
@@ -13,8 +17,8 @@ var ErrMountFailed = errors.New("mount failed")
 
 // Handler Controls the processing of a list of mount points
 type Handler struct {
-	// mountPoints A list of mount points to process
-	mounts config.MountConfig
+	// mounts Mount list binned by priority
+	mounts map[int]config.MountConfig
 }
 
 // findDevice Returns an absolute path to a given block device
@@ -62,32 +66,55 @@ func (handler *Handler) mount(mount config.MountPoint, flags ...uintptr) error {
 // MountAll Mounts all mount points passed to the handler. MountAll will sort the mount point slice provided based on
 // the config.MountPoint.Priority field and will concurrently mount where applicable. If remount is set to true, then
 // each mount point will be remounted as read only in reverse order according to its priority
-// TODO: Needs to be concurrent
 func (handler *Handler) MountAll(remount bool) error {
+	priorities := slices.Sorted(maps.Keys(handler.mounts)) // sort by priority
+
 	if remount {
-		// reverse our pre-sorted list so that we can remount in reverse priority order
-		slices.Reverse(handler.mounts)
-		unix.Sync()
+		slices.Reverse(priorities)
 	}
 
-	for _, mount := range handler.mounts {
-		flags := uintptr(0)
-		if remount {
-			// if remount is set, and we are processing a read-only mount, then there is no point in attempting to remount
-			// a readonly filesystem as readonly. Doing so would harm performance and would waste system calls.
+	mountCtx := make([]context.Context, 0)
+	for _, priority := range priorities {
+		mountPoints := handler.mounts[priority]
 
-			// This also depends on system state not deviating from what is defined. If a defined read only mount point
-			// was remounted as r/w, then we are potentially incurring data loss here
-			if mount.ReadOnly {
-				continue
+		wg := new(sync.WaitGroup)
+
+		// TODO: Need to reverse mountPoints here for `remount`
+		for _, mountPoint := range mountPoints {
+			log.Println("mounting: ", mountPoint.MountPoint)
+			flags := uintptr(0)
+			if remount {
+				if mountPoint.ReadOnly { // no point in remounting an r/o filesystem as r/o
+					continue
+				}
+
+				flags |= unix.MS_REMOUNT
+				mountPoint.ReadOnly = true
 			}
 
-			flags = unix.MS_REMOUNT
-			mount.ReadOnly = true
+			ctx, cancel := context.WithCancelCause(context.Background())
+			mountCtx = append(mountCtx, ctx) // store the context we used so that we can aggregate errors
+			wg.Go(
+				func() {
+					select {
+					case <-ctx.Done():
+						return
+					default:
+						if err := handler.mount(mountPoint, flags); err != nil {
+							cancel(err) // need a way of actually handling this error here
+						}
+						return
+					}
+				},
+			)
 		}
 
-		if err := handler.mount(mount, flags); err != nil {
-			return err
+		wg.Wait() // wait for all mounts in this priority class to complete
+
+		for _, ctx := range mountCtx {
+			if err := context.Cause(ctx); err != nil {
+				return err // return on the first error that we get
+			} // shitty error handling
 		}
 	}
 
@@ -96,5 +123,5 @@ func (handler *Handler) MountAll(remount bool) error {
 
 // NewHandler Initialize a new mount.Handler and return a pointer to it
 func NewHandler(mounts config.MountConfig) *Handler {
-	return &Handler{mounts: mounts}
+	return &Handler{mounts: mounts.Bin()}
 }
