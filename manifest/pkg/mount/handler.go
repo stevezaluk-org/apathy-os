@@ -2,7 +2,6 @@ package mount
 
 import (
 	"errors"
-	"fmt"
 	"slices"
 
 	internalErrors "github.com/stevezaluk/immutable-os/manifest/internal/errors"
