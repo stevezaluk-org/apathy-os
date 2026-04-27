@@ -2,6 +2,7 @@ package runner
 
 import (
 	"github.com/stevezaluk/immutable-os/manifest/pkg/config"
+	"github.com/stevezaluk/immutable-os/manifest/pkg/env"
 	"github.com/stevezaluk/immutable-os/manifest/pkg/mount"
 )
 
@@ -12,10 +13,17 @@ type Runner struct {
 
 	// MountHandler Handles processing the `mount` section of a manifest config
 	MountHandler *mount.Handler
+
+	// EnvHandler Handles processing the `env` section of a manifest config
+	EnvHandler *env.Handler
 }
 
 // Go Start the runner and process the manifest config
 func (runner *Runner) Go() error {
+	if err := runner.EnvHandler.SetAll(); err != nil {
+		return err
+	}
+
 	if err := runner.MountHandler.MountAll(false); err != nil {
 		return err
 	}
@@ -28,5 +36,6 @@ func New(config *config.Config) *Runner {
 	return &Runner{
 		config:       config,
 		MountHandler: mount.NewHandler(config.Mounts),
+		EnvHandler:   env.NewHandler(config.Envs),
 	}
 }
