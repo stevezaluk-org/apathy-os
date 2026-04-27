@@ -8,15 +8,16 @@ import (
 )
 
 // Config An abstraction of a manifest file
+// TODO: Needs to support merging config files
 type Config struct {
 	// Mounts The `mounts` section of the manifest file
-	Mounts []MountConfig `yaml:"mounts"`
+	Mounts MountConfig `yaml:"mounts"`
 }
 
 // New Initialize a Config struct and return a pointer to it
 func New() *Config {
 	return &Config{
-		Mounts: make([]MountConfig, 0),
+		Mounts: make(MountConfig, 0),
 	}
 }
 

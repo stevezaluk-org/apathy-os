@@ -62,6 +62,7 @@ func (handler *Handler) mount(mount config.MountPoint, flags ...uintptr) error {
 // MountAll Mounts all mount points passed to the handler. MountAll will sort the mount point slice provided based on
 // the config.MountPoint.Priority field and will concurrently mount where applicable. If remount is set to true, then
 // each mount point will be remounted as read only in reverse order according to its priority
+// TODO: Needs to be concurrent
 func (handler *Handler) MountAll(remount bool) error {
 	if remount {
 		// reverse our pre-sorted list so that we can remount in reverse priority order
