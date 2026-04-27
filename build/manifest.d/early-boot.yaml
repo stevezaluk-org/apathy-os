@@ -41,4 +41,4 @@ services:
 
 env:
   - key: PATH
-    value: "/bin:/sbin:/tmp/bin:/usr/bin:/usr/sbin"
+    value: "/usr/sbin:/usr/bin:/bin:/sbin"
