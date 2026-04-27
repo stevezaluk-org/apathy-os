@@ -16,9 +16,7 @@ func RunCmd(cmd string, args ...string) (string, error) {
 		return "", internalErrors.Wrap(ErrCommandFailed, err)
 	}
 
-	out := exec.Command(path, args...)
-
-	output, err := out.CombinedOutput()
+	output, err := exec.Command(path, args...).CombinedOutput()
 	if err != nil {
 		return "", internalErrors.Wrap(ErrCommandFailed, err)
 	}
