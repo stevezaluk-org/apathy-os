@@ -82,6 +82,7 @@ func (handler *Handler) MountAll(remount bool) error {
 			}
 
 			flags = unix.MS_REMOUNT
+			mount.ReadOnly = true
 		}
 
 		if err := handler.mount(mount, flags); err != nil {
