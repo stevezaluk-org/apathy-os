@@ -104,11 +104,11 @@ RUN apt-get update \
 
 WORKDIR /out/initramfs
 
-RUN bash -c 'mkdir -p /out/initramfs/{sbin,usr/sbin,dev,proc,sys}'
+RUN bash -c 'mkdir -p /out/initramfs/{usr/sbin,newroot,dev,proc,sys}'
+RUN bash -c 'mkdir -p /out/initramfs/newroot/{etc,var,mnt}'
 
 COPY "./build/deps/busybox-x86_64" /out/initramfs/usr/sbin/busybox
-
-COPY --from=init-build /out/init /out/initramfs/init
+COPY --from=init-build /out/init /out/initramfs/usr/sbin/init
 
 RUN bash -c 'find . | cpio -o -H newc > ../initrd.cpio'
 

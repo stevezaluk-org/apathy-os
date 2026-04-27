@@ -8,8 +8,8 @@ BUILD_DEPS=$(BUILD)/deps
 
 BUSYBOX_VER=1.21.1
 
-BOOT_ARGS_release="root=87965c58-36e0-11f1-8de9-0242ac120002 console=ttyS0 rdinit=/init --early"
-BOOT_ARGS_development="debug root=87965c58-36e0-11f1-8de9-0242ac120002 console=ttyS0 rdinit=/init --early"
+BOOT_ARGS_release="root=87965c58-36e0-11f1-8de9-0242ac120002 console=ttyS0 rdinit=/usr/sbin/init"
+BOOT_ARGS_development="debug root=87965c58-36e0-11f1-8de9-0242ac120002 console=ttyS0 rdinit=/usr/sbin/init"
 
 BOOT_ARGS=$(BOOT_ARGS_$(RELEASE))
 
