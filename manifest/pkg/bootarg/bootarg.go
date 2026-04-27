@@ -94,3 +94,19 @@ func Unmarshal(raw map[string]string, bootArguments *BootArguments) error {
 
 	return nil
 }
+
+// New Reads boot arguments from /proc/cmdline and returns an instantiated pointer to a BootArguments struct. Alias for
+// calling Read followed by Unmarshal
+func New() (*BootArguments, error) {
+	raw, err := Read()
+	if err != nil {
+		return nil, err
+	}
+
+	ret := new(BootArguments)
+	if err := Unmarshal(raw, ret); err != nil {
+		return nil, err
+	}
+
+	return ret, nil
+}
