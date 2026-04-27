@@ -1,5 +1,12 @@
 package config
 
+import (
+	"os"
+	"strings"
+
+	"github.com/goccy/go-yaml"
+)
+
 // Config An abstraction of a manifest file
 type Config struct {
 	// Mounts The `mounts` section of the manifest file
@@ -11,4 +18,24 @@ func New() *Config {
 	return &Config{
 		Mounts: make([]*MountPoint, 0),
 	}
+}
+
+// Read Reads a config file at the specified Unix path, unmarshalls it into Config, and returns a pointer to it
+func Read(path string) (*Config, error) {
+	if strings.HasPrefix(path, "~") {
+		path = strings.Replace(path, "~", os.Getenv("HOME"), 1)
+	}
+
+	config := New()
+
+	contents, err := os.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := yaml.Unmarshal(contents, config); err != nil {
+		return nil, err
+	}
+
+	return config, err
 }
