@@ -14,7 +14,7 @@ type Config struct {
 	Mounts MountConfig `yaml:"mounts"`
 
 	// Envs EnvironmentVariables that should be created
-	Envs []*EnvironmentVariable `yaml:"envs"`
+	Envs []*EnvironmentVariable `yaml:"env"`
 }
 
 // New Initialize a Config struct and return a pointer to it
