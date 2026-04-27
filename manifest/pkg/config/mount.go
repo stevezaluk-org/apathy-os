@@ -33,3 +33,23 @@ func (mountConfig MountConfig) Sort() {
 		return cmp.Compare(a.Priority, b.Priority)
 	})
 }
+
+// Bin Returns a hash map representing binned mount points based on priority. Enables mounting multiple filesystems
+// concurrently.
+func (mountConfig MountConfig) Bin() map[int]MountConfig {
+	mountConfig.Sort()
+
+	bin := make(map[int]MountConfig)
+
+	for _, point := range mountConfig {
+		priority := point.Priority
+
+		if _, ok := bin[priority]; !ok {
+			bin[priority] = make(MountConfig, 0)
+		}
+
+		bin[priority] = append(bin[priority], point)
+	}
+
+	return bin
+}
