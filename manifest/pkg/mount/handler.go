@@ -1,15 +1,14 @@
 package mount
 
 import (
-	"context"
 	"errors"
 	"log"
 	"maps"
 	"slices"
-	"sync"
 
 	internalErrors "github.com/stevezaluk/immutable-os/manifest/internal/errors"
 	"github.com/stevezaluk/immutable-os/manifest/pkg/config"
+	"golang.org/x/sync/errgroup"
 	"golang.org/x/sys/unix"
 )
 
@@ -73,11 +72,10 @@ func (handler *Handler) MountAll(remount bool) error {
 		slices.Reverse(priorities)
 	}
 
-	mountCtx := make([]context.Context, 0)
 	for _, priority := range priorities {
 		mountPoints := handler.mounts[priority]
 
-		wg := new(sync.WaitGroup)
+		wg := new(errgroup.Group)
 
 		// TODO: Need to reverse mountPoints here for `remount`
 		for _, mountPoint := range mountPoints {
@@ -92,30 +90,20 @@ func (handler *Handler) MountAll(remount bool) error {
 				mountPoint.ReadOnly = true
 			}
 
-			ctx, cancel := context.WithCancelCause(context.Background())
-			mountCtx = append(mountCtx, ctx) // store the context we used so that we can aggregate errors
-			wg.Go(
-				func() {
-					select {
-					case <-ctx.Done():
-						return
-					default:
-						if err := handler.mount(mountPoint, flags); err != nil {
-							cancel(err) // need a way of actually handling this error here
-						}
-						return
-					}
-				},
-			)
+			wg.Go(func() error {
+				if err := handler.mount(mountPoint, flags); err != nil {
+					return err
+				}
+
+				return nil
+			})
 		}
 
-		wg.Wait() // wait for all mounts in this priority class to complete
-
-		for _, ctx := range mountCtx {
-			if err := context.Cause(ctx); err != nil {
-				return err // return on the first error that we get
-			} // shitty error handling
+		// Wait for all mounts in this priority class to complete
+		if err := wg.Wait(); err != nil {
+			return err
 		}
+
 	}
 
 	return nil
