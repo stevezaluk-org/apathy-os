@@ -48,7 +48,7 @@ ARG GLIBC_VER="2.43"
 
 WORKDIR /out
 
-RUN bash -c 'mkdir -p /out/rootfs/{bin,sbin,usr/bin,etc,sys,dev,proc,tmp,boot}'
+RUN bash -c 'mkdir -p /out/rootfs/{bin,sbin,usr/bin,etc,sys,dev,proc,tmp,boot,var,mnt}'
 
 WORKDIR /out/build/glibc
 
@@ -70,7 +70,7 @@ ARG MUSL_VER="1.2.6"
 
 WORKDIR /out
 
-RUN bash -c 'mkdir -p /out/rootfs/{bin,sbin,usr/bin,etc,sys,dev,proc,tmp,boot}'
+RUN bash -c 'mkdir -p /out/rootfs/{bin,sbin,usr/bin,etc,sys,dev,proc,tmp,boot,var,mnt}'
 
 WORKDIR /out/build/musl
 
@@ -91,7 +91,7 @@ FROM debian:stable-slim AS rootfs-static
 WORKDIR /out
 
 # not much really needed here as the whole point of a static build is not needing a libc implementation
-RUN bash -c 'mkdir -p /out/rootfs/{bin,sbin,usr/bin,etc,sys,dev,proc,tmp,boot}'
+RUN bash -c 'mkdir -p /out/rootfs/{bin,sbin,usr/bin,etc,sys,dev,proc,tmp,boot,var,mnt}'
 
 FROM rootfs-${LIBC_FLAVOR} AS rootfs-build
 
