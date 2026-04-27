@@ -65,8 +65,8 @@ func Read() (map[string]string, error) {
 // Unmarshal Parses raw boot arguments into an instance of BootArguments. `=` joined arguments (i.e. root=blah) are
 // unmarshalled to strings, while lone boot arguments (i.e. quiet) are unmarshalled to bool's. Use the `bootarg` struct
 // tag to control unmarshalling
-func Unmarshal(raw map[string]string, bootArguments *BootArguments) error {
-	s := reflect.TypeOf(bootArguments)
+func Unmarshal(raw map[string]string, v any) error {
+	s := reflect.TypeOf(v)
 
 	for i := 0; i < s.NumField(); i++ {
 		field := s.Field(i)
@@ -79,14 +79,14 @@ func Unmarshal(raw map[string]string, bootArguments *BootArguments) error {
 				// This effectively lets us represent them as boolean's in Config
 				if param == "" { // we got a bool
 					if field.Type == reflect.TypeOf(true) {
-						reflect.ValueOf(bootArguments).Elem().Field(i).SetBool(true)
+						reflect.ValueOf(v).Elem().Field(i).SetBool(true)
 					}
 
 					continue
 				}
 
 				if field.Type == reflect.TypeOf(param) { // map all other values to their respective types
-					reflect.ValueOf(bootArguments).Elem().Field(i).Set(reflect.ValueOf(param))
+					reflect.ValueOf(v).Elem().Field(i).Set(reflect.ValueOf(param))
 				}
 			}
 		}
