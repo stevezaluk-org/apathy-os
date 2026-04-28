@@ -39,6 +39,11 @@ services:
       - "/usr/sbin/agentd"
       exec: true
 
+# We don't persist anything on initramfs, so just log to stdout directly
+log:
+  local:
+    stdout: true
+
 env:
   - key: PATH
     value: "/usr/sbin:/usr/bin:/bin:/sbin"
