@@ -114,7 +114,7 @@ RUN bash -c 'mkdir -p /out/initramfs/newroot/{etc,var,mnt}'
 COPY "./build/deps/busybox-x86_64" /out/initramfs/usr/sbin/busybox
 COPY --from=init-build /out/init /out/initramfs/usr/sbin/init
 
-COPY "./build/manifest.d/early-boot.yaml" /out/initramfs/usr/share/manifest.d/early-boot.yaml
+COPY "./build/manifest.d/init.yaml" /out/initramfs/usr/share/manifest.d/init.yaml
 
 RUN bash -c 'find . | cpio -o -H newc > ../initrd.cpio'
 

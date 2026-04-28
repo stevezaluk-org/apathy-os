@@ -11,7 +11,7 @@ import (
 // All constant paths are under initramfs, not rootfs
 const (
 	BusyBoxPath       = "/usr/sbin/busybox"
-	EarlyBootManifest = "/usr/share/manifest.d/early-boot.yaml"
+	EarlyBootManifest = "/usr/share/manifest.d/init.yaml"
 )
 
 // symlinks Initialize required symlinks for mounting root filesystem
