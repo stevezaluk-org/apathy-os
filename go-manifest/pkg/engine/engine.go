@@ -3,7 +3,7 @@ package engine
 import "golang.org/x/sync/errgroup"
 
 // Engine Run's tasks in parallel in go-routines
-type Engine[T any] struct {
+type Engine[T Task] struct {
 	// Tasks A caller provided slice of tasks to execute
 	tasks []T
 }
@@ -30,6 +30,6 @@ func (engine *Engine[T]) Wait(f TaskFunc[T]) error {
 }
 
 // New Initialize a new Engine and returns a pointer to it
-func New[T any](tasks []T) *Engine[T] {
+func New[T Task](tasks []T) *Engine[T] {
 	return &Engine[T]{}
 }
