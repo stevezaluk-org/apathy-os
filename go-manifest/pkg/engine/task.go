@@ -2,7 +2,7 @@ package engine
 
 // Task Defines a task that should not only be executed but can be prioritized
 type Task interface {
-	Priority() int
+	PriorityGate() int
 }
 
 // TaskFunc A function that should be executed against a task
@@ -20,7 +20,7 @@ func (set TaskSet) Prioritize() PrioritizedTaskSet {
 	binned := make(PrioritizedTaskSet)
 
 	for _, t := range set {
-		priority := t.Priority()
+		priority := t.PriorityGate()
 
 		// if a slice of tasks does not already exist at this priority gate then create one
 		// Nil pointer deref otherwise

@@ -8,8 +8,8 @@ type EnvironmentVariable struct {
 	Value string `yaml:"value"`
 }
 
-// Priority Always returns 0 on an environment variable since there is no reason that one set of env vars should be
+// PriorityGate Always returns 0 on an environment variable since there is no reason that one set of env vars should be
 // created before or after another set
-func (envVar *EnvironmentVariable) Priority() int {
+func (envVar *EnvironmentVariable) PriorityGate() int {
 	return 0
 }

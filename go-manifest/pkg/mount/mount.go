@@ -1,11 +1,6 @@
 package mount
 
-import (
-	"cmp"
-	"slices"
-)
-
-type MountPoint struct {
+type Mount struct {
 	// Device Mount based on an absolute path to a Unix block device. Ex: /dev/sda
 	Device string `yaml:"device"`
 
@@ -25,31 +20,7 @@ type MountPoint struct {
 	Priority int `yaml:"priority"`
 }
 
-type MountConfig []MountPoint
-
-// Sort Sorts a list of mount points based on Priority
-func (mountConfig MountConfig) Sort() {
-	slices.SortFunc(mountConfig, func(a, b MountPoint) int {
-		return cmp.Compare(a.Priority, b.Priority)
-	})
-}
-
-// Bin Returns a hash map representing binned mount points based on priority. Enables mounting multiple filesystems
-// concurrently.
-func (mountConfig MountConfig) Bin() map[int]MountConfig {
-	mountConfig.Sort()
-
-	bin := make(map[int]MountConfig)
-
-	for _, point := range mountConfig {
-		priority := point.Priority
-
-		if _, ok := bin[priority]; !ok {
-			bin[priority] = make(MountConfig, 0)
-		}
-
-		bin[priority] = append(bin[priority], point)
-	}
-
-	return bin
+// PriorityGate Returns the priority gate for a given task
+func (mount *Mount) PriorityGate() int {
+	return mount.Priority
 }
