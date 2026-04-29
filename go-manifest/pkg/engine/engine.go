@@ -1,6 +1,9 @@
 package engine
 
 import (
+	"maps"
+	"slices"
+
 	"golang.org/x/sync/errgroup"
 )
 
@@ -35,9 +38,38 @@ func (engine *Engine) Wait(f TaskFunc) error {
 	return nil
 }
 
+// PrioritizedWait Execute a TaskFunc against each task while respecting priority gating
+func (engine *Engine) PrioritizedWait(f TaskFunc) error {
+	binned := slices.Sorted(maps.Keys(engine.binned))
+
+	for _, priority := range binned {
+		taskSet := engine.binned[priority]
+
+		eg := new(errgroup.Group)
+
+		for _, task := range taskSet {
+			eg.Go(func() error {
+				if err := f(task); err != nil {
+					return err
+				}
+
+				return nil
+			})
+		}
+
+		// Always wait for all tasks within a given priority gate to complete before moving to the next one
+		if err := eg.Wait(); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 // New Initialize a new Engine and returns a pointer to it
 func New(tasks TaskSet) *Engine {
 	return &Engine{
-		tasks: tasks,
+		tasks:  tasks,
+		binned: tasks.Prioritize(),
 	}
 }
