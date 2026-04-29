@@ -7,3 +7,9 @@ type EnvironmentVariable struct {
 	// Value Values of the environment variable
 	Value string `yaml:"value"`
 }
+
+// Priority Always returns 0 on an environment variable since there is no reason that one set of env vars should be
+// created before or after another set
+func (envVar *EnvironmentVariable) Priority() int {
+	return 0
+}
