@@ -2,11 +2,11 @@ package seq
 
 import (
 	"context"
-	"iter"
+	"github.com/stevezaluk/immutable-os/go-runner/internal/iter"
 )
 
 // SequentialRunner A runner that executes a given task over each element of a sequence
-type SequentialRunner[T iter.Seq[T]] struct {
+type SequentialRunner[T iter.Iterable[T]] struct {
 	// User provided data to iterate over
 	data T
 
@@ -30,6 +30,6 @@ func (runner *SequentialRunner[T]) Go() {
 }
 
 // New Initialize a new sequential runner and return a pointer to it
-func New[T iter.Seq[T]]() *SequentialRunner[T] {
+func New[T iter.Iterable[T]]() *SequentialRunner[T] {
 	return &SequentialRunner[T]{}
 }
