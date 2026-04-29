@@ -7,7 +7,6 @@ import (
 	"slices"
 
 	internalErrors "github.com/stevezaluk/immutable-os/go-manifest/internal/errors"
-	"github.com/stevezaluk/immutable-os/go-manifest/pkg/config"
 	"golang.org/x/sync/errgroup"
 	"golang.org/x/sys/unix"
 )
@@ -17,11 +16,11 @@ var ErrMountFailed = errors.New("mount failed")
 // Handler Controls the processing of a list of mount points
 type Handler struct {
 	// mounts Mount list binned by priority
-	mounts map[int]config.MountConfig
+	mounts map[int]MountConfig
 }
 
 // findDevice Returns an absolute path to a given block device
-func (handler *Handler) findDevice(mount config.MountPoint) (string, error) {
+func (handler *Handler) findDevice(mount MountPoint) (string, error) {
 	// we are not validating if `mount`. Device is actually populate here as we are trusting that config.MountConfig
 	// was validated before it was passed to us
 	if mount.FilesystemUUID == "" {
@@ -38,7 +37,7 @@ func (handler *Handler) findDevice(mount config.MountPoint) (string, error) {
 
 // mount Processes a single mount and returns a wrapped error if the mount fails. Merges any flags passed in the `flags`
 // argument with unix.MS_RDONLY if the given config.MountPoint is read only
-func (handler *Handler) mount(mount config.MountPoint, flags ...uintptr) error {
+func (handler *Handler) mount(mount MountPoint, flags ...uintptr) error {
 	device, err := handler.findDevice(mount)
 	if err != nil {
 		return err
@@ -110,6 +109,6 @@ func (handler *Handler) MountAll(remount bool) error {
 }
 
 // NewHandler Initialize a new mount.Handler and return a pointer to it
-func NewHandler(mounts config.MountConfig) *Handler {
+func NewHandler(mounts MountConfig) *Handler {
 	return &Handler{mounts: mounts.Bin()}
 }

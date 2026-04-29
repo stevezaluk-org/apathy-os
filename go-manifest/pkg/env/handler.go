@@ -5,7 +5,6 @@ import (
 	"os"
 
 	internalErrors "github.com/stevezaluk/immutable-os/go-manifest/internal/errors"
-	"github.com/stevezaluk/immutable-os/go-manifest/pkg/config"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -13,7 +12,7 @@ var ErrSetEnvFailed = errors.New("set environment variable failed")
 
 // Handler Processes the `env` section of a config file. Concurrently sets system wide environment variables
 type Handler struct {
-	envs []*config.EnvironmentVariable
+	envs []*EnvironmentVariable
 }
 
 // SetAll Set's all environment variables defined in Handler.envs
@@ -38,7 +37,7 @@ func (handler *Handler) SetAll() error {
 }
 
 // NewHandler Initializes a new Handler and returns a pointer to it
-func NewHandler(envs []*config.EnvironmentVariable) *Handler {
+func NewHandler(envs []*EnvironmentVariable) *Handler {
 	return &Handler{
 		envs: envs,
 	}

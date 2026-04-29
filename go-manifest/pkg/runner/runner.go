@@ -1,15 +1,15 @@
 package runner
 
 import (
-	"github.com/stevezaluk/immutable-os/go-manifest/pkg/config"
 	"github.com/stevezaluk/immutable-os/go-manifest/pkg/env"
+	"github.com/stevezaluk/immutable-os/go-manifest/pkg/manifest"
 	"github.com/stevezaluk/immutable-os/go-manifest/pkg/mount"
 )
 
 // Runner Handles actually processing a config file and executing its required steps
 type Runner struct {
 	// config Caller passed config.Config struct.
-	config *config.Config
+	config *manifest.Manifest
 
 	// MountHandler Handles processing the `mount` section of a manifest config
 	MountHandler *mount.Handler
@@ -32,7 +32,7 @@ func (runner *Runner) Go() error {
 }
 
 // New Initializes a new Runner and returns a pointer to it
-func New(config *config.Config) *Runner {
+func New(config *manifest.Manifest) *Runner {
 	return &Runner{
 		config:       config,
 		MountHandler: mount.NewHandler(config.Mounts),

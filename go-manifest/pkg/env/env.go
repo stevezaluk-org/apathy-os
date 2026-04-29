@@ -1,4 +1,4 @@
-package config
+package env
 
 type EnvironmentVariable struct {
 	// Key The name of the environment variable
