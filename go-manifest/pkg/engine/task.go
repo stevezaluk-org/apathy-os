@@ -6,7 +6,7 @@ type Task interface {
 }
 
 // TaskFunc A function that should be executed against a task
-type TaskFunc[T any] func(elem T) error
+type TaskFunc func(elem Task) error
 
 // TaskSet A slice of tasks that need to be executed
 type TaskSet []Task

@@ -1,19 +1,21 @@
 package engine
 
-import "golang.org/x/sync/errgroup"
+import (
+	"golang.org/x/sync/errgroup"
+)
 
 // Engine Run's tasks in parallel in go-routines
-type Engine[T Task] struct {
-	// Tasks A caller provided slice of tasks to execute
-	tasks []T
+type Engine struct {
+	// tasks A caller provided slice of tasks to execute
+	tasks TaskSet
 
-	// prioritized A map representing tasks sorted by there priority groups
-	prioritized map[int][]Task
+	// binned A map representing slices of tasks gated by priority
+	binned PrioritizedTaskSet
 }
 
 // Wait Executes a function against each task, ignoring its priority. Effectively a wrapper around an existing error group. Wait will return
 // the first error that it encounters if one is found. Otherwise, nil is returned
-func (engine *Engine[T]) Wait(f TaskFunc[T]) error {
+func (engine *Engine) Wait(f TaskFunc) error {
 	eg := new(errgroup.Group)
 
 	for _, t := range engine.tasks {
@@ -34,8 +36,8 @@ func (engine *Engine[T]) Wait(f TaskFunc[T]) error {
 }
 
 // New Initialize a new Engine and returns a pointer to it
-func New[T Task](tasks []T) *Engine[T] {
-	return &Engine[T]{
+func New(tasks TaskSet) *Engine {
+	return &Engine{
 		tasks: tasks,
 	}
 }
