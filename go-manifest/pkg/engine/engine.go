@@ -2,8 +2,6 @@ package engine
 
 import "golang.org/x/sync/errgroup"
 
-type TaskFunc[T any] func(elem T) error
-
 // Engine Run's tasks in parallel in go-routines
 type Engine[T any] struct {
 	// Tasks A caller provided slice of tasks to execute
