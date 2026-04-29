@@ -3,7 +3,7 @@ package mount
 import (
 	"strings"
 
-	"github.com/stevezaluk/immutable-os/manifest/internal/shell"
+	"github.com/stevezaluk/immutable-os/go-manifest/internal/shell"
 )
 
 // FindFilesystem Identifies a device path (under /dev) from a filesystem UUID and returns it. Thin wrapper around

@@ -1,4 +1,4 @@
-module github.com/stevezaluk/immutable-os/manifest
+module github.com/stevezaluk/immutable-os/go-manifest
 
 go 1.26.1
 

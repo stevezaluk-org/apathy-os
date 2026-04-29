@@ -1,9 +1,9 @@
 package runner
 
 import (
-	"github.com/stevezaluk/immutable-os/manifest/pkg/config"
-	"github.com/stevezaluk/immutable-os/manifest/pkg/env"
-	"github.com/stevezaluk/immutable-os/manifest/pkg/mount"
+	"github.com/stevezaluk/immutable-os/go-manifest/pkg/config"
+	"github.com/stevezaluk/immutable-os/go-manifest/pkg/env"
+	"github.com/stevezaluk/immutable-os/go-manifest/pkg/mount"
 )
 
 // Runner Handles actually processing a config file and executing its required steps

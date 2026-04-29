@@ -4,8 +4,8 @@ import (
 	"log"
 	"os"
 
-	"github.com/stevezaluk/immutable-os/manifest/pkg/config"
-	"github.com/stevezaluk/immutable-os/manifest/pkg/runner"
+	"github.com/stevezaluk/immutable-os/go-manifest/pkg/config"
+	"github.com/stevezaluk/immutable-os/go-manifest/pkg/runner"
 )
 
 // All constant paths are under initramfs, not rootfs

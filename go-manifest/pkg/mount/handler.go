@@ -6,8 +6,8 @@ import (
 	"maps"
 	"slices"
 
-	internalErrors "github.com/stevezaluk/immutable-os/manifest/internal/errors"
-	"github.com/stevezaluk/immutable-os/manifest/pkg/config"
+	internalErrors "github.com/stevezaluk/immutable-os/go-manifest/internal/errors"
+	"github.com/stevezaluk/immutable-os/go-manifest/pkg/config"
 	"golang.org/x/sync/errgroup"
 	"golang.org/x/sys/unix"
 )

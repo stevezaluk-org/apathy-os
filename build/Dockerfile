@@ -35,10 +35,10 @@ ENV CGO_ENABLED=0 \
 WORKDIR /out
 
 COPY ./initd initd/
-COPY ./manifest manifest/
+COPY ./go-manifest go-manifest/
 
 # this can be removed once this goes public
-RUN go work init ./initd ./manifest
+RUN go work init ./initd ./go-manifest
 
 RUN go build -o init $INIT_BUILDFLAGS -ldflags="$INIT_LDFLAGS" ./initd && chmod +x init
 
