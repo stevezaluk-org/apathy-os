@@ -68,7 +68,7 @@ func (handler *Handler) MountAll(remount bool) error {
 	if remount {
 		f = func(mountPoint *Mount) error {
 			return handler.remountFilesystem(mountPoint)
-		}
+		} // this does not remount in reverse order
 	}
 
 	if err := handler.engine.PrioritizedWait(f); err != nil {
