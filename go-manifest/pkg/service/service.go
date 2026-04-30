@@ -10,4 +10,12 @@ type ProcessService struct {
 
 	// Exec If set to true, unix.Exec is executed to start this binary
 	Exec bool `yaml:"exec"`
+
+	// Priority The priority gate for the process
+	Priority int `yaml:"priority"`
+}
+
+// PriorityGate The priority gate for the process
+func (processService *ProcessService) PriorityGate() int {
+	return processService.Priority
 }
