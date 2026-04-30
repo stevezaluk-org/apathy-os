@@ -2,97 +2,26 @@ package mount
 
 import (
 	"errors"
-	"log"
-	"maps"
-	"slices"
 
-	internalErrors "github.com/stevezaluk/immutable-os/go-manifest/internal/errors"
-	"golang.org/x/sync/errgroup"
-	"golang.org/x/sys/unix"
+	"github.com/stevezaluk/immutable-os/go-manifest/pkg/engine"
 )
 
 var ErrMountFailed = errors.New("mount failed")
 
 // Handler Controls the processing of a list of mount points
 type Handler struct {
+	// engine The concurrency engine that the Handler uses
+	engine *engine.Engine
+
 	// mounts Mount list binned by priority
-	mounts map[int]MountConfig
+	mounts []*Mount
 }
 
-// mount Processes a single mount and returns a wrapped error if the mount fails. Merges any flags passed in the `flags`
-// argument with unix.MS_RDONLY if the given config.MountPoint is read only
-func (handler *Handler) mount(mount MountPoint, flags ...uintptr) error {
-	device, err := handler.findDevice(mount)
-	if err != nil {
-		return err
-	}
-
-	mountFlags := uintptr(0)
-	if len(flags) != 0 {
-		for _, flag := range flags {
-			mountFlags |= flag
-		}
-	}
-
-	if mount.ReadOnly {
-		mountFlags |= unix.MS_RDONLY
-	}
-
-	if err := unix.Mount(device, mount.MountPoint, mount.FilesystemType, mountFlags, ""); err != nil {
-		return internalErrors.Wrap(ErrMountFailed, err)
-	}
-
-	return nil
-}
-
-// MountAll Mounts all mount points passed to the handler. MountAll will sort the mount point slice provided based on
-// the config.MountPoint.Priority field and will concurrently mount where applicable. If remount is set to true, then
-// each mount point will be remounted as read only in reverse order according to its priority
 func (handler *Handler) MountAll(remount bool) error {
-	priorities := slices.Sorted(maps.Keys(handler.mounts)) // sort by priority
-
-	if remount {
-		slices.Reverse(priorities)
-	}
-
-	for _, priority := range priorities {
-		mountPoints := handler.mounts[priority]
-
-		wg := new(errgroup.Group)
-
-		// TODO: Need to reverse mountPoints here for `remount`
-		for _, mountPoint := range mountPoints {
-			log.Println("mounting: ", mountPoint.MountPoint)
-			flags := uintptr(0)
-			if remount {
-				if mountPoint.ReadOnly { // no point in remounting an r/o filesystem as r/o
-					continue
-				}
-
-				flags |= unix.MS_REMOUNT
-				mountPoint.ReadOnly = true
-			}
-
-			wg.Go(func() error {
-				if err := handler.mount(mountPoint, flags); err != nil {
-					return err
-				}
-
-				return nil
-			})
-		}
-
-		// Wait for all mounts in this priority class to complete
-		if err := wg.Wait(); err != nil {
-			return err
-		}
-
-	}
-
 	return nil
 }
 
 // NewHandler Initialize a new mount.Handler and return a pointer to it
-func NewHandler(mounts MountConfig) *Handler {
-	return &Handler{mounts: mounts.Bin()}
+func NewHandler(mounts []*Mount) *Handler {
+	return &Handler{mounts: mounts}
 }
