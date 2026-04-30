@@ -37,7 +37,7 @@ func (handler *Handler) StartAll() error {
 	return nil
 }
 
-// New Initializes a new service.Handler and returns a pointer to it
-func New(processServices []*ProcessService) *Handler {
+// NewHandler Initializes a new service.Handler and returns a pointer to it
+func NewHandler(processServices []*ProcessService) *Handler {
 	return &Handler{processServices: processServices, engine: engine.New(processServices)}
 }
