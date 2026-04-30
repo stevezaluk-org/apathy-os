@@ -19,22 +19,6 @@ type Handler struct {
 	mounts map[int]MountConfig
 }
 
-// findDevice Returns an absolute path to a given block device
-func (handler *Handler) findDevice(mount MountPoint) (string, error) {
-	// we are not validating if `mount`. Device is actually populate here as we are trusting that config.MountConfig
-	// was validated before it was passed to us
-	if mount.FilesystemUUID == "" {
-		return mount.Device, nil
-	}
-
-	device, err := FindFilesystem(mount.FilesystemUUID)
-	if err != nil {
-		return "", err
-	}
-
-	return device, nil
-}
-
 // mount Processes a single mount and returns a wrapped error if the mount fails. Merges any flags passed in the `flags`
 // argument with unix.MS_RDONLY if the given config.MountPoint is read only
 func (handler *Handler) mount(mount MountPoint, flags ...uintptr) error {
