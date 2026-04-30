@@ -19,3 +19,8 @@ type ProcessService struct {
 func (processService *ProcessService) PriorityGate() int {
 	return processService.Priority
 }
+
+// Services Defines the services config section
+type Services struct {
+	ProcessServices []*ProcessService `yaml:"processes"`
+}

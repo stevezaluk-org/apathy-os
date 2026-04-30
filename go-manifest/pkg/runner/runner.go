@@ -45,6 +45,6 @@ func New(config *manifest.Manifest) *Runner {
 		config:         config,
 		MountHandler:   mount.NewHandler(config.Mounts),
 		EnvHandler:     env.NewHandler(config.Envs),
-		ServiceHandler: service.NewHandler(config.Services),
+		ServiceHandler: service.NewHandler(config.Services.ProcessServices),
 	}
 }
