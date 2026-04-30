@@ -9,14 +9,14 @@ type Task interface {
 type TaskFunc func(elem Task) error
 
 // TaskSet A slice of tasks that need to be executed
-type TaskSet []Task
+type TaskSet[T Task] []T
 
 // PrioritizedTaskSet A map representing priority gated tasks. Higher integers represent a collection
 // of tasks that should be executed first
 type PrioritizedTaskSet map[int][]Task
 
 // Prioritize Sorts each task in a given list of task definitions by there priority.
-func (set TaskSet) Prioritize() PrioritizedTaskSet {
+func (set TaskSet[T]) Prioritize() PrioritizedTaskSet {
 	binned := make(PrioritizedTaskSet)
 
 	for _, t := range set {

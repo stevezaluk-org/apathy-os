@@ -8,9 +8,9 @@ import (
 )
 
 // Engine Run's tasks in parallel in go-routines
-type Engine struct {
+type Engine[T Task] struct {
 	// tasks A caller provided slice of tasks to execute
-	tasks TaskSet
+	tasks TaskSet[T]
 
 	// binned A map representing slices of tasks gated by priority
 	binned PrioritizedTaskSet
@@ -18,7 +18,7 @@ type Engine struct {
 
 // Wait Executes a function against each task, ignoring its priority. Effectively a wrapper around an existing error group. Wait will return
 // the first error that it encounters if one is found. Otherwise, nil is returned
-func (engine *Engine) Wait(f TaskFunc) error {
+func (engine *Engine[T]) Wait(f TaskFunc) error {
 	eg := new(errgroup.Group)
 
 	for _, t := range engine.tasks {
@@ -39,7 +39,7 @@ func (engine *Engine) Wait(f TaskFunc) error {
 }
 
 // PrioritizedWait Execute a TaskFunc against each task while respecting priority gating
-func (engine *Engine) PrioritizedWait(f TaskFunc) error {
+func (engine *Engine[T]) PrioritizedWait(f TaskFunc) error {
 	binned := slices.Sorted(maps.Keys(engine.binned))
 
 	for _, priority := range binned {
@@ -67,8 +67,8 @@ func (engine *Engine) PrioritizedWait(f TaskFunc) error {
 }
 
 // New Initialize a new Engine and returns a pointer to it
-func New(tasks TaskSet) *Engine {
-	return &Engine{
+func New[T Task](tasks TaskSet[T]) *Engine[T] {
+	return &Engine[T]{
 		tasks:  tasks,
 		binned: tasks.Prioritize(),
 	}
