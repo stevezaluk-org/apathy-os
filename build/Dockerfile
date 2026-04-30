@@ -118,6 +118,7 @@ WORKDIR /out
 
 COPY "./build/deps/busybox-x86_64" /out/rootfs/usr/sbin/busybox
 COPY --from=init-build /out/init /out/rootfs/usr/sbin/init
+COPY --from=agentd-build /out/agent /out/rootfs/init
 
 FROM debian:stable-slim AS initramfs-build
 
