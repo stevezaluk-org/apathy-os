@@ -13,7 +13,7 @@ import (
 // TODO: Needs to support merging config files
 type Manifest struct {
 	// Mounts The `mounts` section of the manifest file
-	Mounts mount.MountConfig `yaml:"mounts"`
+	Mounts []*mount.Mount `yaml:"mounts"`
 
 	// Envs EnvironmentVariables that should be created
 	Envs []*env.EnvironmentVariable `yaml:"env"`
