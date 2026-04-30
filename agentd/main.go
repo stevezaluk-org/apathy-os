@@ -1,7 +1,9 @@
 package main
 
-import "errors"
+import (
+	"log"
+)
 
 func main() {
-	panic(errors.New("agentd not implemented"))
+	log.Println("===> agentd not implemented")
 }
