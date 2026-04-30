@@ -4,7 +4,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/stevezaluk/immutable-os/go-manifest/pkg/config"
+	"github.com/stevezaluk/immutable-os/go-manifest/pkg/manifest"
 	"github.com/stevezaluk/immutable-os/go-manifest/pkg/runner"
 )
 
@@ -32,7 +32,7 @@ func main() {
 		log.Fatal("initd must be launched as PID 1")
 	}
 
-	earlyConfig, err := config.Read(EarlyBootManifest)
+	earlyConfig, err := manifest.Read(EarlyBootManifest)
 	if err != nil {
 		log.Fatalf("got fatal error triyng to read early boot config: %v", err)
 	}
