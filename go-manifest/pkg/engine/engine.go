@@ -13,12 +13,12 @@ type Engine[T Task] struct {
 	tasks TaskSet[T]
 
 	// binned A map representing slices of tasks gated by priority
-	binned PrioritizedTaskSet
+	binned PrioritizedTaskSet[T]
 }
 
 // Wait Executes a function against each task, ignoring its priority. Effectively a wrapper around an existing error group. Wait will return
 // the first error that it encounters if one is found. Otherwise, nil is returned
-func (engine *Engine[T]) Wait(f TaskFunc) error {
+func (engine *Engine[T]) Wait(f TaskFunc[T]) error {
 	eg := new(errgroup.Group)
 
 	for _, t := range engine.tasks {
@@ -39,7 +39,7 @@ func (engine *Engine[T]) Wait(f TaskFunc) error {
 }
 
 // PrioritizedWait Execute a TaskFunc against each task while respecting priority gating
-func (engine *Engine[T]) PrioritizedWait(f TaskFunc) error {
+func (engine *Engine[T]) PrioritizedWait(f TaskFunc[T]) error {
 	binned := slices.Sorted(maps.Keys(engine.binned))
 
 	for _, priority := range binned {

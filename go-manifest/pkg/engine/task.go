@@ -6,18 +6,18 @@ type Task interface {
 }
 
 // TaskFunc A function that should be executed against a task
-type TaskFunc func(elem Task) error
+type TaskFunc[T Task] func(elem T) error
 
 // TaskSet A slice of tasks that need to be executed
 type TaskSet[T Task] []T
 
 // PrioritizedTaskSet A map representing priority gated tasks. Higher integers represent a collection
 // of tasks that should be executed first
-type PrioritizedTaskSet map[int][]Task
+type PrioritizedTaskSet[T Task] map[int][]T
 
 // Prioritize Sorts each task in a given list of task definitions by there priority.
-func (set TaskSet[T]) Prioritize() PrioritizedTaskSet {
-	binned := make(PrioritizedTaskSet)
+func (set TaskSet[T]) Prioritize() PrioritizedTaskSet[T] {
+	binned := make(PrioritizedTaskSet[T])
 
 	for _, t := range set {
 		priority := t.PriorityGate()
@@ -25,7 +25,7 @@ func (set TaskSet[T]) Prioritize() PrioritizedTaskSet {
 		// if a slice of tasks does not already exist at this priority gate then create one
 		// Nil pointer deref otherwise
 		if _, ok := binned[priority]; !ok {
-			binned[priority] = make([]Task, 0)
+			binned[priority] = make([]T, 0)
 		}
 
 		// Add the task to this priority group
