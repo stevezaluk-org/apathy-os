@@ -23,7 +23,7 @@ COPY "./build/kernel/config.default" ./.config
 RUN make olddefconfig
 RUN make -j $(nproc)
 
-FROM golang:1.25.5-alpine AS init-build
+FROM golang:1.26.1-alpine AS init-build
 
 ARG INIT_BUILDFLAGS="-v"
 ARG INIT_LDFLAGS="-s -w"
@@ -34,9 +34,32 @@ ENV CGO_ENABLED=0 \
 
 WORKDIR /out
 
-COPY ./initd .
+COPY ./initd initd/
+COPY ./go-manifest go-manifest/
 
-RUN go build -o init $INIT_BUILDFLAGS -ldflags="$INIT_LDFLAGS" && chmod +x init
+# this can be removed once this goes public
+RUN go work init ./initd ./go-manifest
+
+RUN go build -o init $INIT_BUILDFLAGS -ldflags="$INIT_LDFLAGS" ./initd && chmod +x init
+
+FROM golang:1.26.1-alpine AS agentd-build
+
+ARG INIT_BUILDFLAGS="-v"
+ARG INIT_LDFLAGS="-s -w"
+
+ENV CGO_ENABLED=0 \
+    GOOS=linux \
+    GOARCH=amd64
+
+WORKDIR /out
+
+COPY ./agentd agentd/
+COPY ./go-manifest go-manifest/
+
+# this can be removed once this goes public
+RUN go work init ./agentd ./go-manifest
+
+RUN go build -o agent $INIT_BUILDFLAGS -ldflags="$INIT_LDFLAGS" ./agentd && chmod +x agent
 
 FROM debian:stable-slim AS rootfs-glibc
 
@@ -44,7 +67,7 @@ ARG GLIBC_VER="2.43"
 
 WORKDIR /out
 
-RUN bash -c 'mkdir -p /out/rootfs/{bin,sbin,usr/bin,etc,sys,dev,proc,tmp,boot}'
+RUN bash -c 'mkdir -p /out/rootfs/{bin,sbin,usr/bin,etc,sys,dev,proc,tmp,boot,var,mnt}'
 
 WORKDIR /out/build/glibc
 
@@ -66,7 +89,7 @@ ARG MUSL_VER="1.2.6"
 
 WORKDIR /out
 
-RUN bash -c 'mkdir -p /out/rootfs/{bin,sbin,usr/bin,etc,sys,dev,proc,tmp,boot}'
+RUN bash -c 'mkdir -p /out/rootfs/{bin,sbin,usr/bin,etc,sys,dev,proc,tmp,boot,var,mnt}'
 
 WORKDIR /out/build/musl
 
@@ -87,7 +110,7 @@ FROM debian:stable-slim AS rootfs-static
 WORKDIR /out
 
 # not much really needed here as the whole point of a static build is not needing a libc implementation
-RUN bash -c 'mkdir -p /out/rootfs/{bin,sbin,usr/bin,etc,sys,dev,proc,tmp,boot}'
+RUN bash -c 'mkdir -p /out/rootfs/{bin,sbin,usr/bin,etc,sys,dev,proc,tmp,boot,var,mnt}'
 
 FROM rootfs-${LIBC_FLAVOR} AS rootfs-build
 
@@ -95,6 +118,7 @@ WORKDIR /out
 
 COPY "./build/deps/busybox-x86_64" /out/rootfs/usr/sbin/busybox
 COPY --from=init-build /out/init /out/rootfs/usr/sbin/init
+COPY --from=agentd-build /out/agent /out/rootfs/init
 
 FROM debian:stable-slim AS initramfs-build
 
@@ -104,11 +128,16 @@ RUN apt-get update \
 
 WORKDIR /out/initramfs
 
-RUN bash -c 'mkdir -p /out/initramfs/{sbin,usr/sbin,dev,proc,sys}'
+RUN bash -c 'mkdir -p /out/initramfs/{usr/sbin,usr/share/manifest.d,newroot,dev,proc,sys}'
+RUN bash -c 'mkdir -p /out/initramfs/newroot/{etc,var,mnt}'
 
 COPY "./build/deps/busybox-x86_64" /out/initramfs/usr/sbin/busybox
+COPY --from=init-build /out/init /out/initramfs/usr/sbin/init
 
-COPY --from=init-build /out/init /out/initramfs/init
+# This creates a confusing initramfs environment as agent is renamed to init, however this is a hard requirement of switch_root
+COPY --from=agentd-build /out/agent /out/initramfs/init
+
+COPY "./build/manifest.d/init.yaml" /out/initramfs/usr/share/manifest.d/init.yaml
 
 RUN bash -c 'find . | cpio -o -H newc > ../initrd.cpio'
 
