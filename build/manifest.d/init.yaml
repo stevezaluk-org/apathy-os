@@ -41,7 +41,7 @@ services:
     - bin: "/usr/sbin/switch_root" # switch_root launches agentd which handles late setup and our event loop
       args:
       - "/newroot"
-      - "/usr/sbin/agent"
+      - "/init" # agentd
       exec: true
 
 # We don't persist anything on initramfs, so just log to stdout directly

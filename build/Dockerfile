@@ -133,6 +133,9 @@ RUN bash -c 'mkdir -p /out/initramfs/newroot/{etc,var,mnt}'
 COPY "./build/deps/busybox-x86_64" /out/initramfs/usr/sbin/busybox
 COPY --from=init-build /out/init /out/initramfs/usr/sbin/init
 
+# This creates a confusing initramfs environment as agent is renamed to init, however this is a hard requirement of switch_root
+COPY --from=agentd-build /out/agent /out/initramfs/init
+
 COPY "./build/manifest.d/init.yaml" /out/initramfs/usr/share/manifest.d/init.yaml
 
 RUN bash -c 'find . | cpio -o -H newc > ../initrd.cpio'
