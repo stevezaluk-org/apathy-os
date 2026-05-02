@@ -64,9 +64,9 @@ func (agent *Agent) Start() error {
 // New Initializes a new Agent and returns a pointer to it
 func New(config *manifest.Manifest) *Agent {
 	return &Agent{
-		runner:  runner.New(config),
-		sigChld: make(chan os.Signal, 1),
-		sigTerm: make(chan os.Signal, 1),
-		sigAcpi: make(chan *edev.InputEvent),
+		runner:   runner.New(config),
+		sigChild: make(chan os.Signal, 1),
+		sigTerm:  make(chan os.Signal, 1),
+		sigAcpi:  make(chan *edev.InputEvent),
 	}
 }
