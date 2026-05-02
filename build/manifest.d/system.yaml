@@ -1,0 +1,70 @@
+# Name: system.yaml
+# Description: The default system config that gets applied to all immutable-os builds. This generally should not be
+# modified directly, and instead you should use merge files present at /etc/manifest.d/user.yaml. The only way that this
+# could be modified is if the filesystem was mounted as r/w on another system as this is stored under /usr/share/manifest.d/system.yaml
+
+mounts:
+  # Default virtual mounts
+  - device: devtmpfs
+    filesystemType: devtmpfs
+    mountPoint: /dev
+    priority: 1
+
+  - device: sysfs
+    filesystemType: sysfs
+    mountPoint: /sys
+    priority: 1
+
+  - device: proc
+    filesystemType: proc
+    mountPoint: /proc
+    priority: 1
+
+  - device: tmpfs
+    filesystemType: tmpfs
+    mountPoint: /tmp
+    priority: 1
+
+  # Cgroup related filesystems
+  - device: cgroup2
+    filesystemType: cgroup2
+    mountPoint: /sys/fs/cgroup
+    priority: 2
+
+# Always try to initialize a NIC
+network:
+  - auto: true
+
+# We set this higher than the default as we want to ensure that processes are given enough time to close properly
+# This is really only applicable a for plain processes (ones that reject cgroup containment). By default, raw processes
+# run contained within a cgroup, unless this is explicitly rejected or `exec: true` is passed
+reaper:
+  delay: 90
+
+services:
+  container:
+    # agentd-api is the gRPC API that allows you to interact with the system at runtime
+    # Note: `volumes` is omitted here as by default services will get mapped to /srv/sys/volumes/<container-name>
+    # Note: Image cache present at /srv/sys/oci-image. Purge this directory to wipe the image cache
+    # Note: All containers are deployed through containerd
+    - image: "ghcr.io/stevezaluk/immutable-os/agentd-api:latest"
+      name: "agentd-api"
+      fatal: true
+      restart:
+        policy: always # Always try and restart this container. Omitting `count` here to further enforce this
+        backoff: 15 # Wait 15 seconds on a failure before trying to start this container again
+
+# Replicate a small number of logs to disk in the event that remote options fail
+log:
+  local:
+    path: "/srv/sys/log/log.json"
+    format: "json"
+    compress: true
+    maxsize: 50 # Size in MiB
+    maxage: 3
+
+env:
+  - key: PATH
+    value: "/usr/sbin:/usr/bin:/bin:/sbin"
+  - key: HOME
+    value: "/srv/home"
