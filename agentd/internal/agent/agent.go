@@ -49,8 +49,12 @@ func (agent *Agent) EventLoop() error {
 			log.Println("got sigchld")
 			// TODO: Handle wait for pid here
 		case <-agent.sigAcpi:
+			log.Println("got ACPI")
+			if err := agent.Shutdown(); err != nil {
+				return err
+			}
 		case <-agent.sigTerm:
-			log.Println("got sigterm/acpi event")
+			log.Println("got sigterm")
 			if err := agent.Shutdown(); err != nil {
 				return err
 			}
