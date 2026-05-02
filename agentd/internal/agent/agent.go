@@ -4,11 +4,11 @@ import (
 	"log"
 	"os"
 	"os/signal"
-	"syscall"
 
 	"github.com/stevezaluk/immutable-os/agentd/internal/edev"
 	"github.com/stevezaluk/immutable-os/go-manifest/pkg/manifest"
 	"github.com/stevezaluk/immutable-os/go-manifest/pkg/runner"
+	"golang.org/x/sys/unix"
 )
 
 // Agent An abstraction around the agent as a whole. Manages the state of late PID 1 and service supervisor
@@ -33,8 +33,8 @@ type Agent struct {
 func (agent *Agent) EventLoop() error {
 
 	// Establish notifications for the signals that we need to catch
-	signal.Notify(agent.sigChild, syscall.SIGCHLD)
-	signal.Notify(agent.sigTerm, syscall.SIGTERM, syscall.SIGINT)
+	signal.Notify(agent.sigChild, unix.SIGCHLD)
+	signal.Notify(agent.sigTerm, unix.SIGTERM, unix.SIGINT)
 
 	for {
 		select {
