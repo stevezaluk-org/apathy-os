@@ -21,7 +21,7 @@ func processEvents(messages []genetlink.Message) (bool, error) {
 			continue // skip on an invalid message
 		}
 
-		if strings.Contains(string(event.DeviceClass[:]), "button/power") {
+		if strings.Contains(event.Device(), "button/power") {
 			return true, nil // we got a power button press, return true
 		}
 	}

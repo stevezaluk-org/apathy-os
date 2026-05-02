@@ -27,6 +27,11 @@ type Event struct {
 	Data uint32
 }
 
+// Device Returns the string representation of the device that initiated this event
+func (event *Event) Device() string {
+	return string(event.DeviceClass[:])
+}
+
 // UnmarshalEvent Unmarshal's a generic netlink message into an acpi.Event message and returns a pointer to it.
 func UnmarshalEvent(msg genetlink.Message) (*Event, error) {
 	ret := new(Event)
