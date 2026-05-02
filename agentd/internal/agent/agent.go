@@ -7,6 +7,7 @@ import (
 	"os/signal"
 
 	"github.com/stevezaluk/immutable-os/agentd/internal/acpi"
+	"github.com/stevezaluk/immutable-os/agentd/internal/reaper"
 	"github.com/stevezaluk/immutable-os/go-manifest/pkg/manifest"
 	"github.com/stevezaluk/immutable-os/go-manifest/pkg/runner"
 	"golang.org/x/sys/unix"
@@ -45,13 +46,33 @@ func (agent *Agent) EventLoop() error {
 	for {
 		select {
 		case <-agent.sigChild:
-			log.Println("got sigchdl")
+			log.Println("got sigchld")
+			// TODO: Handle wait for pid here
 		case <-agent.sigAcpi:
-			log.Println("got sigacpi")
 		case <-agent.sigTerm:
 			log.Println("got sigterm/acpi event")
+			if err := agent.Shutdown(); err != nil {
+				return err
+			}
 		}
 	}
+}
+
+// Shutdown Initiates shutdown logic
+//
+// TODO: Not remounting (reverse order) filesystems here. Leads to data loss
+// TODO: No real service management here. Basic unix.Kill(-1)
+func (agent *Agent) Shutdown() error {
+	if err := reaper.ReapProcesses(); err != nil {
+		return err
+	}
+
+	// actually shutdown the system
+	if err := unix.Reboot(unix.LINUX_REBOOT_CMD_POWER_OFF); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // Start Initial entrypoint for the agent. Processes system/user manifest files and then moves to the event loop
