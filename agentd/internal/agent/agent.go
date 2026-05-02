@@ -1,7 +1,10 @@
 package agent
 
 import (
+	"log"
 	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/stevezaluk/immutable-os/agentd/internal/edev"
 	"github.com/stevezaluk/immutable-os/go-manifest/pkg/manifest"
@@ -16,14 +19,46 @@ type Agent struct {
 	// runner go-manifest runner used for initializing the system during startup
 	runner *runner.Runner
 
-	// sigChld Channel responsible for delivering SIGCHLD signals. Used for reaping processes
-	sigChld chan os.Signal
+	// sigChild Channel responsible for delivering SIGCHLD signals. Used for reaping processes
+	sigChild chan os.Signal
 
 	// sigTerm Channel responsible for delivering SIGTERM events, an alternative way of initiating a shutdown
 	sigTerm chan os.Signal
 
 	// sigAcpi Channel responsible for receiving ACPI events, indicating that the system should shutdowwn
 	sigAcpi chan *edev.InputEvent
+}
+
+// EventLoop Starts the core agent event loop
+func (agent *Agent) EventLoop() error {
+
+	// Establish notifications for the signals that we need to catch
+	signal.Notify(agent.sigChild, syscall.SIGCHLD)
+	signal.Notify(agent.sigTerm, syscall.SIGTERM, syscall.SIGINT)
+
+	for {
+		select {
+		case <-agent.sigChild:
+			log.Println("got sigchdl")
+		case <-agent.sigAcpi:
+		case <-agent.sigTerm:
+			log.Println("got sigterm/acpi event")
+		}
+	}
+}
+
+// Start Initial entrypoint for the agent. Processes system/user manifest files and then moves to the event loop
+func (agent *Agent) Start() error {
+	if err := agent.runner.Go(); err != nil {
+		return err
+	}
+
+	// blocks forever
+	if err := agent.EventLoop(); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // New Initializes a new Agent and returns a pointer to it
