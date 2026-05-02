@@ -32,6 +32,8 @@ func processEvents(messages []genetlink.Message) (bool, error) {
 // EventLoop Loop forever until we receive a "button/power" event from a generic netlink socket. This indicates that a
 // power button event was received, and we should start gracefully shutdown. Notify the channel passed in the second
 // argument of this function.
+//
+// TODO: This function has bad error handling
 func EventLoop(context context.Context, sig chan bool) {
 	sock, err := genetlink.Dial(nil)
 	if err != nil {

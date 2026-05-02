@@ -1,11 +1,12 @@
 package agent
 
 import (
+	"context"
 	"log"
 	"os"
 	"os/signal"
 
-	"github.com/stevezaluk/immutable-os/agentd/internal/edev"
+	"github.com/stevezaluk/immutable-os/agentd/internal/acpi"
 	"github.com/stevezaluk/immutable-os/go-manifest/pkg/manifest"
 	"github.com/stevezaluk/immutable-os/go-manifest/pkg/runner"
 	"golang.org/x/sys/unix"
@@ -26,21 +27,27 @@ type Agent struct {
 	sigTerm chan os.Signal
 
 	// sigAcpi Channel responsible for receiving ACPI events, indicating that the system should shutdowwn
-	sigAcpi chan *edev.InputEvent
+	sigAcpi chan bool
 }
 
 // EventLoop Starts the core agent event loop
 func (agent *Agent) EventLoop() error {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
 	// Establish notifications for the signals that we need to catch
 	signal.Notify(agent.sigChild, unix.SIGCHLD)
 	signal.Notify(agent.sigTerm, unix.SIGTERM, unix.SIGINT)
+
+	// start our ACPI event loop
+	go acpi.EventLoop(ctx, agent.sigAcpi)
 
 	for {
 		select {
 		case <-agent.sigChild:
 			log.Println("got sigchdl")
 		case <-agent.sigAcpi:
+			log.Println("got sigacpi")
 		case <-agent.sigTerm:
 			log.Println("got sigterm/acpi event")
 		}
@@ -67,6 +74,6 @@ func New(config *manifest.Manifest) *Agent {
 		runner:   runner.New(config),
 		sigChild: make(chan os.Signal, 1),
 		sigTerm:  make(chan os.Signal, 1),
-		sigAcpi:  make(chan *edev.InputEvent),
+		sigAcpi:  make(chan bool),
 	}
 }
