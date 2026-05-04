@@ -7,7 +7,6 @@ import (
 	"github.com/goccy/go-yaml"
 	"github.com/stevezaluk/immutable-os/go-manifest/pkg/env"
 	"github.com/stevezaluk/immutable-os/go-manifest/pkg/mount"
-	"github.com/stevezaluk/immutable-os/go-manifest/pkg/service"
 )
 
 // Manifest An abstraction of a manifest file
@@ -18,9 +17,6 @@ type Manifest struct {
 
 	// Envs EnvironmentVariables that should be created
 	Envs []*env.EnvironmentVariable `yaml:"env"`
-
-	// Services Service's that should be started after the root filesystem is mounted
-	Services *service.Services `yaml:"services"`
 }
 
 // Read Reads a manifest config file at the specified Unix path, unmarshalls it into Config, and returns a pointer to it

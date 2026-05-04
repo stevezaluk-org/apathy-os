@@ -6,12 +6,15 @@ import (
 
 	"github.com/stevezaluk/immutable-os/go-manifest/pkg/manifest"
 	"github.com/stevezaluk/immutable-os/go-manifest/pkg/runner"
+	"golang.org/x/sys/unix"
 )
 
 // All constant paths are under initramfs, not rootfs
 const (
-	BusyBoxPath       = "/usr/sbin/busybox"
-	EarlyBootManifest = "/usr/share/manifest.d/init.yaml"
+	BusyBoxPath             = "/usr/sbin/busybox"
+	SwitchRootPath          = "/usr/sbin/switch_root"
+	TemporaryRootFilesystem = "/newroot"
+	EarlyBootManifest       = "/usr/share/manifest.d/init.yaml"
 )
 
 // symlinks Initialize required symlinks for mounting root filesystem
@@ -43,5 +46,9 @@ func main() {
 
 	if err := runner.New(earlyConfig).Go(); err != nil {
 		log.Fatalf("got fatal error trying to process early boot manfiest: %v", err)
+	}
+
+	if err := unix.Exec(SwitchRootPath, []string{SwitchRootPath, TemporaryRootFilesystem, "/init"}, os.Environ()); err != nil {
+		log.Fatalf("got fatal error when trying to switch_root: %v", err)
 	}
 }
