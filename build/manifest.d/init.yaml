@@ -35,15 +35,6 @@ mounts:
     mountPoint: /newroot/mnt
     priority: 3
 
-# Services will only ever start until all mounts are processed, so this is safe to execute
-services:
-  processes:
-    - bin: "/usr/sbin/switch_root" # switch_root launches agentd which handles late setup and our event loop
-      args:
-      - "/newroot"
-      - "/init" # agentd
-      exec: true
-
 # We don't persist anything on initramfs, so just log to stdout directly
 log:
   local:
