@@ -117,6 +117,7 @@ FROM rootfs-${LIBC_FLAVOR} AS rootfs-build
 WORKDIR /out
 
 COPY "./build/manifest.d/system.yaml" /out/rootfs/usr/share/manifest.d/system.yaml
+COPY "./build/service.d/*.yaml" /out/rootfs/usr/share/service.d/
 
 COPY "./build/deps/busybox-x86_64" /out/rootfs/usr/sbin/busybox
 COPY --from=init-build /out/init /out/rootfs/usr/sbin/init
