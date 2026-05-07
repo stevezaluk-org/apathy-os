@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"log"
 	"os"
 	"path/filepath"
@@ -29,6 +30,15 @@ type Supervisor struct {
 
 	// mu Mutex lock protecting concurrent writes to the process list
 	mu sync.RWMutex
+}
+
+func (supervisor *Supervisor) EventLoop(ctx context.Context) {
+	childCtx, cancel := context.WithCancelCause(ctx)
+
+	for _, service := range supervisor.processList {
+		log.Printf("Starting watch loop on %s", service.Name)
+		go service.Watch(childCtx, cancel)
+	}
 }
 
 // Start Iterates through all enumerated services and starts them concurrently according to there ordered priority

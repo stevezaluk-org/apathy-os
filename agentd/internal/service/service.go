@@ -1,8 +1,11 @@
 package service
 
 import (
+	"context"
+	"log"
 	"os"
 	"os/exec"
+	"time"
 
 	"github.com/containerd/cgroups/v2/cgroup2"
 	"github.com/goccy/go-yaml"
@@ -39,9 +42,50 @@ type Service struct {
 	manager *cgroup2.Manager
 }
 
+// Watch Starts the core wait/restart loop for the service. Services do not have a configurable restart policy as they
+// are treated as core to the operating system. Services will try and restart a maximum of 3 times before Watch gives
+// up and trying to restart them. Backoff in between restarts is set to 5 seconds
+func (service *Service) Watch(ctx context.Context, cancel context.CancelCauseFunc) {
+	log.Printf("Watching service %s", service.Name)
+
+	for i := range 3 {
+		select {
+		case <-ctx.Done():
+			cancel(ctx.Err()) // context was canceled, ensure that we have proper clean up here
+		default:
+			if err := service.proc.Wait(); err != nil {
+				log.Printf("Service %s (%d) died with error: %s", service.Name, service.proc.Process.Pid, err)
+			}
+
+			time.Sleep(5 * time.Second) // backoff
+
+			// TODO: This does not free the process from its cgroup, which should be changed
+			log.Printf("Restarting service %s. Try %d", service.Name, i)
+			if err := service.Start(); err != nil {
+				log.Printf("Got error trying to restart service %s on try %d: %s", service.Name, i, err)
+				if i == 3 {
+					cancel(err) // we hit our limit on restarting the service. proper clean up here
+				}
+			}
+		}
+	}
+}
+
 // Start Starts the specified service, and provided that it does not immediately crash, its process is migrated to the
 // services cgroup.
 func (service *Service) Start() error {
+	service.proc = exec.Command(service.Binary, service.Args...)
+	service.proc.Env = append(service.proc.Env, service.Env...)
+
+	// This is kind of a hacky way of doing this and we really should be using something like containerd/console for
+	// creating a proper virtual console. To be replaced in the future
+	// TODO: Replace with github.com/containerd/console
+	if service.MapConsole {
+		service.proc.Stdout = os.Stdout
+		service.proc.Stdin = os.Stdin
+		service.proc.Stderr = os.Stderr
+	}
+
 	if err := service.proc.Start(); err != nil {
 		return err
 	}
@@ -54,6 +98,8 @@ func (service *Service) Start() error {
 	if err := service.manager.AddProc(uint64(service.proc.Process.Pid)); err != nil {
 		return err
 	}
+
+	log.Printf("Service %s started with PID %d", service.Name, service.proc.Process.Pid)
 
 	return nil
 }
@@ -76,19 +122,7 @@ func New(path string, parent *cgroup2.Manager) (*Service, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	service.manager = manager
-	service.proc = exec.Command(service.Binary, service.Args...)
-	service.proc.Env = append(service.proc.Env, service.Env...)
-
-	// This is kind of a hacky way of doing this and we really should be using something like containerd/console for
-	// creating a proper virtual console. To be replaced in the future
-	// TODO: Replace with github.com/containerd/console
-	if service.MapConsole {
-		service.proc.Stdout = os.Stdout
-		service.proc.Stdin = os.Stdin
-		service.proc.Stderr = os.Stderr
-	}
 
 	return service, nil
 }

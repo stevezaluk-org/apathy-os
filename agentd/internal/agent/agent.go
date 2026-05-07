@@ -46,6 +46,7 @@ func (agent *Agent) EventLoop() error {
 
 	// start our ACPI event loop
 	go acpi.EventLoop(ctx, agent.sigAcpi)
+	go agent.supervisor.EventLoop(ctx)
 
 	for {
 		select {
