@@ -1,3 +1,5 @@
+github.com/containerd/cgroups/v2 v2.0.0-20221109034041-cc78c6c1e32d h1:gfwJ/MHZGr5PdfUf2oMZjbJyPhKIIN1m46Sdm1FIodM=
+github.com/containerd/cgroups/v2 v2.0.0-20221109034041-cc78c6c1e32d/go.mod h1:nno7catpBPPU5fP1B4f1c1B5B5v8VTs+U2z62ZsTzSE=
 github.com/google/go-cmp v0.7.0 h1:wk8382ETsv4JYUZwIsn6YpYiWiBsYLSJiTsyBybVuN8=
 github.com/google/go-cmp v0.7.0/go.mod h1:pXiqmnSA92OHEEa9HXL2W4E7lf9JzCmGVUdgjX3N/iU=
 github.com/mdlayher/genetlink v1.4.0 h1:f/Xs7Y2T+GyX9b3dbiUhnLE9InGs5F9RxJ2JwBMl71o=
