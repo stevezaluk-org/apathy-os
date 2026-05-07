@@ -8,6 +8,7 @@ import (
 
 	"github.com/stevezaluk/immutable-os/agentd/internal/acpi"
 	"github.com/stevezaluk/immutable-os/agentd/internal/reaper"
+	"github.com/stevezaluk/immutable-os/agentd/internal/service"
 	"github.com/stevezaluk/immutable-os/go-manifest/pkg/manifest"
 	"github.com/stevezaluk/immutable-os/go-manifest/pkg/runner"
 	"golang.org/x/sys/unix"
@@ -20,6 +21,9 @@ type Agent struct {
 
 	// runner go-manifest runner used for initializing the system during startup
 	runner *runner.Runner
+
+	// supervisor Service supervisor for Agent
+	supervisor *service.Supervisor
 
 	// sigChild Channel responsible for delivering SIGCHLD signals. Used for reaping processes
 	sigChild chan os.Signal
@@ -84,6 +88,13 @@ func (agent *Agent) Start() error {
 	if err := agent.runner.Go(); err != nil {
 		return err
 	}
+
+	supervisor, err := service.NewSupervisor(service.DefaultServicePath)
+	if err != nil {
+		return err
+	}
+
+	agent.supervisor = supervisor
 
 	// blocks forever
 	if err := agent.EventLoop(); err != nil {
