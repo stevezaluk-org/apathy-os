@@ -28,6 +28,10 @@ type Service struct {
 	// Env Environment variables to pass to the service. Will be merged with OS set env vars
 	Env []string `yaml:"env"`
 
+	// MapConsole If set to true, map the processes Stdout/Stdin/Stderr to there os equivalents. Allows you to actually
+	// interact with a service that wants input from stdin
+	MapConsole bool `yaml:"mapConsole"`
+
 	// proc Contains the "state" of the service and its associating process
 	proc *exec.Cmd
 
@@ -76,6 +80,15 @@ func New(path string, parent *cgroup2.Manager) (*Service, error) {
 	service.manager = manager
 	service.proc = exec.Command(service.Binary, service.Args...)
 	service.proc.Env = append(service.proc.Env, service.Env...)
+
+	// This is kind of a hacky way of doing this and we really should be using something like containerd/console for
+	// creating a proper virtual console. To be replaced in the future
+	// TODO: Replace with github.com/containerd/console
+	if service.MapConsole {
+		service.proc.Stdout = os.Stdout
+		service.proc.Stdin = os.Stdin
+		service.proc.Stderr = os.Stderr
+	}
 
 	return service, nil
 }
