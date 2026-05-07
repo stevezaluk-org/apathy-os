@@ -8,6 +8,7 @@ import (
 	"sync"
 
 	"github.com/containerd/cgroups/v2/cgroup2"
+	"golang.org/x/sync/errgroup"
 )
 
 const (
@@ -30,6 +31,25 @@ type Supervisor struct {
 	mu sync.RWMutex
 }
 
+// Start Iterates through all enumerated services and starts them concurrently according to there ordered priority
+func (supervisor *Supervisor) Start() error {
+	eg := new(errgroup.Group)
+
+	for name, service := range supervisor.processList {
+		log.Printf("Starting service %s (%s %v)", name, service.Binary, service.Args)
+
+		eg.Go(func() error {
+			return service.Start()
+		})
+	}
+
+	if err := eg.Wait(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // NewSupervisor Initializes a new Supervisor and returns a pointer to it. NewSupervisor will initialize the parent
 // cgroup in which all processes will be placed within, so you should only call this once. Additionally, NewSupervisor
 // walks the Unix path provided in its first argument trying to identify files that end in .yaml. If a .yaml file is found
@@ -48,14 +68,13 @@ func NewSupervisor(path string) (*Supervisor, error) {
 	}
 
 	err = filepath.Walk(path, func(path string, info os.FileInfo, err error) error {
-		log.Println("path: ", path)
 		if strings.HasSuffix(path, ".yaml") {
 			service, err := New(path, parent)
 			if err != nil {
 				return err
 			}
 
-			log.Printf("Adding service: %v", service)
+			log.Printf("Service queued for start: %s", path)
 			services[service.Name] = service
 		}
 

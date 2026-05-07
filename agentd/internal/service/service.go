@@ -35,6 +35,25 @@ type Service struct {
 	manager *cgroup2.Manager
 }
 
+// Start Starts the specified service, and provided that it does not immediately crash, its process is migrated to the
+// services cgroup.
+func (service *Service) Start() error {
+	if err := service.proc.Start(); err != nil {
+		return err
+	}
+
+	if service.proc.Process == nil {
+		return nil // service failed to start here. Actually process the error
+	}
+
+	// migrate the service to its cgroup
+	if err := service.manager.AddProc(uint64(service.proc.Process.Pid)); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // New Initialize a new Service and return a pointer to it. You must provide an absolute path that the service is
 // available at. On initialization, the services cgroup will be created, but it will not be started. Use Service.Start
 // for that
