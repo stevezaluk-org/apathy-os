@@ -96,6 +96,11 @@ func (agent *Agent) Start() error {
 
 	agent.supervisor = supervisor
 
+	// kick off service start before we start ACPI event loop
+	if err := agent.supervisor.Start(); err != nil {
+		return err
+	}
+
 	// blocks forever
 	if err := agent.EventLoop(); err != nil {
 		return err
