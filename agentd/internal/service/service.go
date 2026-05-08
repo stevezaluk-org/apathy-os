@@ -79,7 +79,7 @@ func (service *Service) Stop(ctx context.Context) error {
 
 // Start Starts the specified service, and provided that it does not immediately crash, its process is migrated to the
 // services cgroup.
-// TODO: Service keeps trying to restart here on context cancel (system shutdown)
+// TODO: Service accepts input (when os.Stdin) is mapped even after Service.Stop is called
 func (service *Service) Start(ctx context.Context) {
 	child, cancel := context.WithCancel(ctx)
 	defer cancel()
@@ -108,21 +108,26 @@ func (service *Service) Start(ctx context.Context) {
 			service.proc.Stderr = os.Stderr
 		}
 
-		if err := service.proc.Start(); err != nil {
-			log.Printf("Error starting %s on try %d: %v", service.Name, i+1, err)
-			continue
-		}
+		select {
+		case <-child.Done():
+			return
+		default:
+			if err := service.proc.Start(); err != nil {
+				log.Printf("Error starting %s on try %d: %v", service.Name, i+1, err)
+				continue
+			}
 
-		// migrate the service to its cgroup
-		if err := service.manager.AddProc(uint64(service.proc.Process.Pid)); err != nil {
-			log.Printf("Failed to migrated service %s to cgroup", service.Name)
-			continue
-		}
+			// migrate the service to its cgroup
+			if err := service.manager.AddProc(uint64(service.proc.Process.Pid)); err != nil {
+				log.Printf("Failed to migrated service %s to cgroup", service.Name)
+				continue
+			}
 
-		log.Printf("Service %s started with PID %d", service.Name, service.proc.Process.Pid)
-		if err := service.proc.Wait(); err != nil {
-			log.Printf("Service %s died with error: %v", service.Name, err)
-			continue
+			log.Printf("Service %s started with PID %d", service.Name, service.proc.Process.Pid)
+			if err := service.proc.Wait(); err != nil {
+				log.Printf("Service %s died with error: %v", service.Name, err)
+				continue
+			}
 		}
 
 		log.Printf("Service %s died with PID %d. Trying to restart in 20 seconds", service.Name, service.proc.Process.Pid)
