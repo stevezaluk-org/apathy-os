@@ -55,11 +55,13 @@ func (agent *Agent) EventLoop() error {
 			// TODO: Handle wait for pid here
 		case <-agent.sigAcpi:
 			log.Println("got ACPI")
+			cancel()
 			if err := agent.Shutdown(); err != nil {
 				return err
 			}
 		case <-agent.sigTerm:
 			log.Println("got sigterm")
+			cancel()
 			if err := agent.Shutdown(); err != nil {
 				return err
 			}
@@ -96,11 +98,6 @@ func (agent *Agent) Start() error {
 	}
 
 	agent.supervisor = supervisor
-
-	// kick off service start before we start ACPI event loop
-	if err := agent.supervisor.Start(); err != nil {
-		return err
-	}
 
 	// blocks forever
 	if err := agent.EventLoop(); err != nil {

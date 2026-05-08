@@ -9,7 +9,6 @@ import (
 	"sync"
 
 	"github.com/containerd/cgroups/v2/cgroup2"
-	"golang.org/x/sync/errgroup"
 )
 
 const (
@@ -33,31 +32,10 @@ type Supervisor struct {
 }
 
 func (supervisor *Supervisor) EventLoop(ctx context.Context) {
-	childCtx, cancel := context.WithCancelCause(ctx)
-
 	for _, service := range supervisor.processList {
 		log.Printf("Starting watch loop on %s", service.Name)
-		go service.Watch(childCtx, cancel)
+		go service.Start(ctx)
 	}
-}
-
-// Start Iterates through all enumerated services and starts them concurrently according to there ordered priority
-func (supervisor *Supervisor) Start() error {
-	eg := new(errgroup.Group)
-
-	for name, service := range supervisor.processList {
-		log.Printf("Starting service %s (%s %v)", name, service.Binary, service.Args)
-
-		eg.Go(func() error {
-			return service.Start()
-		})
-	}
-
-	if err := eg.Wait(); err != nil {
-		return err
-	}
-
-	return nil
 }
 
 // NewSupervisor Initializes a new Supervisor and returns a pointer to it. NewSupervisor will initialize the parent

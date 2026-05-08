@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"syscall"
 	"time"
 
 	"github.com/containerd/cgroups/v2/cgroup2"
@@ -40,32 +41,37 @@ type Service struct {
 
 	// manager The cgroup2 manager for this service
 	manager *cgroup2.Manager
+
+	// ctx Context controlling concurrency for service starting/stopping
+	ctx context.Context
+
+	// cancel Function for stopping executing
+	cancel context.CancelFunc
 }
 
-// Watch Starts the core wait/restart loop for the service. Services do not have a configurable restart policy as they
-// are treated as core to the operating system. Services will try and restart a maximum of 3 times before Watch gives
-// up and trying to restart them. Backoff in between restarts is set to 5 seconds
-func (service *Service) Watch(ctx context.Context, cancel context.CancelCauseFunc) {
-	log.Printf("Watching service %s", service.Name)
+func (service *Service) Stop(ctx context.Context) error {
+	if service.proc.Process == nil {
+		return nil // Service has not been started exit early
+	}
 
-	for i := range 3 {
+	log.Printf("Sending SIGTERM to service %s with PID %d", service.Name, service.proc.Process.Pid)
+	if err := service.proc.Process.Signal(syscall.SIGTERM); err != nil {
+		return err
+	}
+
+	for {
 		select {
 		case <-ctx.Done():
-			cancel(ctx.Err()) // context was canceled, ensure that we have proper clean up here
-		default:
-			if err := service.proc.Wait(); err != nil {
-				log.Printf("Service %s (%d) died with error: %s", service.Name, service.proc.Process.Pid, err)
+			log.Println("Service failed to respond to SIGTERM. Service will be SIGKILL'ed and cgroup frozen")
+			if err := service.manager.Freeze(); err != nil {
+				return err
 			}
 
-			time.Sleep(5 * time.Second) // backoff
-
-			// TODO: This does not free the process from its cgroup, which should be changed
-			log.Printf("Restarting service %s. Try %d", service.Name, i)
-			if err := service.Start(); err != nil {
-				log.Printf("Got error trying to restart service %s on try %d: %s", service.Name, i, err)
-				if i == 3 {
-					cancel(err) // we hit our limit on restarting the service. proper clean up here
-				}
+			return nil
+		default:
+			if err := service.proc.ProcessState; err != nil {
+				log.Printf("Service %s stopped. Exit code: %d", service.Name, service.proc.ProcessState.ExitCode())
+				return nil
 			}
 		}
 	}
@@ -73,35 +79,55 @@ func (service *Service) Watch(ctx context.Context, cancel context.CancelCauseFun
 
 // Start Starts the specified service, and provided that it does not immediately crash, its process is migrated to the
 // services cgroup.
-func (service *Service) Start() error {
-	service.proc = exec.Command(service.Binary, service.Args...)
-	service.proc.Env = append(service.proc.Env, service.Env...)
+// TODO: Service keeps trying to restart here on context cancel (system shutdown)
+func (service *Service) Start(ctx context.Context) {
+	child, cancel := context.WithCancel(ctx)
+	defer cancel()
 
-	// This is kind of a hacky way of doing this and we really should be using something like containerd/console for
-	// creating a proper virtual console. To be replaced in the future
-	// TODO: Replace with github.com/containerd/console
-	if service.MapConsole {
-		service.proc.Stdout = os.Stdout
-		service.proc.Stdin = os.Stdin
-		service.proc.Stderr = os.Stderr
+	for i := range 3 {
+		service.proc = exec.CommandContext(child, service.Binary, service.Args...)
+		service.proc.Cancel = func() error {
+			cleanUpCtx, cleanUpCancel := context.WithTimeout(context.Background(), 20*time.Second)
+			defer cleanUpCancel()
+
+			if err := service.Stop(cleanUpCtx); err != nil {
+				return err
+			}
+
+			return nil
+		}
+
+		service.proc.Env = append(service.proc.Env, service.Env...)
+
+		// This is kind of a hacky way of doing this and we really should be using something like containerd/console for
+		// creating a proper virtual console. To be replaced in the future
+		// TODO: Replace with github.com/containerd/console
+		if service.MapConsole {
+			service.proc.Stdout = os.Stdout
+			service.proc.Stdin = os.Stdin
+			service.proc.Stderr = os.Stderr
+		}
+
+		if err := service.proc.Start(); err != nil {
+			log.Printf("Error starting %s on try %d: %v", service.Name, i+1, err)
+			continue
+		}
+
+		// migrate the service to its cgroup
+		if err := service.manager.AddProc(uint64(service.proc.Process.Pid)); err != nil {
+			log.Printf("Failed to migrated service %s to cgroup", service.Name)
+			continue
+		}
+
+		log.Printf("Service %s started with PID %d", service.Name, service.proc.Process.Pid)
+		if err := service.proc.Wait(); err != nil {
+			log.Printf("Service %s died with error: %v", service.Name, err)
+			continue
+		}
+
+		log.Printf("Service %s died with PID %d. Trying to restart in 20 seconds", service.Name, service.proc.Process.Pid)
+		time.Sleep(20 * time.Second) // back off
 	}
-
-	if err := service.proc.Start(); err != nil {
-		return err
-	}
-
-	if service.proc.Process == nil {
-		return nil // service failed to start here. Actually process the error
-	}
-
-	// migrate the service to its cgroup
-	if err := service.manager.AddProc(uint64(service.proc.Process.Pid)); err != nil {
-		return err
-	}
-
-	log.Printf("Service %s started with PID %d", service.Name, service.proc.Process.Pid)
-
-	return nil
 }
 
 // New Initialize a new Service and return a pointer to it. You must provide an absolute path that the service is
