@@ -70,7 +70,6 @@ func (service *Service) Stop(ctx context.Context) error {
 			return nil
 		default:
 			if err := service.proc.ProcessState; err != nil {
-				log.Printf("Service %s stopped. Exit code: %d", service.Name, service.proc.ProcessState.ExitCode())
 				return nil
 			}
 		}
@@ -141,9 +140,10 @@ func (service *Service) Watch(ctx context.Context) {
 				log.Printf("Service %s died with error: %v", service.Name, err)
 			}
 		}
-
-		time.Sleep(20 * time.Second) // back off
 	}
+
+	// never hit on system shutdown, only ever hit if a service repeatedly refuses to start
+	log.Printf("Service %s has tried to restart 3 times. Service will not be restarted", service.Name)
 }
 
 // New Initialize a new Service and return a pointer to it. You must provide an absolute path that the service is
