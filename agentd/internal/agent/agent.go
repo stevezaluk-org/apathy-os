@@ -31,11 +31,12 @@ type Agent struct {
 	// sigTerm Channel responsible for delivering SIGTERM events, an alternative way of initiating a shutdown
 	sigTerm chan os.Signal
 
-	// sigAcpi Channel responsible for receiving ACPI events, indicating that the system should shutdowwn
+	// sigAcpi Channel responsible for receiving ACPI events, indicating that the system should shutdown
 	sigAcpi chan bool
 }
 
 // EventLoop Starts the core agent event loop
+// TODO: Both the process reaper and service shutdown is occurring at the same time.
 func (agent *Agent) EventLoop() error {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()

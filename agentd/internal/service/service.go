@@ -120,6 +120,7 @@ func (service *Service) Start(ctx context.Context) error {
 // A new child context is  derived from the parent context that is passed to this function in order to ensure that
 // services do not attempt to restart after system shutdown has been initiated
 // TODO: Service accepts input (when os.Stdin) is mapped even after Service.Stop is called
+// TODO: The time.Sleep call at the end of this function is preventing our context from being canceled here
 func (service *Service) Watch(ctx context.Context) {
 	child, cancel := context.WithCancel(ctx)
 	defer cancel()
