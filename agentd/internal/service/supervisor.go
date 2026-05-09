@@ -34,7 +34,7 @@ type Supervisor struct {
 func (supervisor *Supervisor) EventLoop(ctx context.Context) {
 	for _, service := range supervisor.processList {
 		log.Printf("Starting watch loop on %s", service.Name)
-		go service.Start(ctx)
+		go service.Watch(ctx)
 	}
 }
 
