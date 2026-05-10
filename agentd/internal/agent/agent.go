@@ -8,6 +8,7 @@ import (
 
 	"github.com/stevezaluk/immutable-os/agentd/internal/acpi"
 	"github.com/stevezaluk/immutable-os/agentd/internal/reaper"
+	"github.com/stevezaluk/immutable-os/agentd/internal/service"
 	"github.com/stevezaluk/immutable-os/go-manifest/pkg/manifest"
 	"github.com/stevezaluk/immutable-os/go-manifest/pkg/runner"
 	"golang.org/x/sys/unix"
@@ -21,17 +22,21 @@ type Agent struct {
 	// runner go-manifest runner used for initializing the system during startup
 	runner *runner.Runner
 
+	// supervisor Service supervisor for Agent
+	supervisor *service.Supervisor
+
 	// sigChild Channel responsible for delivering SIGCHLD signals. Used for reaping processes
 	sigChild chan os.Signal
 
 	// sigTerm Channel responsible for delivering SIGTERM events, an alternative way of initiating a shutdown
 	sigTerm chan os.Signal
 
-	// sigAcpi Channel responsible for receiving ACPI events, indicating that the system should shutdowwn
+	// sigAcpi Channel responsible for receiving ACPI events, indicating that the system should shutdown
 	sigAcpi chan bool
 }
 
 // EventLoop Starts the core agent event loop
+// TODO: Both the process reaper and service shutdown is occurring at the same time.
 func (agent *Agent) EventLoop() error {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -42,6 +47,7 @@ func (agent *Agent) EventLoop() error {
 
 	// start our ACPI event loop
 	go acpi.EventLoop(ctx, agent.sigAcpi)
+	go agent.supervisor.EventLoop(ctx)
 
 	for {
 		select {
@@ -50,11 +56,13 @@ func (agent *Agent) EventLoop() error {
 			// TODO: Handle wait for pid here
 		case <-agent.sigAcpi:
 			log.Println("got ACPI")
+			cancel()
 			if err := agent.Shutdown(); err != nil {
 				return err
 			}
 		case <-agent.sigTerm:
 			log.Println("got sigterm")
+			cancel()
 			if err := agent.Shutdown(); err != nil {
 				return err
 			}
@@ -84,6 +92,13 @@ func (agent *Agent) Start() error {
 	if err := agent.runner.Go(); err != nil {
 		return err
 	}
+
+	supervisor, err := service.NewSupervisor(service.DefaultServicePath)
+	if err != nil {
+		return err
+	}
+
+	agent.supervisor = supervisor
 
 	// blocks forever
 	if err := agent.EventLoop(); err != nil {
