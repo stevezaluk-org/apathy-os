@@ -102,8 +102,8 @@ RUN mkdir build && tar -xvf glibc.tar.gz -C build/ --strip-components=1
 
 WORKDIR /out/build/glibc
 RUN ./build/configure --prefix=/usr --datadir=$(pwd) --with-sysroot=/out/rootfs
-RUN make -j $(nproc)
-RUN make DESTDIR=/out/rootfs install
+RUN make -j $(nproc) slibdir=/usr/lib64 rtlddir=/usr/lib64
+RUN make DESTDIR=/out/rootfs install slibdir=/usr/lib64 rtlddir=/usr/lib64 sbindir=/usr/sbin rootsbindir=/usr/sbin
 
 WORKDIR /out/build/gcc
 
@@ -140,13 +140,13 @@ COPY --from=uutils-build /build/coreutils/bin/* /out/rootfs/usr/bin
 COPY --from=init-build /out/init /out/rootfs/usr/sbin/init
 COPY --from=agentd-build /out/agent /out/rootfs/init
 
-RUN rm -rf /out/rootfs/lib64 && \
-    rm -rf /out/rootfs/out
+RUN rm -rf /out/rootfs/out
 
 WORKDIR /out/rootfs
 
 # Symlinks for our core directories
 RUN ln -s usr/bin bin
+RUN ln -s usr/sbin sbin
 RUN ln -s usr/lib lib
 RUN ln -s usr/lib64 lib64
 
