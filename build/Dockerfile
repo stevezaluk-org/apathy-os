@@ -76,6 +76,7 @@ RUN cargo install \
 
 FROM debian:stable-slim AS rootfs-build
 ARG GLIBC_VER="2.43"
+ARG GCC_VER="16.1.0"
 
 WORKDIR /out
 
@@ -85,15 +86,37 @@ WORKDIR /out/build/glibc
 
 RUN apt-get update \
     && \
-    apt-get install tar gzip gcc make gawk bison python3 -y
+    apt-get install tar gzip gcc g++ make gawk bison python3 libgmp-dev libmpfr-dev libmpc-dev libisl-dev zlib1g-dev -y
 
 ADD https://ftp.gnu.org/gnu/glibc/glibc-$GLIBC_VER.tar.gz glibc.tar.gz
 
 RUN mkdir build && tar -xvf glibc.tar.gz -C build/ --strip-components=1
 
+WORKDIR /out/build/glibc
 RUN ./build/configure --prefix=/out/rootfs/usr --datadir=$(pwd)
 RUN make -j $(nproc)
 RUN make install
+
+WORKDIR /out/build/gcc
+
+ADD https://ftp.gnu.org/gnu/gcc/gcc-${GCC_VER}/gcc-${GCC_VER}.tar.gz gcc.tar.gz
+
+RUN mkdir build && tar -xvf gcc.tar.gz -C build/ --strip-components=1 && rm -rf gcc.tar.gz
+
+RUN ./build/configure \
+     --prefix=/out/rootfs/usr \
+    --enable-languages=c,c++ \
+    --enable-shared=libgcc,libstdc++ \
+    --disable-bootstrap \
+    --disable-multilib
+
+# We only really care about the gcc shared libs and not the compiler itself so we only target that here
+RUN make all-gcc -j $(nproc)
+RUN make all-target-libgcc  -j $(nproc)
+RUN make all-target-libstdc++-v3 -j $(nproc)
+
+RUN make install-target-libgcc
+RUN make install-target-libstdc++-v3
 
 WORKDIR /out
 
