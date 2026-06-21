@@ -138,6 +138,11 @@ COPY --from=uutils-build /build/coreutils/bin/* /out/rootfs/usr/bin
 COPY --from=init-build /out/init /out/rootfs/usr/sbin/init
 COPY --from=agentd-build /out/agent /out/rootfs/init
 
+WORKDIR /out/rootfs
+
+RUN ln -s usr/lib /out/rootfs/lib
+RUN ln -s usr/lib /out/rootfs/lib64
+
 FROM debian:stable-slim AS initramfs-build
 
 RUN apt-get update \
