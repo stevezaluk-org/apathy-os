@@ -123,9 +123,9 @@ RUN ./build/configure \
 RUN mkdir -p /out/rootfs/usr/lib && cp -r /out/rootfs/usr/lib64/* /out/rootfs/usr/lib
 
 # We only really care about the gcc shared libs and not the compiler itself so we only target that here
-RUN make all-gcc -j $(nproc)
-RUN make all-target-libgcc  -j $(nproc)
-RUN make all-target-libstdc++-v3 -j $(nproc)
+RUN make -j$(nproc) all-gcc
+RUN make -j$(nproc) all-target-libgcc
+RUN make -j$(nproc) all-target-libstdc++-v3
 
 RUN make DESTDIR=/out/rootfs install-target-libgcc
 RUN make DESTDIR=/out/rootfs install-target-libstdc++-v3
