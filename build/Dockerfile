@@ -112,6 +112,20 @@ WORKDIR /out
 # not much really needed here as the whole point of a static build is not needing a libc implementation
 RUN bash -c 'mkdir -p /out/rootfs/{bin,sbin,usr/bin,etc,sys,dev,proc,tmp,boot,var,mnt}'
 
+FROM rust:1.96.0 AS  uutils-build
+ARG COREUTILS_VER="0.9.0"
+
+WORKDIR /build/coreutils
+
+ADD https://github.com/uutils/coreutils/archive/refs/tags/$COREUTILS_VER.tar.gz coreutils.tar.gz
+
+RUN tar -xvf coreutils.tar.gz -C . --strip-components=1 && rm -rf coreutils.tar.gz
+RUN cargo install \
+          --locked \
+          --path . \
+          --bins \
+          --root /build/coreutils
+
 FROM rootfs-${LIBC_FLAVOR} AS rootfs-build
 
 WORKDIR /out
@@ -120,6 +134,7 @@ COPY "./build/manifest.d/system.yaml" /out/rootfs/usr/share/manifest.d/system.ya
 COPY "./build/service.d/*.yaml" /out/rootfs/usr/share/service.d/
 
 COPY "./build/deps/busybox-x86_64" /out/rootfs/usr/sbin/busybox
+COPY --from=uutils-build /build/coreutils/bin/* /out/rootfs/usr/bin
 COPY --from=init-build /out/init /out/rootfs/usr/sbin/init
 COPY --from=agentd-build /out/agent /out/rootfs/init
 
