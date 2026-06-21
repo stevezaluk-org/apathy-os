@@ -1,5 +1,4 @@
 ARG RELEASE="release"
-ARG LIBC_FLAVOR="static"
 
 FROM debian:stable-slim AS kernel-build
 ARG LINUX_VER="6.19"
@@ -61,8 +60,21 @@ RUN go work init ./agentd ./go-manifest
 
 RUN go build -o agent $INIT_BUILDFLAGS -ldflags="$INIT_LDFLAGS" ./agentd && chmod +x agent
 
-FROM debian:stable-slim AS rootfs-glibc
+FROM rust:1.96.0 AS  uutils-build
+ARG COREUTILS_VER="0.9.0"
 
+WORKDIR /build/coreutils
+
+ADD https://github.com/uutils/coreutils/archive/refs/tags/$COREUTILS_VER.tar.gz coreutils.tar.gz
+
+RUN tar -xvf coreutils.tar.gz -C . --strip-components=1 && rm -rf coreutils.tar.gz
+RUN cargo install \
+          --locked \
+          --path . \
+          --bins \
+          --root /build/coreutils
+
+FROM debian:stable-slim AS rootfs-build
 ARG GLIBC_VER="2.43"
 
 WORKDIR /out
@@ -82,51 +94,6 @@ RUN mkdir build && tar -xvf glibc.tar.gz -C build/ --strip-components=1
 RUN ./build/configure --prefix=/out/rootfs/usr --datadir=$(pwd)
 RUN make -j $(nproc)
 RUN make install
-
-FROM debian:stable-slim AS rootfs-musl
-
-ARG MUSL_VER="1.2.6"
-
-WORKDIR /out
-
-RUN bash -c 'mkdir -p /out/rootfs/{bin,sbin,usr/bin,etc,sys,dev,proc,tmp,boot,var,mnt}'
-
-WORKDIR /out/build/musl
-
-RUN apt-get update \
-    && \
-    apt-get install tar gzip gcc make gawk bison python3 -y
-
-ADD https://git.musl-libc.org/cgit/musl/snapshot/musl-$MUSL_VER.tar.gz musl.tar.gz
-
-RUN tar -xvf musl.tar.gz -C . --strip-components=1 && rm -rf musl.tar.gz
-
-RUN ./configure --prefix=/out/rootfs/usr
-RUN make -j $(nproc)
-RUN make install
-
-FROM debian:stable-slim AS rootfs-static
-
-WORKDIR /out
-
-# not much really needed here as the whole point of a static build is not needing a libc implementation
-RUN bash -c 'mkdir -p /out/rootfs/{bin,sbin,usr/bin,etc,sys,dev,proc,tmp,boot,var,mnt}'
-
-FROM rust:1.96.0 AS  uutils-build
-ARG COREUTILS_VER="0.9.0"
-
-WORKDIR /build/coreutils
-
-ADD https://github.com/uutils/coreutils/archive/refs/tags/$COREUTILS_VER.tar.gz coreutils.tar.gz
-
-RUN tar -xvf coreutils.tar.gz -C . --strip-components=1 && rm -rf coreutils.tar.gz
-RUN cargo install \
-          --locked \
-          --path . \
-          --bins \
-          --root /build/coreutils
-
-FROM rootfs-${LIBC_FLAVOR} AS rootfs-build
 
 WORKDIR /out
 

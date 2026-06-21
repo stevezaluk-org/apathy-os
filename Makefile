@@ -1,5 +1,4 @@
 RELEASE ?= "release"
-LIBC_FLAVOR ?= "static"
 
 DIST=$(shell pwd)/dist
 OUTPUT=$(DIST)/out
@@ -29,7 +28,6 @@ build:
 	docker buildx bake \
 		--file build/docker-bake.hcl \
 		--set "_common.args.RELEASE=$(RELEASE)" \
-		--set "_common.args.LIBC_FLAVOR=$(LIBC_FLAVOR)" \
 		_common
 
 .PHONY: deps
@@ -46,12 +44,12 @@ image:
 	mkdir -p $(DIST)/out/img
 
 	ukify build \
-		--linux=$(DIST)/out/$(RELEASE)-$(LIBC_FLAVOR)/boot/vmlinuz \
-		--initrd=$(DIST)/out/$(RELEASE)-$(LIBC_FLAVOR)/boot/initrd.img \
+		--linux=$(DIST)/out/$(RELEASE)/boot/vmlinuz \
+		--initrd=$(DIST)/out/$(RELEASE)/boot/initrd.img \
 		--cmdline=$(BOOT_ARGS) \
 		--output=/tmp/container_os/esp/EFI/BOOT/BOOTX64.EFI
 
-	cp -r $(DIST)/out/$(RELEASE)-$(LIBC_FLAVOR)/* /tmp/container_os/root
+	cp -r $(DIST)/out/$(RELEASE)/* /tmp/container_os/root
 
 	genimage \
 		--config $(BUILD)/genimage/release.cfg \
