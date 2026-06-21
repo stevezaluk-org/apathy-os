@@ -86,7 +86,7 @@ RUN unset LD_AUDIT \
 
 WORKDIR /out
 
-RUN bash -c 'mkdir -p /out/rootfs/{bin,sbin,usr/bin,etc,sys,dev,proc,tmp,boot,var,mnt}'
+RUN bash -c 'mkdir -p /out/rootfs/{usr/bin,usr/sbin,etc,sys,dev,proc,tmp,boot,var,mnt}'
 
 COPY --from=kernel-build /out/headers/include /out/rootfs/usr/include
 
@@ -139,6 +139,16 @@ COPY "./build/deps/busybox-x86_64" /out/rootfs/usr/sbin/busybox
 COPY --from=uutils-build /build/coreutils/bin/* /out/rootfs/usr/bin
 COPY --from=init-build /out/init /out/rootfs/usr/sbin/init
 COPY --from=agentd-build /out/agent /out/rootfs/init
+
+RUN rm -rf /out/rootfs/lib64 && \
+    rm -rf /out/rootfs/out
+
+WORKDIR /out/rootfs
+
+# Symlinks for our core directories
+RUN ln -s usr/bin bin
+RUN ln -s usr/lib lib
+RUN ln -s usr/lib64 lib64
 
 FROM debian:stable-slim AS initramfs-build
 
