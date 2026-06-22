@@ -1,5 +1,4 @@
 ARG RELEASE="release"
-ARG LIBC_FLAVOR="static"
 
 FROM debian:stable-slim AS kernel-build
 ARG LINUX_VER="6.19"
@@ -8,7 +7,7 @@ WORKDIR /out
 
 RUN apt-get update \
     && \
-    apt-get install bc bison flex libssl-dev libelf-dev build-essential pkg-config gcc make tar gzip -y
+    apt-get install bc bison flex libssl-dev libelf-dev build-essential pkg-config gcc make tar gzip rsync -y
 
 ADD https://github.com/torvalds/linux/archive/refs/tags/v$LINUX_VER.tar.gz /out/linux.tar.gz
 
@@ -22,6 +21,9 @@ COPY "./build/kernel/config.default" ./.config
 # merge old config with paramters introduced in newer versions
 RUN make olddefconfig
 RUN make -j $(nproc)
+
+RUN mkdir /out/headers && \
+    make -j $(nproc) INSTALL_HDR_PATH=/out/headers headers_install
 
 FROM golang:1.26.1-alpine AS init-build
 
@@ -61,67 +63,96 @@ RUN go work init ./agentd ./go-manifest
 
 RUN go build -o agent $INIT_BUILDFLAGS -ldflags="$INIT_LDFLAGS" ./agentd && chmod +x agent
 
-FROM debian:stable-slim AS rootfs-glibc
+FROM rust:1.96.0 AS  uutils-build
+ARG COREUTILS_VER="0.9.0"
 
+WORKDIR /build/coreutils
+
+ADD https://github.com/uutils/coreutils/archive/refs/tags/$COREUTILS_VER.tar.gz coreutils.tar.gz
+
+RUN tar -xvf coreutils.tar.gz -C . --strip-components=1 && rm -rf coreutils.tar.gz
+RUN cargo install \
+          --locked \
+          --path . \
+          --bins \
+          --root /build/coreutils
+
+FROM debian:stable-slim AS rootfs-build
 ARG GLIBC_VER="2.43"
+ARG GCC_VER="16.1.0"
+
+RUN unset LD_AUDIT \
+    unset LD_PRELOAD
 
 WORKDIR /out
 
-RUN bash -c 'mkdir -p /out/rootfs/{bin,sbin,usr/bin,etc,sys,dev,proc,tmp,boot,var,mnt}'
+RUN bash -c 'mkdir -p /out/rootfs/{usr/bin,usr/sbin,etc,sys,dev,proc,tmp,boot,var,mnt}'
+
+COPY --from=kernel-build /out/headers/include /out/rootfs/usr/include
 
 WORKDIR /out/build/glibc
 
 RUN apt-get update \
     && \
-    apt-get install tar gzip gcc make gawk bison python3 -y
+    apt-get install tar gzip gcc g++ make gawk bison python3 libgmp-dev libmpfr-dev libmpc-dev libisl-dev zlib1g-dev libc6-dev -y
 
 ADD https://ftp.gnu.org/gnu/glibc/glibc-$GLIBC_VER.tar.gz glibc.tar.gz
 
 RUN mkdir build && tar -xvf glibc.tar.gz -C build/ --strip-components=1
 
-RUN ./build/configure --prefix=/out/rootfs/usr --datadir=$(pwd)
-RUN make -j $(nproc)
-RUN make install
+WORKDIR /out/build/glibc
+RUN ./build/configure --prefix=/usr --datadir=$(pwd) --with-sysroot=/out/rootfs
+RUN make -j $(nproc) slibdir=/usr/lib64 rtlddir=/usr/lib64
+RUN make DESTDIR=/out/rootfs install slibdir=/usr/lib64 rtlddir=/usr/lib64 sbindir=/usr/sbin rootsbindir=/usr/sbin
 
-FROM debian:stable-slim AS rootfs-musl
+WORKDIR /out/build/gcc
 
-ARG MUSL_VER="1.2.6"
+ADD https://ftp.gnu.org/gnu/gcc/gcc-${GCC_VER}/gcc-${GCC_VER}.tar.gz gcc.tar.gz
 
-WORKDIR /out
+RUN mkdir build && tar -xvf gcc.tar.gz -C build/ --strip-components=1 && rm -rf gcc.tar.gz
 
-RUN bash -c 'mkdir -p /out/rootfs/{bin,sbin,usr/bin,etc,sys,dev,proc,tmp,boot,var,mnt}'
+RUN ./build/configure \
+    --with-sysroot=/out/rootfs \
+    --prefix=/usr \
+    --enable-languages=c,c++ \
+    --enable-shared=libgcc,libstdc++ \
+    --disable-bootstrap \
+    --disable-multilib
 
-WORKDIR /out/build/musl
+# [WARN] This is a hack and should really be rectified by either building both 32-bit and 64-bit stl's or just 64-bit
+RUN mkdir -p /out/rootfs/usr/lib && cp -r /out/rootfs/usr/lib64/* /out/rootfs/usr/lib
 
-RUN apt-get update \
-    && \
-    apt-get install tar gzip gcc make gawk bison python3 -y
+# We only really care about the gcc shared libs and not the compiler itself so we only target that here
+RUN make -j$(nproc) all-gcc
+RUN make -j$(nproc) all-target-libgcc
+RUN make -j$(nproc) all-target-libstdc++-v3
 
-ADD https://git.musl-libc.org/cgit/musl/snapshot/musl-$MUSL_VER.tar.gz musl.tar.gz
-
-RUN tar -xvf musl.tar.gz -C . --strip-components=1 && rm -rf musl.tar.gz
-
-RUN ./configure --prefix=/out/rootfs/usr
-RUN make -j $(nproc)
-RUN make install
-
-FROM debian:stable-slim AS rootfs-static
-
-WORKDIR /out
-
-# not much really needed here as the whole point of a static build is not needing a libc implementation
-RUN bash -c 'mkdir -p /out/rootfs/{bin,sbin,usr/bin,etc,sys,dev,proc,tmp,boot,var,mnt}'
-
-FROM rootfs-${LIBC_FLAVOR} AS rootfs-build
+RUN make DESTDIR=/out/rootfs install-target-libgcc
+RUN make DESTDIR=/out/rootfs install-target-libstdc++-v3
 
 WORKDIR /out
 
 COPY "./build/manifest.d/system.yaml" /out/rootfs/usr/share/manifest.d/system.yaml
 COPY "./build/service.d/*.yaml" /out/rootfs/usr/share/service.d/
 
+# this must stay until we include /usr/bin/bash
 COPY "./build/deps/busybox-x86_64" /out/rootfs/usr/sbin/busybox
+COPY --from=uutils-build /build/coreutils/bin/* /out/rootfs/usr/bin
 COPY --from=init-build /out/init /out/rootfs/usr/sbin/init
 COPY --from=agentd-build /out/agent /out/rootfs/init
+
+RUN rm -rf /out/rootfs/out
+
+WORKDIR /out/rootfs
+
+# Symlinks for our core directories
+RUN ln -s usr/bin bin
+RUN ln -s usr/sbin sbin
+RUN ln -s usr/lib lib
+RUN ln -s usr/lib64 lib64
+
+# Symlinks to our coreutils
+RUN bash -c 'for prog in $(./usr/bin/coreutils --list); do ln -s ./coreutils usr/bin/$prog; done'
 
 FROM debian:stable-slim AS initramfs-build
 
