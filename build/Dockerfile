@@ -150,6 +150,9 @@ RUN ln -s usr/sbin sbin
 RUN ln -s usr/lib lib
 RUN ln -s usr/lib64 lib64
 
+# Symlinks to our coreutils
+RUN bash -c 'for prog in $(./usr/bin/coreutils --list); do ln -s ./coreutils usr/bin/$prog; done'
+
 FROM debian:stable-slim AS initramfs-build
 
 RUN apt-get update \
