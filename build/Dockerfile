@@ -36,8 +36,8 @@ ENV CGO_ENABLED=0 \
 
 WORKDIR /out
 
-COPY ./initd initd/
-COPY ./go-manifest go-manifest/
+COPY ./src/go-initd initd/
+COPY ./src/go-manifest go-manifest/
 
 # this can be removed once this goes public
 RUN go work init ./initd ./go-manifest
@@ -55,8 +55,8 @@ ENV CGO_ENABLED=0 \
 
 WORKDIR /out
 
-COPY ./agentd agentd/
-COPY ./go-manifest go-manifest/
+COPY ./src/go-agentd agentd/
+COPY ./src/go-manifest go-manifest/
 
 # this can be removed once this goes public
 RUN go work init ./agentd ./go-manifest
