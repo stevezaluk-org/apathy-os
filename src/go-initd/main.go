@@ -4,8 +4,8 @@ import (
 	"log"
 	"os"
 
-	"github.com/stevezaluk/immutable-os/go-manifest/pkg/manifest"
-	"github.com/stevezaluk/immutable-os/go-manifest/pkg/runner"
+	"github.com/stevezaluk/immutable-os/src/go-manifest/pkg/manifest"
+	"github.com/stevezaluk/immutable-os/src/go-manifest/pkg/runner"
 	"golang.org/x/sys/unix"
 )
 

@@ -1,4 +1,4 @@
-module github.com/stevezaluk/immutable-os/agentd
+module github.com/stevezaluk/immutable-os/src/go-agentd
 
 go 1.26.1
 
