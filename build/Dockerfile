@@ -1,24 +1,5 @@
 ARG RELEASE="release"
 
-FROM golang:1.26.1-alpine AS init-build
-
-ARG INIT_BUILDFLAGS="-v"
-ARG INIT_LDFLAGS="-s -w"
-
-ENV CGO_ENABLED=0 \
-    GOOS=linux \
-    GOARCH=amd64
-
-WORKDIR /out
-
-COPY ./src/go-initd initd/
-COPY ./src/go-manifest go-manifest/
-
-# this can be removed once this goes public
-RUN go work init ./initd ./go-manifest
-
-RUN go build -o init $INIT_BUILDFLAGS -ldflags="$INIT_LDFLAGS" ./initd && chmod +x init
-
 FROM rust:1.96.0 AS  uutils-build
 ARG COREUTILS_VER="0.9.0"
 

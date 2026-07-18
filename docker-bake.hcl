@@ -28,6 +28,16 @@ variable "AGENT_LDFLAGS" {
   default = "-s -w"
 }
 
+// INIT_BUILDFLAGS The flags to pass to the Go compiler when building go-agentd
+variable "INIT_BUILDFLAGS" {
+  default = "-v"
+}
+
+// INIT_LDFLAGS The flags to pass to the Go linker when building go-agentd
+variable "INIT_LDFLAGS" {
+  default = "-s -w"
+}
+
 target "toolchain" {
   dockerfile = "build/toolchain/Dockerfile"
   platforms = ["linux/amd64"] // as of the moment, only x86_64 is supported
@@ -84,5 +94,26 @@ target "go-agentd" {
   args = {
     AGENT_BUILDFLAGS = AGENT_BUILDFLAGS
     AGENT_LDFLAGS = AGENT_LDFLAGS
+  }
+}
+
+target "go-initd" {
+  dockerfile = "go-initd/Dockerfile"
+  context = "./src"
+  platforms = ["linux/amd64"]
+  tags = ["ghcr.io/immutable-os/go-initd:${TAG}"]
+  output = ["type=docker"]
+
+  labels = {
+    "org.opencontainers.title" = "go-initd"
+    "org.opencontainers.image.authors" = "Steven A. Zaluk <stevezaluk@gmail.com>"
+    "org.opencontainers.image.source" = "https://github.com/immutable-os/immutable-os"
+    "org.opencontainers.image.url" = "https://github.com/immutable-os/immutable-os"
+    "org.opencontainers.image.version" = TAG
+  }
+
+  args = {
+    INIT_BUILDFLAGS = INIT_BUILDFLAGS
+    INIT_LDFLAGS = INIT_LDFLAGS
   }
 }
