@@ -10,14 +10,14 @@ variable "TARGET" {
 
 // CROSSTOOLS_VER The version of crosstool-ng to use for building the toolchain
 variable "CROSSTOOLS_VER" {
-  defualt = "1.28.0"
+  default = "1.28.0"
 }
 
 target "toolchain" {
   dockerfile = "build/toolchain/Dockerfile"
   platforms = ["linux/amd64"] // as of the moment, only x86_64 is supported
   tags = ["ghcr.io/immutable-os/toolchain:${TAG}"]
-  output = ["type=local,dest=dist/out/toolchain"]
+  output = ["type=docker"]
   labels = {
     "org.opencontainers.title" = "immutable-os - toolchain"
     "org.opencontainers.image.authors" = "Steven A. Zaluk <stevezaluk@gmail.com>"
