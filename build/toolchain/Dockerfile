@@ -1,5 +1,9 @@
-FROM debian:stable-slim AS crosstools-build
+ARG TARGET="x86_64-unknown-linux-gnu"
 ARG CROSSTOOLS_VER="1.28.0"
+
+FROM debian:stable-slim AS crosstools-build
+ARG TARGET
+ARG CROSSTOOLS_VER
 
 RUN apt-get update && \
     apt-get install make bzip2 wget rsync gcc python3 python3-dev python-is-python3 flex bison texinfo xz-utils unzip help2man file patch gawk libtool libtool-bin build-essential libncurses-dev adduser -y
@@ -24,6 +28,10 @@ RUN chown -R nonroot:nonroot /build/toolchain
 
 USER nonroot:nonroot
 
-COPY ./config .config
+RUN ct-ng $TARGET && \
+    ct-ng build
 
-RUN ct-ng build
+FROM scratch
+ARG TARGET
+
+COPY --from=crosstools-build /home/nonroot/x-tools/$TARGET/$TARGET/sysroot/* /
