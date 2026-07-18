@@ -1,30 +1,5 @@
 ARG RELEASE="release"
 
-FROM debian:stable-slim AS kernel-build
-ARG LINUX_VER="6.19"
-
-WORKDIR /out
-
-RUN apt-get update \
-    && \
-    apt-get install bc bison flex libssl-dev libelf-dev build-essential pkg-config gcc make tar gzip rsync -y
-
-ADD https://github.com/torvalds/linux/archive/refs/tags/v$LINUX_VER.tar.gz /out/linux.tar.gz
-
-RUN tar -xvf linux.tar.gz -C . --strip-components=1 \
-    && \
-    rm linux.tar.gz
-
-# Doing an entire build here probs wont make sense long term but it will do for now
-COPY "./build/kernel/config.default" ./.config
-
-# merge old config with paramters introduced in newer versions
-RUN make olddefconfig
-RUN make -j $(nproc)
-
-RUN mkdir /out/headers && \
-    make -j $(nproc) INSTALL_HDR_PATH=/out/headers headers_install
-
 FROM golang:1.26.1-alpine AS init-build
 
 ARG INIT_BUILDFLAGS="-v"
