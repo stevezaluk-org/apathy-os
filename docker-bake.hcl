@@ -18,6 +18,16 @@ variable "LINUX_VER" {
   default = "6.19"
 }
 
+// AGENT_BUILDFLAGS The flags to pass to the Go compiler when building go-agentd
+variable "AGENT_BUILDFLAGS" {
+  default = "-v"
+}
+
+// AGENT_LDFLAGS The flags to pass to the Go linker when building go-agentd
+variable "AGENT_LDFLAGS" {
+  default = "-s -w"
+}
+
 target "toolchain" {
   dockerfile = "build/toolchain/Dockerfile"
   platforms = ["linux/amd64"] // as of the moment, only x86_64 is supported
@@ -53,5 +63,26 @@ target "kernel" {
 
   args = {
     LINUX_VER = LINUX_VER
+  }
+}
+
+target "go-agentd" {
+  dockerfile = "go-agentd/Dockerfile"
+  context = "./src"
+  platforms = ["linux/amd64"]
+  tags = ["ghcr.io/immutable-os/go-agentd:${TAG}"]
+  output = ["type=docker"]
+
+  labels = {
+    "org.opencontainers.title" = "go-agentd"
+    "org.opencontainers.image.authors" = "Steven A. Zaluk <stevezaluk@gmail.com>"
+    "org.opencontainers.image.source" = "https://github.com/immutable-os/immutable-os"
+    "org.opencontainers.image.url" = "https://github.com/immutable-os/immutable-os"
+    "org.opencontainers.image.version" = TAG
+  }
+
+  args = {
+    AGENT_BUILDFLAGS = AGENT_BUILDFLAGS
+    AGENT_LDFLAGS = AGENT_LDFLAGS
   }
 }
