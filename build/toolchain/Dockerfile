@@ -34,4 +34,4 @@ RUN ct-ng $TARGET && \
 FROM scratch
 ARG TARGET
 
-COPY --from=crosstools-build /home/nonroot/x-tools/$TARGET/$TARGET/sysroot/* /
+COPY --from=crosstools-build /home/nonroot/x-tools/$TARGET/$TARGET/sysroot/ /
