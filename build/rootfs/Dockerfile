@@ -46,7 +46,7 @@ RUN bash -c 'mkdir -p /build/{usr/bin,usr/sbin,etc,sys,dev,proc,tmp,boot,var,mnt
 
 COPY --from=toolchain-build / /build
 COPY --from=uutils-build /build/coreutils/bin/* /build/usr/bin
-COPY --from=initd-build /app/initd /build/usr/sbin/init
+COPY --from=initd-build /app/init /build/usr/sbin/init
 COPY --from=agentd-build /app/agentd /build/init
 
 # this must stay until we include /usr/bin/bash

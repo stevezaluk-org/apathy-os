@@ -1,5 +1,7 @@
+ARG BUSYBOX_VER="1.38.0"
+
+FROM busybox:$BUSYBOX_VER-musl AS busybox-build
 FROM debian:stable-slim AS initramfs-build
-ARG BUSYBOX_VER="1.21.1"
 
 RUN apt-get update \
     && \
@@ -8,10 +10,10 @@ RUN apt-get update \
 WORKDIR /build
 RUN bash -c 'mkdir -p /build/{usr/sbin,usr/share/manifest.d,newroot,dev,proc,sys}'
 
-ADD https://busybox.net/downloads/binaries/$BUSYBOX_VER/busybox-x86_64 usr/sbin/busybox
+COPY --from=busybox-build /bin/busybox usr/sbin/busybox
 
 # This creates a confusing initramfs environment as agent is renamed to init, however this is a hard requirement of switch_root
-COPY --from=ghcr.io/immutable-os/go-initd:latest /app/initd /build/init
+COPY --from=ghcr.io/immutable-os/go-initd:latest /app/init /build/init
 COPY --from=ghcr.io/immutable-os/go-agentd:latest /app/agentd /build/usr/sbin/init
 COPY ./usr/share/manifest.d/init.yaml /build/usr/share/manifest.d/init.yaml
 

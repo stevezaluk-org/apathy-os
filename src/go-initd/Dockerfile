@@ -8,17 +8,17 @@ ENV CGO_ENABLED=0 \
 
 WORKDIR /build
 
-COPY ./go-initd initd/
+COPY ./go-initd go-initd/
 COPY ./go-manifest go-manifest/
 
 # this can be removed once this goes public
-RUN go work init ./initd ./go-manifest
+RUN go work init ./go-initd ./go-manifest
 
-RUN go build -o init $INIT_BUILDFLAGS -ldflags="$INIT_LDFLAGS" ./initd && chmod +x init
+RUN go build -o init $INIT_BUILDFLAGS -ldflags="$INIT_LDFLAGS" ./go-initd && chmod +x init
 
 FROM gcr.io/distroless/static-debian13:latest
 
 WORKDIR /app
-COPY --from=init-build /build/initd /app/initd
+COPY --from=init-build /build/init /app/init
 
-ENTRYPOINT ["initd"]
+ENTRYPOINT ["init"]
