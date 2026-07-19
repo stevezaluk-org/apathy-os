@@ -38,33 +38,33 @@ type SystemInit struct {
 
 // EventLoop Starts the core agent event loop
 // TODO: Both the process reaper and service shutdown is occurring at the same time.
-func (agent *SystemInit) EventLoop() error {
+func (systemInit *SystemInit) EventLoop() error {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
 	// Establish notifications for the signals that we need to catch
-	signal.Notify(agent.sigChild, unix.SIGCHLD)
-	signal.Notify(agent.sigTerm, unix.SIGTERM, unix.SIGINT)
+	signal.Notify(systemInit.sigChild, unix.SIGCHLD)
+	signal.Notify(systemInit.sigTerm, unix.SIGTERM, unix.SIGINT)
 
 	// start our ACPI event loop
-	go acpi.EventLoop(ctx, agent.sigAcpi)
-	go agent.supervisor.EventLoop(ctx)
+	go acpi.EventLoop(ctx, systemInit.sigAcpi)
+	go systemInit.supervisor.EventLoop(ctx)
 
 	for {
 		select {
-		case <-agent.sigChild:
+		case <-systemInit.sigChild:
 			log.Println("got sigchld")
 			// TODO: Handle wait for pid here
-		case <-agent.sigAcpi:
+		case <-systemInit.sigAcpi:
 			log.Println("got ACPI")
 			cancel()
-			if err := agent.Shutdown(); err != nil {
+			if err := systemInit.Shutdown(); err != nil {
 				return err
 			}
-		case <-agent.sigTerm:
+		case <-systemInit.sigTerm:
 			log.Println("got sigterm")
 			cancel()
-			if err := agent.Shutdown(); err != nil {
+			if err := systemInit.Shutdown(); err != nil {
 				return err
 			}
 		}
@@ -75,7 +75,7 @@ func (agent *SystemInit) EventLoop() error {
 //
 // TODO: Not remounting (reverse order) filesystems here. Leads to data loss
 // TODO: No real service management here. Basic unix.Kill(-1)
-func (agent *SystemInit) Shutdown() error {
+func (systemInit *SystemInit) Shutdown() error {
 	if err := reaper.ReapProcesses(); err != nil {
 		return err
 	}
@@ -88,9 +88,9 @@ func (agent *SystemInit) Shutdown() error {
 	return nil
 }
 
-// Start Initial entrypoint for the agent. Processes system/user manifest files and then moves to the event loop
-func (agent *SystemInit) Start() error {
-	if err := agent.runner.Go(); err != nil {
+// Start Initial entrypoint for the systemInit Processes system/user manifest files and then moves to the event loop
+func (systemInit *SystemInit) Start() error {
+	if err := systemInit.runner.Go(); err != nil {
 		return err
 	}
 
@@ -99,10 +99,10 @@ func (agent *SystemInit) Start() error {
 		return err
 	}
 
-	agent.supervisor = supervisor
+	systemInit.supervisor = supervisor
 
 	// blocks forever
-	if err := agent.EventLoop(); err != nil {
+	if err := systemInit.EventLoop(); err != nil {
 		return err
 	}
 
