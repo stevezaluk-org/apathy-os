@@ -12,7 +12,7 @@ clean:
 	rm -rf $(DIST)/uefi
 
 .PHONY: image
-build:
+image:
 	docker buildx bake image
 
 .PHONY: rootfs
