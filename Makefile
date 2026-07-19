@@ -5,7 +5,11 @@ DIST=$(shell pwd)/dist
 .PHONY: clean
 .SILENT:
 clean:
-	rm -rf $(DIST)
+	rm -rf $(DIST)/image
+
+.PHONY: clean-uefi
+.SILENT:
+	rm -rf $(DIST)/uefi
 
 .PHONY: image
 build:
