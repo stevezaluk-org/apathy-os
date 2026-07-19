@@ -21,7 +21,11 @@ import (
 	"log"
 	"os"
 
+	"github.com/immutable-os/immutable-os/src/go-manifest/pkg/manifest"
+	"github.com/immutable-os/immutable-os/src/go-manifest/pkg/runner"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+	"golang.org/x/sys/unix"
 )
 
 var cfgFile string
@@ -37,11 +41,51 @@ func NewRootCmd() *cobra.Command {
 				log.Fatal("go-initd must be launched as PID 1")
 			}
 		},
+		Run: func(cmd *cobra.Command, args []string) {
+			earlyConfig, err := manifest.Read(viper.GetString("manifest"))
+			if err != nil {
+				log.Fatalf("got fatal error triyng to read early boot config: %v", err)
+			}
+
+			// As with the below flags, this should really be deprecated as well
+			required := []string{"findfs", "switch_root"}
+			for _, link := range required {
+				if err := os.Symlink(viper.GetString("buysbox"), "/usr/sbin/"+link); err != nil {
+					log.Fatalf("could not create symbolic link (required for sys init): %v", err)
+				}
+			}
+
+			if err := runner.New(earlyConfig).Go(); err != nil {
+				log.Fatalf("got fatal error trying to process early boot manfiest: %v", err)
+			}
+
+			if err := unix.Exec(
+				viper.GetString("switch-root"),
+				[]string{viper.GetString("switch-root"), viper.GetString("rootfs"), "/init"},
+				os.Environ(),
+			); err != nil {
+				log.Fatalf("got fatal error when trying to switch_root: %v", err)
+			}
+		},
 	}
 
 	rootCmd.AddCommand(NewVersionCmd())
 
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "set the config file for go-initd")
+	rootCmd.Flags().StringP("manifest", "m", "/usr/share/manifest.d/init.yaml", "The manifest file to run for system initialization")
+	rootCmd.Flags().Bool("system", false, "If set to true, put go-initd in system mode. Used during late boot and assumes a mounted rootfs")
+
+	/*
+		The flags below are a result of the current state of go-initd execution and are subject to deprecation soon. init
+		should not be dependent on externalized tools initializing the system.
+	*/
+	rootCmd.Flags().String("rootfs", "/newroot", "The directory to switch root to after system initialization")
+	rootCmd.Flags().String("busybox", "/usr/sbin/busybox", "The location of busybox to use for filesystem discovery")
+	rootCmd.Flags().String("switch-root", "/usr/sbin/switch_root", "The location of the switch_root binary to execute during switch_root")
+
+	if err := viper.BindPFlags(rootCmd.Flags()); err != nil {
+		log.Fatalf("got fatal error trying to bind viper flags: %v", err)
+	}
 
 	return rootCmd
 }
