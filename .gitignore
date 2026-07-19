@@ -44,3 +44,6 @@ build/deps/**
 .DS_Store
 **/.DS_Store
 
+# Misc
+.ignored/
+.ignored/**
