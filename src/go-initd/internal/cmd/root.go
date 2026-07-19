@@ -18,6 +18,9 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package cmd
 
 import (
+	"log"
+	"os"
+
 	"github.com/spf13/cobra"
 )
 
@@ -29,6 +32,11 @@ func NewRootCmd() *cobra.Command {
 		Use:   "init",
 		Short: "go-initd is an init system and declarative system configuration tool for Unix like systems",
 		Long:  `go-initd is an init system and declarative system configuration tool for Unix like systems.`,
+		PersistentPreRun: func(cmd *cobra.Command, args []string) {
+			if os.Getpid() != 1 {
+				log.Fatal("go-initd must be launched as PID 1")
+			}
+		},
 	}
 
 	rootCmd.AddCommand(NewVersionCmd())
