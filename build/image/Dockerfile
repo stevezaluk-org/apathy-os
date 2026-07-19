@@ -3,6 +3,7 @@ ARG BOOT_ARGS="debug root=87965c58-36e0-11f1-8de9-0242ac120002 console=ttyS0 rdi
 
 FROM ghcr.io/immutable-os/rootfs:$ROOTFS_VER AS rootfs-build
 FROM debian:stable-slim AS image-build
+ARG BOOT_ARGS
 
 WORKDIR /build
 
@@ -17,7 +18,7 @@ COPY --from=rootfs-build / /rootfs
 RUN ukify build \
       --linux=/rootfs/boot/vmlinuz \
       --initrd=/rootfs/boot/initrd.img \
-      --cmdline=$BOOT_ARGS \
+      --cmdline="$BOOT_ARGS" \
       --os-release=/rootfs/usr/lib/os-release \
       --output=/build/esp/EFI/BOOT/BOOTX64.EFI
 
