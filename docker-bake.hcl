@@ -68,17 +68,24 @@ variable "INIT_LDFLAGS" {
   default = "-s -w"
 }
 
-target "toolchain" {
-  dockerfile = "build/toolchain/Dockerfile"
-  platforms = ["linux/amd64"] // as of the moment, only x86_64 is supported
-  tags = ["ghcr.io/immutable-os/toolchain:${TAG}"]
+target "_common" {
+  platforms = ["linux/amd64"]
   output = ["type=docker"]
   labels = {
-    "org.opencontainers.title" = "immutable-os - toolchain"
     "org.opencontainers.image.authors" = "Steven A. Zaluk <stevezaluk@gmail.com>"
     "org.opencontainers.image.source" = "https://github.com/immutable-os/immutable-os"
     "org.opencontainers.image.url" = "https://github.com/immutable-os/immutable-os"
     "org.opencontainers.image.version" = TAG
+  }
+}
+
+target "toolchain" {
+  inherits = ["_common"]
+
+  dockerfile = "build/toolchain/Dockerfile"
+  tags = ["ghcr.io/immutable-os/toolchain:${TAG}"]
+  labels = {
+    "org.opencontainers.title" = "immutable-os - toolchain"
   }
 
   args = {
@@ -88,17 +95,13 @@ target "toolchain" {
 }
 
 target "kernel" {
+  inherits = ["_common"]
+
   dockerfile = "Dockerfile"
   context = "./build/kernel"
-  platforms = ["linux/amd64"]
   tags = ["ghcr.io/immutable-os/kernel:${TAG}"]
-  output = ["type=docker"]
   labels = {
     "org.opencontainers.title" = "immutable-os - kernel"
-    "org.opencontainers.image.authors" = "Steven A. Zaluk <stevezaluk@gmail.com>"
-    "org.opencontainers.image.source" = "https://github.com/immutable-os/immutable-os"
-    "org.opencontainers.image.url" = "https://github.com/immutable-os/immutable-os"
-    "org.opencontainers.image.version" = TAG
   }
 
   args = {
@@ -107,6 +110,8 @@ target "kernel" {
 }
 
 target "initramfs" {
+  inherits = ["_common"]
+
   dockerfile = "Dockerfile"
   context = "./build/initramfs"
 
@@ -116,15 +121,9 @@ target "initramfs" {
     "ghcr.io/immutable-os/go-agentd:latest" = "docker-image://ghcr.io/immutable-os/go-agentd:latest"
   }
 
-  platforms = ["linux/amd64"]
   tags = ["ghcr.io/immutable-os/initramfs:${TAG}"]
-  output = ["type=docker"]
   labels = {
     "org.opencontainers.title" = "immutable-os - initramfs"
-    "org.opencontainers.image.authors" = "Steven A. Zaluk <stevezaluk@gmail.com>"
-    "org.opencontainers.image.source" = "https://github.com/immutable-os/immutable-os"
-    "org.opencontainers.image.url" = "https://github.com/immutable-os/immutable-os"
-    "org.opencontainers.image.version" = TAG
   }
 
   args = {
@@ -133,6 +132,8 @@ target "initramfs" {
 }
 
 target "rootfs" {
+  inherits = ["_common"]
+
   dockerfile = "Dockerfile"
   context = "./build/rootfs"
 
@@ -145,15 +146,9 @@ target "rootfs" {
     "ghcr.io/immutable-os/toolchain:latest" = "docker-image://ghcr.io/immutable-os/toolchain:latest"
   }
 
-  platforms = ["linux/amd64"]
   tags = ["ghcr.io/immutable-os/rootfs:${TAG}"]
-  output = ["type=docker"]
   labels = {
     "org.opencontainers.title" = "immutable-os - rootfs"
-    "org.opencontainers.image.authors" = "Steven A. Zaluk <stevezaluk@gmail.com>"
-    "org.opencontainers.image.source" = "https://github.com/immutable-os/immutable-os"
-    "org.opencontainers.image.url" = "https://github.com/immutable-os/immutable-os"
-    "org.opencontainers.image.version" = TAG
   }
 
   args = {
@@ -168,18 +163,14 @@ target "rootfs" {
 }
 
 target "go-agentd" {
+  inherits = ["_common"]
+
   dockerfile = "go-agentd/Dockerfile"
   context = "./src"
-  platforms = ["linux/amd64"]
   tags = ["ghcr.io/immutable-os/go-agentd:${TAG}"]
-  output = ["type=docker"]
 
   labels = {
     "org.opencontainers.title" = "go-agentd"
-    "org.opencontainers.image.authors" = "Steven A. Zaluk <stevezaluk@gmail.com>"
-    "org.opencontainers.image.source" = "https://github.com/immutable-os/immutable-os"
-    "org.opencontainers.image.url" = "https://github.com/immutable-os/immutable-os"
-    "org.opencontainers.image.version" = TAG
   }
 
   args = {
@@ -189,18 +180,14 @@ target "go-agentd" {
 }
 
 target "go-initd" {
+  inherits = ["_common"]
+
   dockerfile = "go-initd/Dockerfile"
   context = "./src"
-  platforms = ["linux/amd64"]
   tags = ["ghcr.io/immutable-os/go-initd:${TAG}"]
-  output = ["type=docker"]
 
   labels = {
     "org.opencontainers.title" = "go-initd"
-    "org.opencontainers.image.authors" = "Steven A. Zaluk <stevezaluk@gmail.com>"
-    "org.opencontainers.image.source" = "https://github.com/immutable-os/immutable-os"
-    "org.opencontainers.image.url" = "https://github.com/immutable-os/immutable-os"
-    "org.opencontainers.image.version" = TAG
   }
 
   args = {
