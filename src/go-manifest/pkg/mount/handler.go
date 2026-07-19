@@ -3,7 +3,7 @@ package mount
 import (
 	"errors"
 
-	"github.com/stevezaluk/immutable-os/src/go-manifest/pkg/engine"
+	"github.com/immutable-os/immutable-os/src/go-manifest/pkg/engine"
 	"golang.org/x/sys/unix"
 )
 

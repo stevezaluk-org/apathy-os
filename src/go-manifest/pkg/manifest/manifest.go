@@ -5,8 +5,8 @@ import (
 	"strings"
 
 	"github.com/goccy/go-yaml"
-	"github.com/stevezaluk/immutable-os/src/go-manifest/pkg/env"
-	"github.com/stevezaluk/immutable-os/src/go-manifest/pkg/mount"
+	"github.com/immutable-os/immutable-os/src/go-manifest/pkg/env"
+	"github.com/immutable-os/immutable-os/src/go-manifest/pkg/mount"
 )
 
 // Manifest An abstraction of a manifest file

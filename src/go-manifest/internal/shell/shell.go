@@ -4,7 +4,7 @@ import (
 	"errors"
 	"os/exec"
 
-	internalErrors "github.com/stevezaluk/immutable-os/src/go-manifest/internal/errors"
+	internalErrors "github.com/immutable-os/immutable-os/src/go-manifest/internal/errors"
 )
 
 var ErrCommandFailed = errors.New("command failed")
