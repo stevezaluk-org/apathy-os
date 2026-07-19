@@ -25,9 +25,14 @@ import (
 )
 
 const (
+	// SemanticVersion The semantic version of go-initd. Should match the tag that this was built against
 	SemanticVersion string = "undefined"
-	Commit          string = "undefined"
-	BuildTime       string = "undefined"
+
+	// Commit The short git commit SHA that go-initd was built against
+	Commit string = "undefined"
+
+	// BuildTime The date/time that go-initd was built
+	BuildTime string = "undefined"
 )
 
 // Version Returns the go-initd version string
