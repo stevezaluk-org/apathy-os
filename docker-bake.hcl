@@ -23,6 +23,26 @@ variable "BUSYBOX_VER" {
   default = "1.21.1"
 }
 
+// CORETUILS_VER The version of coreutils to use when building the rootfs
+variable "COREUTILS_VER" {
+  default = "0.9.0"
+}
+
+// TOOLCHAIN_VER The toolchain version to use when building the rootfs
+variable "TOOLCHAIN_VER" {
+  default = "latest"
+}
+
+// INITRAMFS_VER The version of the initramfs to use when building the rootfs
+variable "INITRAMFS_VER" {
+  default = "latest"
+}
+
+// AGENT_VER The version of the go-agentd to use when building the rootfs
+variable "AGENT_VER" {
+  default = "latest"
+}
+
 // AGENT_BUILDFLAGS The flags to pass to the Go compiler when building go-agentd
 variable "AGENT_BUILDFLAGS" {
   default = "-v"
@@ -33,12 +53,17 @@ variable "AGENT_LDFLAGS" {
   default = "-s -w"
 }
 
-// INIT_BUILDFLAGS The flags to pass to the Go compiler when building go-agentd
+// INIT_VER The version of go-initd to use when building the rootfs
+variable "INIT_VER" {
+  default = "latest"
+}
+
+// INIT_BUILDFLAGS The flags to pass to the Go compiler when building go-initd
 variable "INIT_BUILDFLAGS" {
   default = "-v"
 }
 
-// INIT_LDFLAGS The flags to pass to the Go linker when building go-agentd
+// INIT_LDFLAGS The flags to pass to the Go linker when building go-initd
 variable "INIT_LDFLAGS" {
   default = "-s -w"
 }
@@ -104,6 +129,41 @@ target "initramfs" {
 
   args = {
     BUSYBOX_VER = BUSYBOX_VER
+  }
+}
+
+target "rootfs" {
+  dockerfile = "Dockerfile"
+  context = "./build/rootfs"
+
+  # We override locally here since we want to build "from scratch" when invoking through buildx bake
+  contexts = {
+    "ghcr.io/immutable-os/go-initd:latest" = "docker-image://ghcr.io/immutable-os/go-initd:latest"
+    "ghcr.io/immutable-os/go-agentd:latest" = "docker-image://ghcr.io/immutable-os/go-agentd:latest"
+    "ghcr.io/immutable-os/kernel:latest" = "docker-image://ghcr.io/immutable-os/kernel:latest"
+    "ghcr.io/immutable-os/initramfs:latest" = "docker-image://ghcr.io/immutable-os/initramfs:latest"
+    "ghcr.io/immutable-os/toolchain:latest" = "docker-image://ghcr.io/immutable-os/toolchain:latest"
+  }
+
+  platforms = ["linux/amd64"]
+  tags = ["ghcr.io/immutable-os/rootfs:${TAG}"]
+  output = ["type=docker"]
+  labels = {
+    "org.opencontainers.title" = "immutable-os - rootfs"
+    "org.opencontainers.image.authors" = "Steven A. Zaluk <stevezaluk@gmail.com>"
+    "org.opencontainers.image.source" = "https://github.com/immutable-os/immutable-os"
+    "org.opencontainers.image.url" = "https://github.com/immutable-os/immutable-os"
+    "org.opencontainers.image.version" = TAG
+  }
+
+  args = {
+    BUSYBOX_VER = BUSYBOX_VER
+    LINUX_VER = LINUX_VER
+    INIT_VER = INIT_VER
+    AGENT_VER = AGENT_VER
+    INITRAMFS_VER = INITRAMFS_VER
+    TOOLCHAIN_VER = TOOLCHAIN_VER
+    COREUTILS_VER = COREUTILS_VER
   }
 }
 
