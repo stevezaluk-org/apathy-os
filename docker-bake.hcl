@@ -25,7 +25,7 @@ variable "LINUX_VER" {
 
 // BUSYBOX_VER The version of busybox to include with the initramfs
 variable "BUSYBOX_VER" {
-  default = "1.21.1"
+  default = "1.38.0"
 }
 
 // CORETUILS_VER The version of coreutils to use when building the rootfs
