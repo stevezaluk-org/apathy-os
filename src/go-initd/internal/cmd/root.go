@@ -31,6 +31,8 @@ func NewRootCmd() *cobra.Command {
 		Long:  `go-initd is an init system and declarative system configuration tool for Unix like systems.`,
 	}
 
+	rootCmd.AddCommand(NewVersionCmd())
+
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "set the config file for go-initd")
 
 	return rootCmd
