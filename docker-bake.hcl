@@ -162,6 +162,15 @@ target "rootfs" {
   }
 }
 
+target "image" {
+  inherits = ["_common"]
+
+  dockerfile = "Dockerfile"
+  context = "./build/image"
+
+  output = ["type=local,dest=dist/image/"]
+}
+
 target "go-agentd" {
   inherits = ["_common"]
 
