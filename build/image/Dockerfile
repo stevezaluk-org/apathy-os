@@ -18,6 +18,7 @@ RUN ukify build \
       --linux=/rootfs/boot/vmlinuz \
       --initrd=/rootfs/boot/initrd.img \
       --cmdline=$BOOT_ARGS \
+      --os-release=/rootfs/usr/lib/os-release \
       --output=/build/esp/EFI/BOOT/BOOTX64.EFI
 
 RUN	genimage \
