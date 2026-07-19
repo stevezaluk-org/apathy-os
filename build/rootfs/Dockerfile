@@ -43,6 +43,7 @@ WORKDIR /build
 
 # this must stay until we include /usr/bin/bash
 ADD https://busybox.net/downloads/binaries/$BUSYBOX_VER/busybox-x86_64 /build/usr/sbin/busybox
+RUN chmod +x /build/usr/sbin/busybox
 
 RUN bash -c 'mkdir -p /build/{usr/bin,usr/sbin,etc,sys,dev,proc,tmp,boot,var,mnt}'
 
@@ -68,3 +69,10 @@ ARG INITRAMFS_VER
 COPY --from=rootfs-build /build /
 COPY --from=kernel-build /boot/vmlinuz /boot/vmlinuz
 COPY --from=initramfs-build /boot/initrd.cpio /boot/initrd.img
+
+SHELL ["/usr/sbin/busybox", "sh"]
+
+ENV PATH="/usr/sbin:/usr/bin:/bin:/sbin"
+ENV HOME="/"
+
+CMD ["/usr/sbin/busybox", "sh"]
