@@ -1,0 +1,11 @@
+NAME="immutable-os"
+ARCHITECTURE="x86_64"
+VERSION="$VER"
+VERSION_CODENAME="origin"
+BUILD_ID="$DATE"
+RELEASE_TYPE=development
+ID=immutable-os
+PRETTY_NAME="Immutable OS Linux"
+HOME_URL="https://github.com/immutable-os/immutable-os"
+DOCUMENTATION_URL="https://github.com/immutable-os/immutable-os/blob/main/README.md"
+SUPPORT_URL="https://github.com/immutable-os/immutable-os/issues"

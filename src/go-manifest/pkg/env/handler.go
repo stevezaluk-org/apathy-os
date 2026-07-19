@@ -4,7 +4,7 @@ import (
 	"errors"
 	"os"
 
-	"github.com/stevezaluk/immutable-os/src/go-manifest/pkg/engine"
+	"github.com/immutable-os/immutable-os/src/go-manifest/pkg/engine"
 )
 
 var ErrSetEnvFailed = errors.New("set environment variable failed")

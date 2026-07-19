@@ -1,0 +1,41 @@
+name: immutable-os - Build
+
+on:
+  push:
+    tags:
+      - '*/v**'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    environment: build
+
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # pinned to 7.0.0
+
+      - name: Get version
+        id: parse
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          TARGET="${TAG%%/*}"
+          VERSION="${TAG#*/}"
+          echo "target=$TARGET" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # pinned to 4.2.0
+
+      - uses: docker/login-action@af1e73f918a031802d376d3c8bbc3fe56130a9b0 # pinned to 4.4.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/bake-action@d3418bd7d0e9324001bca92fa8ba175ea7e6dc9b # pinned to 7.3.0
+        env:
+          TAG: ${{ steps.parse.outputs.version }}
+          TARGET: ${{ steps.parse.outputs.target }}
+        with:
+          targets: ${{ steps.parse.outputs.target }}
+          set: |
+            ${{ env.TARGET }}.tags=${{ var.REGISTRY }}/${{ env.TARGET }}:${{ env.TAG }}

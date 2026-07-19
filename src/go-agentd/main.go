@@ -6,8 +6,8 @@ import (
 	"log"
 	"os"
 
-	"github.com/stevezaluk/immutable-os/src/go-agentd/internal/agent"
-	"github.com/stevezaluk/immutable-os/src/go-manifest/pkg/manifest"
+	"github.com/immutable-os/immutable-os/src/go-agentd/internal/agent"
+	"github.com/immutable-os/immutable-os/src/go-manifest/pkg/manifest"
 )
 
 // TODO: Better CLI here
