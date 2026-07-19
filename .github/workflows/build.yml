@@ -38,4 +38,4 @@ jobs:
         with:
           targets: ${{ steps.parse.outputs.target }}
           set: |
-            ${{ var.TARGET }}.tags=${{ var.REGISTRY }}/${{ var.TARGET }}:${{ var.TAG }}
+            ${{ env.TARGET }}.tags=${{ var.REGISTRY }}/${{ env.TARGET }}:${{ env.TAG }}
