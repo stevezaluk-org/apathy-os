@@ -91,27 +91,6 @@ RUN ln -s usr/lib64 lib64
 # Symlinks to our coreutils
 RUN bash -c 'for prog in $(./usr/bin/coreutils --list); do ln -s ./coreutils usr/bin/$prog; done'
 
-FROM debian:stable-slim AS initramfs-build
-
-RUN apt-get update \
-    && \
-    apt-get install cpio build-essential tar gzip -y
-
-WORKDIR /out/initramfs
-
-RUN bash -c 'mkdir -p /out/initramfs/{usr/sbin,usr/share/manifest.d,newroot,dev,proc,sys}'
-RUN bash -c 'mkdir -p /out/initramfs/newroot/{etc,var,mnt}'
-
-COPY "./build/deps/busybox-x86_64" /out/initramfs/usr/sbin/busybox
-COPY --from=init-build /out/init /out/initramfs/usr/sbin/init
-
-# This creates a confusing initramfs environment as agent is renamed to init, however this is a hard requirement of switch_root
-COPY --from=agentd-build /out/agent /out/initramfs/init
-
-COPY "./build/manifest.d/init.yaml" /out/initramfs/usr/share/manifest.d/init.yaml
-
-RUN bash -c 'find . | cpio -o -H newc > ../initrd.cpio'
-
 FROM scratch
 
 COPY --from=rootfs-build /out/rootfs /

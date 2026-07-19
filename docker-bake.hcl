@@ -18,6 +18,11 @@ variable "LINUX_VER" {
   default = "6.19"
 }
 
+// BUSYBOX_VER The version of busybox to include with the initramfs
+variable "BUSYBOX_VER" {
+  default = "1.21.1"
+}
+
 // AGENT_BUILDFLAGS The flags to pass to the Go compiler when building go-agentd
 variable "AGENT_BUILDFLAGS" {
   default = "-v"
@@ -73,6 +78,32 @@ target "kernel" {
 
   args = {
     LINUX_VER = LINUX_VER
+  }
+}
+
+target "initramfs" {
+  dockerfile = "Dockerfile"
+  context = "./build/initramfs"
+
+  # We override locally here since we want to build "from scratch" when invoking through buildx bake
+  contexts = {
+    "ghcr.io/immutable-os/go-initd:latest" = "docker-image://ghcr.io/immutable-os/go-initd:latest"
+    "ghcr.io/immutable-os/go-agentd:latest" = "docker-image://ghcr.io/immutable-os/go-agentd:latest"
+  }
+
+  platforms = ["linux/amd64"]
+  tags = ["ghcr.io/immutable-os/initramfs:${TAG}"]
+  output = ["type=docker"]
+  labels = {
+    "org.opencontainers.title" = "immutable-os - initramfs"
+    "org.opencontainers.image.authors" = "Steven A. Zaluk <stevezaluk@gmail.com>"
+    "org.opencontainers.image.source" = "https://github.com/immutable-os/immutable-os"
+    "org.opencontainers.image.url" = "https://github.com/immutable-os/immutable-os"
+    "org.opencontainers.image.version" = TAG
+  }
+
+  args = {
+    BUSYBOX_VER = BUSYBOX_VER
   }
 }
 
