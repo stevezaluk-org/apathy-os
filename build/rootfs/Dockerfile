@@ -53,6 +53,10 @@ COPY --from=agentd-build /app/agentd /build/init
 
 COPY ./usr/share/manifest.d/system.yaml /build/usr/share/manifest.d/system.yaml
 COPY ./usr/share/service.d/*.yaml /build/usr/share/service.d/
+COPY ./usr/lib/os-release /build/usr/lib/os-release
+
+# Symlink any required system directories
+RUN ln -s usr/lib/os-release etc/os-release
 
 # Symlinks to our coreutils
 RUN bash -c 'for prog in $(./usr/bin/coreutils --list); do ln -s ./coreutils usr/bin/$prog; done'
