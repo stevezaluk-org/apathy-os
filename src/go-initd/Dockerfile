@@ -6,7 +6,7 @@ ENV CGO_ENABLED=0 \
     GOOS=linux \
     GOARCH=amd64
 
-WORKDIR /out
+WORKDIR /build
 
 COPY ./go-initd initd/
 COPY ./go-manifest go-manifest/
@@ -15,3 +15,10 @@ COPY ./go-manifest go-manifest/
 RUN go work init ./initd ./go-manifest
 
 RUN go build -o init $INIT_BUILDFLAGS -ldflags="$INIT_LDFLAGS" ./initd && chmod +x init
+
+FROM gcr.io/distroless/static-debian13:latest
+
+WORKDIR /app
+COPY --from=init-build /build/initd /app/initd
+
+ENTRYPOINT ["initd"]
