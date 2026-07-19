@@ -1,5 +1,5 @@
 ARG ROOTFS_VER="latest"
-ARG BOOT_ARGS=""
+ARG BOOT_ARGS="debug root=87965c58-36e0-11f1-8de9-0242ac120002 console=ttyS0 rdinit=/usr/sbin/init"
 
 FROM ghcr.io/immutable-os/rootfs:$ROOTFS_VER AS rootfs-build
 FROM debian:stable-slim AS image-build

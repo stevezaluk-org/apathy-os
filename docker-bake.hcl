@@ -8,6 +8,11 @@ variable "TARGET" {
   default = "x86_64-unknown-linux-gnu"
 }
 
+// BOOT_ARGS The boot arguments to bake into the UKI when generating an image
+variable "BOOT_ARGS" {
+  default = "debug root=87965c58-36e0-11f1-8de9-0242ac120002 console=ttyS0 rdinit=/usr/sbin/init"
+}
+
 // CROSSTOOLS_VER The version of crosstool-ng to use for building the toolchain
 variable "CROSSTOOLS_VER" {
   default = "1.28.0"
@@ -35,6 +40,11 @@ variable "TOOLCHAIN_VER" {
 
 // INITRAMFS_VER The version of the initramfs to use when building the rootfs
 variable "INITRAMFS_VER" {
+  default = "latest"
+}
+
+// ROOTFS_VER The version of the rootfs to use when building images
+variable "ROOTFS_VER" {
   default = "latest"
 }
 
@@ -169,6 +179,11 @@ target "image" {
   context = "./build/image"
 
   output = ["type=local,dest=dist/image/"]
+
+  args = {
+    BOOT_ARGS = BOOT_ARGS
+    ROOTFS_VER = ROOTFS_VER
+  }
 }
 
 target "go-agentd" {
