@@ -15,8 +15,8 @@ import (
 	"golang.org/x/sys/unix"
 )
 
-// Agent An abstraction around the agent as a whole. Manages the state of late PID 1 and service supervisor
-type Agent struct {
+// SystemInit An abstraction around the agent as a whole. Manages the state of late PID 1 and service supervisor
+type SystemInit struct {
 	// config go-manifest config file
 	config *manifest.Manifest
 
@@ -38,7 +38,7 @@ type Agent struct {
 
 // EventLoop Starts the core agent event loop
 // TODO: Both the process reaper and service shutdown is occurring at the same time.
-func (agent *Agent) EventLoop() error {
+func (agent *SystemInit) EventLoop() error {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
@@ -75,7 +75,7 @@ func (agent *Agent) EventLoop() error {
 //
 // TODO: Not remounting (reverse order) filesystems here. Leads to data loss
 // TODO: No real service management here. Basic unix.Kill(-1)
-func (agent *Agent) Shutdown() error {
+func (agent *SystemInit) Shutdown() error {
 	if err := reaper.ReapProcesses(); err != nil {
 		return err
 	}
@@ -89,7 +89,7 @@ func (agent *Agent) Shutdown() error {
 }
 
 // Start Initial entrypoint for the agent. Processes system/user manifest files and then moves to the event loop
-func (agent *Agent) Start() error {
+func (agent *SystemInit) Start() error {
 	if err := agent.runner.Go(); err != nil {
 		return err
 	}
@@ -110,8 +110,8 @@ func (agent *Agent) Start() error {
 }
 
 // New Initializes a new Agent and returns a pointer to it
-func New(config *manifest.Manifest) *Agent {
-	return &Agent{
+func New(config *manifest.Manifest) *SystemInit {
+	return &SystemInit{
 		runner:   runner.New(config),
 		sigChild: make(chan os.Signal, 1),
 		sigTerm:  make(chan os.Signal, 1),
