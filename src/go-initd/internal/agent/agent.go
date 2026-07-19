@@ -6,10 +6,10 @@ import (
 	"os"
 	"os/signal"
 
-	"github.com/immutable-os/immutable-os/src/go-agentd/internal/acpi"
+	"github.com/immutable-os/immutable-os/src/go-initd/internal/acpi"
 
-	"github.com/immutable-os/immutable-os/src/go-agentd/internal/reaper"
-	"github.com/immutable-os/immutable-os/src/go-agentd/internal/service"
+	"github.com/immutable-os/immutable-os/src/go-initd/internal/reaper"
+	"github.com/immutable-os/immutable-os/src/go-initd/internal/service"
 	"github.com/immutable-os/immutable-os/src/go-manifest/pkg/manifest"
 	"github.com/immutable-os/immutable-os/src/go-manifest/pkg/runner"
 	"golang.org/x/sys/unix"
