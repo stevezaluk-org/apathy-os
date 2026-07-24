@@ -17,6 +17,11 @@ COPY --from=ghcr.io/immutable-os/go-agentd:latest /app/agentd /build/init
 COPY --from=ghcr.io/immutable-os/go-initd:latest /app/init /build/usr/sbin/init
 COPY ./usr/share/manifest.d/init.yaml /build/usr/share/manifest.d/init.yaml
 
+# These are really the only two dependencies that we need in initramfs outside of initd. These will eventually be replaced
+# with our own implementations but they need to stay for the time being.
+RUN ln -s usr/sbin/busybox usr/sbin/findfs
+RUN ln -s usr/sbin/busybox usr/sbin/switch_root
+
 RUN bash -c 'find . | cpio -o -H newc > initrd.cpio'
 
 FROM scratch

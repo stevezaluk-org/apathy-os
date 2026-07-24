@@ -49,14 +49,6 @@ func NewRootCmd() *cobra.Command {
 				log.Fatalf("got fatal error triyng to read early boot config: %v", err)
 			}
 
-			// As with the below flags, this should really be deprecated as well
-			required := []string{"findfs", "switch_root"}
-			for _, link := range required {
-				if err := os.Symlink(viper.GetString("busybox"), "/usr/sbin/"+link); err != nil {
-					log.Fatalf("could not create symbolic link (required for sys init): %v", err)
-				}
-			}
-
 			if err := runner.New(earlyConfig).Go(); err != nil {
 				log.Fatalf("got fatal error trying to process early boot manfiest: %v", err)
 			}
