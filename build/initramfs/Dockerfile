@@ -10,17 +10,22 @@ RUN apt-get update \
 WORKDIR /build
 RUN bash -c 'mkdir -p /build/{usr/sbin,usr/share/manifest.d,newroot,dev,proc,sys}'
 
-COPY --from=busybox-build /bin/busybox usr/sbin/busybox
+COPY --from=busybox-build /bin/busybox /build/usr/sbin/busybox
 
 # This creates a confusing initramfs environment as agent is renamed to init, however this is a hard requirement of switch_root
-COPY --from=ghcr.io/immutable-os/go-agentd:latest /app/agentd /build/init
+COPY --from=ghcr.io/immutable-os/go-initd:latest /app/init /build/init
 COPY --from=ghcr.io/immutable-os/go-initd:latest /app/init /build/usr/sbin/init
 COPY ./usr/share/manifest.d/init.yaml /build/usr/share/manifest.d/init.yaml
 
+WORKDIR /build/usr/sbin
+
+RUN chmod +x busybox
 # These are really the only two dependencies that we need in initramfs outside of initd. These will eventually be replaced
 # with our own implementations but they need to stay for the time being.
-RUN ln -s usr/sbin/busybox usr/sbin/findfs
-RUN ln -s usr/sbin/busybox usr/sbin/switch_root
+RUN ln -s busybox findfs
+RUN ln -s busybox switch_root
+
+WORKDIR /build
 
 RUN bash -c 'find . | cpio -o -H newc > initrd.cpio'
 
