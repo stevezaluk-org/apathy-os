@@ -63,6 +63,7 @@ RUN ln -s busybox switch_root
 
 RUN chmod +x /build/usr/sbin/busybox
 
+WORKDIR /build
 # Symlinks to our coreutils
 RUN bash -c 'for prog in $(./usr/bin/coreutils --list); do ln -s ./coreutils usr/bin/$prog; done'
 
