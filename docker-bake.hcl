@@ -48,21 +48,6 @@ variable "ROOTFS_VER" {
   default = "latest"
 }
 
-// AGENT_VER The version of the go-agentd to use when building the rootfs
-variable "AGENT_VER" {
-  default = "latest"
-}
-
-// AGENT_BUILDFLAGS The flags to pass to the Go compiler when building go-agentd
-variable "AGENT_BUILDFLAGS" {
-  default = "-v"
-}
-
-// AGENT_LDFLAGS The flags to pass to the Go linker when building go-agentd
-variable "AGENT_LDFLAGS" {
-  default = "-s -w"
-}
-
 // INIT_VER The version of go-initd to use when building the rootfs
 variable "INIT_VER" {
   default = "latest"
@@ -128,7 +113,6 @@ target "initramfs" {
   # We override locally here since we want to build "from scratch" when invoking through buildx bake
   contexts = {
     "ghcr.io/immutable-os/go-initd:latest" = "docker-image://ghcr.io/immutable-os/go-initd:latest"
-    "ghcr.io/immutable-os/go-agentd:latest" = "docker-image://ghcr.io/immutable-os/go-agentd:latest"
   }
 
   tags = ["ghcr.io/immutable-os/initramfs:${TAG}"]
@@ -150,7 +134,6 @@ target "rootfs" {
   # We override locally here since we want to build "from scratch" when invoking through buildx bake
   contexts = {
     "ghcr.io/immutable-os/go-initd:latest" = "docker-image://ghcr.io/immutable-os/go-initd:latest"
-    "ghcr.io/immutable-os/go-agentd:latest" = "docker-image://ghcr.io/immutable-os/go-agentd:latest"
     "ghcr.io/immutable-os/kernel:latest" = "docker-image://ghcr.io/immutable-os/kernel:latest"
     "ghcr.io/immutable-os/initramfs:latest" = "docker-image://ghcr.io/immutable-os/initramfs:latest"
     "ghcr.io/immutable-os/toolchain:latest" = "docker-image://ghcr.io/immutable-os/toolchain:latest"
@@ -165,7 +148,6 @@ target "rootfs" {
     BUSYBOX_VER = BUSYBOX_VER
     LINUX_VER = LINUX_VER
     INIT_VER = INIT_VER
-    AGENT_VER = AGENT_VER
     INITRAMFS_VER = INITRAMFS_VER
     TOOLCHAIN_VER = TOOLCHAIN_VER
     COREUTILS_VER = COREUTILS_VER
@@ -183,23 +165,6 @@ target "image" {
   args = {
     BOOT_ARGS = BOOT_ARGS
     ROOTFS_VER = ROOTFS_VER
-  }
-}
-
-target "go-agentd" {
-  inherits = ["_common"]
-
-  dockerfile = "go-agentd/Dockerfile"
-  context = "./src"
-  tags = ["ghcr.io/immutable-os/go-agentd:${TAG}"]
-
-  labels = {
-    "org.opencontainers.title" = "go-agentd"
-  }
-
-  args = {
-    AGENT_BUILDFLAGS = AGENT_BUILDFLAGS
-    AGENT_LDFLAGS = AGENT_LDFLAGS
   }
 }
 
