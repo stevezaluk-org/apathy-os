@@ -10,19 +10,11 @@ import (
 
 	"github.com/immutable-os/immutable-os/src/go-initd/internal/reaper"
 	"github.com/immutable-os/immutable-os/src/go-initd/internal/service"
-	"github.com/immutable-os/immutable-os/src/go-manifest/pkg/manifest"
-	"github.com/immutable-os/immutable-os/src/go-manifest/pkg/runner"
 	"golang.org/x/sys/unix"
 )
 
 // SystemInit An abstraction around the agent as a whole. Manages the state of late PID 1 and service supervisor
 type SystemInit struct {
-	// config go-manifest config file
-	config *manifest.Manifest
-
-	// runner go-manifest runner used for initializing the system during startup
-	runner *runner.Runner
-
 	// supervisor Service supervisor for Agent
 	supervisor *service.Supervisor
 
@@ -90,10 +82,6 @@ func (systemInit *SystemInit) Shutdown() error {
 
 // Start Initial entrypoint for the systemInit Processes system/user manifest files and then moves to the event loop
 func (systemInit *SystemInit) Start() error {
-	if err := systemInit.runner.Go(); err != nil {
-		return err
-	}
-
 	supervisor, err := service.NewSupervisor(service.DefaultServicePath)
 	if err != nil {
 		return err
@@ -110,9 +98,8 @@ func (systemInit *SystemInit) Start() error {
 }
 
 // New Initializes a new Agent and returns a pointer to it
-func New(config *manifest.Manifest) *SystemInit {
+func New() *SystemInit {
 	return &SystemInit{
-		runner:   runner.New(config),
 		sigChild: make(chan os.Signal, 1),
 		sigTerm:  make(chan os.Signal, 1),
 		sigAcpi:  make(chan bool),
