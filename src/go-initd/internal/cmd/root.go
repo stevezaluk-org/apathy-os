@@ -53,12 +53,14 @@ func NewRootCmd() *cobra.Command {
 				log.Fatalf("got fatal error trying to process early boot manfiest: %v", err)
 			}
 
-			if err := unix.Exec(
-				viper.GetString("switch-root"),
-				[]string{viper.GetString("switch-root"), viper.GetString("rootfs"), "/init"},
-				os.Environ(),
-			); err != nil {
-				log.Fatalf("got fatal error when trying to switch_root: %v", err)
+			if !viper.GetBool("system") {
+				if err := unix.Exec(
+					viper.GetString("switch-root"),
+					[]string{viper.GetString("switch-root"), viper.GetString("rootfs"), "/init", "--manifest=/usr/share/manifest.d/system.yaml", "--system"},
+					os.Environ(),
+				); err != nil {
+					log.Fatalf("got fatal error when trying to switch_root: %v", err)
+				}
 			}
 		},
 	}
