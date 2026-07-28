@@ -21,6 +21,7 @@ import (
 	"log"
 	"os"
 
+	"github.com/immutable-os/immutable-os/src/go-initd/internal/initd"
 	"github.com/immutable-os/immutable-os/src/go-manifest/pkg/manifest"
 	"github.com/immutable-os/immutable-os/src/go-manifest/pkg/runner"
 	"github.com/spf13/cobra"
@@ -60,6 +61,10 @@ func NewRootCmd() *cobra.Command {
 					os.Environ(),
 				); err != nil {
 					log.Fatalf("got fatal error when trying to switch_root: %v", err)
+				}
+			} else {
+				if err := initd.New().Start(); err != nil {
+					log.Fatalf("got fatal error when trying to start initd: %v", err)
 				}
 			}
 		},
