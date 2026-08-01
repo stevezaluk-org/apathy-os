@@ -18,6 +18,9 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package cmd
 
 import (
+	"errors"
+	"os"
+
 	"github.com/spf13/cobra"
 )
 
@@ -27,6 +30,17 @@ func NewRootCmd() *cobra.Command {
 		Use:   "switch_root",
 		Short: "A go implementation of the `switch_root` command from util-linux",
 		Long:  "A go implementation of the `switch_root` command from util-linux",
+		PreRun: func(cmd *cobra.Command, args []string) {
+			/*
+				This program can have some pretty devastating effects on your system if run incorrectly (it recursively
+				deletes everything out of /) so we always check to ensure that we are PID 1 without giving the user
+				the opportunity to override this.
+			*/
+
+			if os.Getpid() != 1 {
+				panic(errors.New("not running as PID 1"))
+			}
+		},
 	}
 
 	cmd.AddCommand(NewVersionCmd())
