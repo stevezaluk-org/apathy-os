@@ -23,9 +23,13 @@ import (
 
 // NewRootCmd Initializes a new root command and returns a pointer to it
 func NewRootCmd() *cobra.Command {
-	return &cobra.Command{
+	cmd := &cobra.Command{
 		Use:   "switch_root",
 		Short: "A go implementation of the `switch_root` command from util-linux",
 		Long:  "A go implementation of the `switch_root` command from util-linux",
 	}
+
+	cmd.AddCommand(NewVersionCmd())
+
+	return cmd
 }
