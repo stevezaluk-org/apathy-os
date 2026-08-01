@@ -31,5 +31,8 @@ func NewRootCmd() *cobra.Command {
 
 	cmd.AddCommand(NewVersionCmd())
 
+	cmd.Flags().String("root", "/newroot", "The directory to switch_root to")
+	cmd.Flags().String("init", "/init", "An absolute path to init")
+
 	return cmd
 }
