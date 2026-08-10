@@ -33,6 +33,18 @@ RUN cargo install \
           --bins \
           --root /build/coreutils
 
+FROM rust:1.96.0 AS  shadow-build
+ARG SHADOW_VER
+
+WORKDIR /build/shadow-rs
+
+ADD https://github.com/uutils/shadow/archive/refs/tags/v$SHADOW_VER.tar.gz shadow-rs.tar.gz
+
+RUN tar -xvf shadow-rs.tar.gz -C . --strip-components=1 && rm -rf shadow-rs.tar.gz
+
+# shadow-rs explicitly recommends installing using there Makefile
+RUN mkdir bin/ && make install PREFIX=/build/shadow-rs/bin
+
 FROM debian:stable-slim AS rootfs-build
 ARG BUSYBOX_VER
 ARG AGENT_VER
@@ -46,6 +58,7 @@ RUN bash -c 'mkdir -p /build/{usr/bin,usr/sbin,etc,sys,dev,proc,tmp,boot,var,mnt
 
 COPY --from=toolchain-build / /build
 COPY --from=uutils-build /build/coreutils/bin/* /build/usr/bin
+COPY --from=shadow-build /build/shadow-rs/bin/* /build/usr/bin
 COPY --from=initd-build /app/init /build/init
 
 # this must stay until we include /usr/bin/bash
@@ -62,6 +75,14 @@ RUN ln -s busybox findfs
 RUN ln -s busybox switch_root
 
 RUN chmod +x /build/usr/sbin/busybox
+
+WORKDIR /etc
+
+# Required template files for user control. User control is generally handled by go-manifest, but we always need a root
+# user so the template contains entries for this
+COPY ./etc/passwd .
+COPY ./etc/group .
+COPY ./etc/shadow .
 
 WORKDIR /build
 # Symlinks to our coreutils
