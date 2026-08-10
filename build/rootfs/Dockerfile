@@ -76,7 +76,7 @@ RUN ln -s busybox switch_root
 
 RUN chmod +x /build/usr/sbin/busybox
 
-WORKDIR /etc
+WORKDIR /build/etc
 
 # Required template files for user control. User control is generally handled by go-manifest, but we always need a root
 # user so the template contains entries for this
