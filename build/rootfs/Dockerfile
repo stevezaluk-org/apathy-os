@@ -101,6 +101,9 @@ COPY ./etc/group .
 COPY ./etc/shadow .
 COPY ./etc/issue .
 
+# All configuration files here are required for configuring PAM
+COPY ./etc/pam.d /build/etc/pam.d
+
 WORKDIR /build
 # Symlinks to our coreutils
 RUN bash -c 'for prog in $(./usr/bin/coreutils --list); do ln -s ./coreutils usr/bin/$prog; done'
