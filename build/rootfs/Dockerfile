@@ -56,7 +56,7 @@ ADD https://github.com/util-linux/util-linux/archive/refs/tags/v$UTILLINUX_VER.t
 RUN tar -xvf util-linux.tar.gz -C . --strip-components=1 && rm -rf util-linux.tar.gz
 
 RUN apt-get update && \
-    apt-get install bison flex libtool make automake meson autopoint python3-dev pkg-config -y
+    apt-get install bison flex libtool make automake meson gettext libpam0g-dev autopoint python3-dev pkg-config -y
 
 RUN meson setup build --prefix=/usr
 RUN DESTDIR=/build/util-linux/out meson install -C build/
