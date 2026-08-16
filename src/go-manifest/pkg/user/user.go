@@ -1,5 +1,7 @@
 package user
 
+import "fmt"
+
 // LinuxUser Represents a Linux User that should be created during system boot
 type LinuxUser struct {
 	// Username The username
@@ -19,9 +21,18 @@ type LinuxUser struct {
 
 	// Comment The GECOS of the user. Can be an abritrary string
 	Comment string `yaml:"comment"`
+
+	// Shell The default shell for the user
+	Shell string `yaml:"shell"`
+}
+
+// String Returns the user metadata formatted as a string so that it can be written to /etc/passwd
+func (linuxUser *LinuxUser) String() string {
+	return fmt.Sprintf("%s:x:%d:%d:%d:%s:%s",
+		linuxUser.Username, linuxUser.UID, linuxUser.GID, linuxUser.HomeDirectory, linuxUser.Comment, linuxUser.Shell)
 }
 
 // NewUser Initializes a new user with the set username and returns a pointer to it
-func NewUser(username string) *LinuxUser {
-	return &LinuxUser{Username: username}
+func NewUser(username string, shell string) *LinuxUser {
+	return &LinuxUser{Username: username, Shell: shell}
 }
