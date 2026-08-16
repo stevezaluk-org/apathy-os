@@ -84,6 +84,10 @@ COPY --from=initd-build /app/init /build/init
 
 # this must stay until we include /usr/bin/bash
 COPY --from=busybox-build /bin/busybox /build/usr/sbin/busybox
+
+# Bad remove this
+RUN cp /build/usr/sbin/busybox /build/usr/bin/sh
+
 COPY ./usr/share/manifest.d/system.yaml /build/usr/share/manifest.d/system.yaml
 COPY ./usr/share/service.d/*.yaml /build/usr/share/service.d/
 COPY ./usr/lib/os-release /build/usr/lib/os-release
