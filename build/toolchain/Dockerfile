@@ -83,7 +83,7 @@ COPY --from=libcrypt-build /build/libcrypt/out/usr/include/* /build/sysroot/usr/
 COPY ./meson-sysroot.ini sysroot.ini
 
 RUN mkdir build && \
-    meson setup build/ --native-file sysroot.ini
+    meson setup -Dsecuredir=/usr/lib/security build/ --native-file sysroot.ini
 
 RUN meson compile -C build/ && \
     DESTDIR=/build/libpam/out meson install -C build
@@ -95,5 +95,6 @@ COPY --from=crosstools-build /home/nonroot/x-tools/$TARGET/$TARGET/sysroot/ /
 COPY --from=libcrypt-build /build/libcrypt/out/usr/lib/* /usr/lib
 
 COPY --from=libpam-build /build/libpam/out/usr/lib/x86_64-linux-gnu/ /usr/lib
+COPY --from=libpam-build /build/libpam/out/usr/lib/security /usr/lib/security
 COPY --from=libpam-build /build/libpam/out/usr/share/pam /usr/share
 COPY --from=libpam-build /build/libpam/out/usr/sbin /usr/sbin
