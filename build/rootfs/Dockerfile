@@ -5,6 +5,7 @@ ARG TOOLCHAIN_VER="latest"
 ARG LINUX_VER="6.19"
 ARG COREUTILS_VER="0.9.0"
 ARG BUSYBOX_VER="1.38.0"
+ARG UTILLINUX_VER="2.42.2"
 
 # This is a workaround since buildkit does not support expanding variables
 # in `--from` arguments when using COPY. Pretty ugly but its the only easy
@@ -45,6 +46,21 @@ RUN tar -xvf shadow-rs.tar.gz -C . --strip-components=1 && rm -rf shadow-rs.tar.
 # shadow-rs explicitly recommends installing using there Makefile
 RUN mkdir bin/ && make install PREFIX=/build/shadow-rs/bin
 
+FROM debian:stable-slim AS utillinux-build
+ARG UTILLINUX_VER
+
+WORKDIR /build/util-linux
+
+ADD https://github.com/util-linux/util-linux/archive/refs/tags/v$UTILLINUX_VER.tar.gz util-linux.tar.gz
+
+RUN tar -xvf util-linux.tar.gz -C . --strip-components=1 && rm -rf util-linux.tar.gz
+
+RUN apt-get update && \
+    apt-get install bison flex libtool make automake meson autopoint python3-dev pkg-config -y
+
+RUN meson setup build --prefix=/usr
+RUN DESTDIR=/build/util-linux/out meson install -C build/
+
 FROM debian:stable-slim AS rootfs-build
 ARG BUSYBOX_VER
 ARG AGENT_VER
@@ -59,6 +75,11 @@ RUN bash -c 'mkdir -p /build/{usr/bin,usr/sbin,etc,sys,dev,proc,tmp,boot,var,mnt
 COPY --from=toolchain-build / /build
 COPY --from=uutils-build /build/coreutils/bin/* /build/usr/bin
 COPY --from=shadow-build /build/shadow-rs/bin/* /build/usr/bin
+
+COPY --from=utillinux-build /build/util-linux/out/usr/bin/* /build/usr/bin
+COPY --from=utillinux-build /build/util-linux/out/usr/sbin/* /build/usr/sbin
+COPY --from=utillinux-build /build/util-linux/out/usr/lib/* /build/usr/lib
+
 COPY --from=initd-build /app/init /build/init
 
 # this must stay until we include /usr/bin/bash
@@ -69,11 +90,6 @@ COPY ./usr/lib/os-release /build/usr/lib/os-release
 
 # Symlink any required system directories
 RUN ln -s usr/lib/os-release etc/os-release
-
-WORKDIR /build/usr/sbin
-RUN ln -s busybox findfs
-RUN ln -s busybox switch_root
-
 RUN chmod +x /build/usr/sbin/busybox
 
 WORKDIR /build/etc
