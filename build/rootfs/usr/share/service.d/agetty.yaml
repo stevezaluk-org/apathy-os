@@ -11,7 +11,7 @@ args:
   - --login-program=/usr/bin/login
   - --keep-baud
   - 115200,57600,38400,9600
-  - "-"
-  - ascii
+  - ttyS0
+  - ansi
 env:
   - "PS1=(debug) [$PWD] $ "
