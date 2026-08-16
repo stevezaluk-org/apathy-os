@@ -82,7 +82,8 @@ target "_common" {
 target "toolchain" {
   inherits = ["_common"]
 
-  dockerfile = "build/toolchain/Dockerfile"
+  dockerfile = "Dockerfile"
+  context = "./build/toolchain"
   tags = ["ghcr.io/immutable-os/toolchain:${TAG}"]
   labels = {
     "org.opencontainers.title" = "immutable-os - toolchain"
