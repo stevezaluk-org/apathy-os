@@ -99,6 +99,7 @@ WORKDIR /build/etc
 COPY ./etc/passwd .
 COPY ./etc/group .
 COPY ./etc/shadow .
+COPY ./etc/issue .
 
 WORKDIR /build
 # Symlinks to our coreutils
