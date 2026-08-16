@@ -1,5 +1,6 @@
 ARG TARGET="x86_64-unknown-linux-gnu"
 ARG CROSSTOOLS_VER="1.28.0"
+ARG LIBCRYPT_VER="4.5.2"
 
 FROM debian:stable-slim AS crosstools-build
 ARG TARGET
@@ -31,7 +32,38 @@ USER nonroot:nonroot
 RUN ct-ng $TARGET && \
     ct-ng build
 
+FROM debian:stable-slim AS libcrypt-build
+ARG TARGET
+ARG LIBCRYPT_VER
+
+RUN apt-get update && \
+    apt-get install autoconf libtool make -y
+
+WORKDIR /build/libcrypt
+
+ADD https://github.com/besser82/libxcrypt/archive/refs/tags/v$LIBCRYPT_VER.tar.gz libcrypt.tar.gz
+
+RUN tar -xvf libcrypt.tar.gz -C . --strip-components=1 && rm -rf libcrypt.tar.gz
+
+# We need to ensure that we are actually compiling against our toolchain, so we need to copy this in
+COPY --from=crosstools-build /home/nonroot/x-tools/$TARGET/$TARGET/sysroot/ /build/sysroot
+
+ENV CPPFLAGS="-I/build/sysroot/usr/include"
+ENV LDFLAGS="-L/build/sysroot/usr/lib -Wl,-rpath-link,/build/sysroot/usr/lib"
+ENV PKG_CONFIG_SYSROOT_DIR="/build/sysroot"
+ENV PKG_CONFIG_LIBDIR="/build/sysroot/usr/lib/pkgconfig"
+
+RUN ./autogen.sh
+RUN ./configure CC="gcc --sysroot=/build/sysroot" \
+                CXX="g++ --sysroot=/build/sysroot" \
+                --with-sysroot=/build/sysroot \
+                --prefix=/usr
+
+RUN make -j$(nproc) && \
+    DESTDIR="/build/libcrypt/out" make install
+
 FROM scratch
 ARG TARGET
 
 COPY --from=crosstools-build /home/nonroot/x-tools/$TARGET/$TARGET/sysroot/ /
+COPY --from=libcrypt-build /build/libcrypt/out/usr/lib/* /usr/lib
