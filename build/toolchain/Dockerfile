@@ -94,6 +94,6 @@ ARG TARGET
 COPY --from=crosstools-build /home/nonroot/x-tools/$TARGET/$TARGET/sysroot/ /
 COPY --from=libcrypt-build /build/libcrypt/out/usr/lib/* /usr/lib
 
-COPY --from=libpam-build /build/libpam/out/usr/lib/x86_64-linux-gnu/* /usr/lib
+COPY --from=libpam-build /build/libpam/out/usr/lib/x86_64-linux-gnu/ /usr/lib
 COPY --from=libpam-build /build/libpam/out/usr/share/pam /usr/share
 COPY --from=libpam-build /build/libpam/out/usr/sbin /usr/sbin
