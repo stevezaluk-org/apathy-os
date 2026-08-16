@@ -1,6 +1,7 @@
 ARG TARGET="x86_64-unknown-linux-gnu"
 ARG CROSSTOOLS_VER="1.28.0"
 ARG LIBCRYPT_VER="4.5.2"
+ARG LIBPAM_VER="1.7.2"
 
 FROM debian:stable-slim AS crosstools-build
 ARG TARGET
@@ -62,8 +63,37 @@ RUN ./configure CC="gcc --sysroot=/build/sysroot" \
 RUN make -j$(nproc) && \
     DESTDIR="/build/libcrypt/out" make install
 
+FROM debian:stable-slim AS libpam-build
+ARG TARGET
+ARG LIBPAM_VER
+
+RUN apt-get update && \
+    apt-get install meson pkg-config -y
+
+WORKDIR /build/libpam
+
+ADD https://github.com/linux-pam/linux-pam/archive/refs/tags/v$LIBPAM_VER.tar.gz libpam.tar.gz
+
+RUN tar -xvf libpam.tar.gz -C . --strip-components=1 && rm -rf libpam.tar.gz
+
+# We need to ensure that we are actually compiling against our toolchain, so we need to copy this in
+COPY --from=crosstools-build /home/nonroot/x-tools/$TARGET/$TARGET/sysroot/ /build/sysroot
+COPY --from=libcrypt-build /build/libcrypt/out/usr/lib/* /build/sysroot/usr/lib
+COPY --from=libcrypt-build /build/libcrypt/out/usr/include/* /build/sysroot/usr/include
+COPY ./meson-sysroot.ini sysroot.ini
+
+RUN mkdir build && \
+    meson setup build/ --native-file sysroot.ini
+
+RUN meson compile -C build/ && \
+    DESTDIR=/build/libpam/out meson install -C build
+
 FROM scratch
 ARG TARGET
 
 COPY --from=crosstools-build /home/nonroot/x-tools/$TARGET/$TARGET/sysroot/ /
 COPY --from=libcrypt-build /build/libcrypt/out/usr/lib/* /usr/lib
+
+COPY --from=libpam-build /build/libpam/out/usr/lib/x86_64-linux-gnu/* /usr/lib
+COPY --from=libpam-build /build/libpam/out/usr/share/pam /usr/share
+COPY --from=libpam-build /build/libpam/out/usr/sbin /usr/sbin
