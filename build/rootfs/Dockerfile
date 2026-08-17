@@ -104,6 +104,7 @@ COPY ./etc/passwd .
 COPY ./etc/group .
 COPY ./etc/shadow .
 COPY ./etc/issue .
+COPY ./etc/login.defs .
 
 # All configuration files here are required for configuring PAM
 COPY ./etc/pam.d /build/etc/pam.d
