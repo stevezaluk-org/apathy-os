@@ -1,0 +1,17 @@
+# Name: agetty.yaml
+# Description: Starts agetty with the baud rate optimized for serial consoles
+
+name: "agetty"
+binary: "/usr/sbin/agetty"
+mapConsole: true
+args:
+  - --noreset
+  - --noclear
+  - --issue-file=/etc/issue
+  - --login-program=/usr/bin/login
+  - --keep-baud
+  - 115200,57600,38400,9600
+  - ttyS0
+  - ansi
+env:
+  - "PS1=(debug) [$PWD] $ "

@@ -33,6 +33,11 @@ variable "COREUTILS_VER" {
   default = "0.9.0"
 }
 
+// CORETUILS_VER The version of uutils/shadow to use when building the rootfs
+variable "SHADOW_VER" {
+  default = "0.2.1"
+}
+
 // TOOLCHAIN_VER The toolchain version to use when building the rootfs
 variable "TOOLCHAIN_VER" {
   default = "latest"
@@ -77,7 +82,8 @@ target "_common" {
 target "toolchain" {
   inherits = ["_common"]
 
-  dockerfile = "build/toolchain/Dockerfile"
+  dockerfile = "Dockerfile"
+  context = "./build/toolchain"
   tags = ["ghcr.io/immutable-os/toolchain:${TAG}"]
   labels = {
     "org.opencontainers.title" = "immutable-os - toolchain"
@@ -151,6 +157,7 @@ target "rootfs" {
     INITRAMFS_VER = INITRAMFS_VER
     TOOLCHAIN_VER = TOOLCHAIN_VER
     COREUTILS_VER = COREUTILS_VER
+    SHADOW_VER = SHADOW_VER
   }
 }
 
