@@ -42,7 +42,9 @@ type Service struct {
 	// updated_at The timestamp of when the service was last updated
 	UpdatedAt *timestamppb.Timestamp `protobuf:"bytes,8,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
 	// priority A number that determines when this service is started in relation to other services
-	Priority      uint64 `protobuf:"varint,9,opt,name=priority,proto3" json:"priority,omitempty"`
+	Priority uint64 `protobuf:"varint,9,opt,name=priority,proto3" json:"priority,omitempty"`
+	// allocate_tty When set to true, allocate the process the child end of a TTY so that it can properly accept input from stdin
+	AllocateTty   bool `protobuf:"varint,10,opt,name=allocate_tty,json=allocateTty,proto3" json:"allocate_tty,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -138,6 +140,13 @@ func (x *Service) GetPriority() uint64 {
 		return x.Priority
 	}
 	return 0
+}
+
+func (x *Service) GetAllocateTty() bool {
+	if x != nil {
+		return x.AllocateTty
+	}
+	return false
 }
 
 type GetServiceRequest struct {
@@ -497,7 +506,7 @@ var File_service_v1_service_proto protoreflect.FileDescriptor
 const file_service_v1_service_proto_rawDesc = "" +
 	"\n" +
 	"\x18service/v1/service.proto\x12\n" +
-	"service.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\x9d\x02\n" +
+	"service.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\xc0\x02\n" +
 	"\aService\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12 \n" +
 	"\vdescription\x18\x02 \x01(\tR\vdescription\x12\x12\n" +
@@ -509,7 +518,9 @@ const file_service_v1_service_proto_rawDesc = "" +
 	"started_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\tstartedAt\x129\n" +
 	"\n" +
 	"updated_at\x18\b \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\x12\x1a\n" +
-	"\bpriority\x18\t \x01(\x04R\bpriority\"'\n" +
+	"\bpriority\x18\t \x01(\x04R\bpriority\x12!\n" +
+	"\fallocate_tty\x18\n" +
+	" \x01(\bR\vallocateTty\"'\n" +
 	"\x11GetServiceRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\"C\n" +
 	"\x12GetServiceResponse\x12-\n" +

@@ -34,6 +34,9 @@ message Service {
 
   // priority A number that determines when this service is started in relation to other services
   uint64 priority = 9;
+
+  // allocate_tty When set to true, allocate the process the child end of a TTY so that it can properly accept input from stdin
+  bool allocate_tty = 10;
 }
 
 service Services {
