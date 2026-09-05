@@ -25,32 +25,28 @@ type Api struct {
 	server *grpc.Server
 }
 
-// Get Retrieve a services metadata
-func (a *Api) Get(ctx context.Context, in *v1.GetServiceRequest, opts ...grpc.CallOption) (*v1.GetServiceResponse, error) {
+func (api *Api) Get(ctx context.Context, request *v1.GetServiceRequest) (*v1.GetServiceResponse, error) {
 	//TODO implement me
 	panic("implement me")
 }
 
-// List Lists all currently loaded services
-func (a *Api) List(ctx context.Context, in *v1.ListServiceRequest, opts ...grpc.CallOption) (*v1.ListServiceResponse, error) {
+func (api *Api) List(ctx context.Context, request *v1.ListServiceRequest) (*v1.ListServiceResponse, error) {
 	//TODO implement me
 	panic("implement me")
 }
 
-// Start Starts a service by name
-func (a *Api) Start(ctx context.Context, in *v1.StartServiceRequest, opts ...grpc.CallOption) (*v1.StartServiceResponse, error) {
+func (api *Api) Start(ctx context.Context, request *v1.StartServiceRequest) (*v1.StartServiceResponse, error) {
 	//TODO implement me
 	panic("implement me")
 }
 
-// Stop Stops a service by name
-func (a *Api) Stop(ctx context.Context, in *v1.StopServiceRequest, opts ...grpc.CallOption) (*v1.StopServiceResponse, error) {
+func (api *Api) Stop(ctx context.Context, request *v1.StopServiceRequest) (*v1.StopServiceResponse, error) {
 	//TODO implement me
 	panic("implement me")
 }
 
 // Serve Starts the API server. Blocks the current go-routine.
-func (a *Api) Serve(path string) error {
+func (api *Api) Serve(path string) error {
 	if strings.HasPrefix(path, "~") {
 		path = strings.Replace(path, "~", os.Getenv("HOME"), 1)
 	}
