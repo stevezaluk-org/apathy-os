@@ -1,12 +1,14 @@
 package daemon
 
 import (
-	"log"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/containerd/cgroups/v2/cgroup2"
+	"github.com/immutable-os/immutable-os/src/go-serviced/internal/log"
+	"github.com/immutable-os/immutable-os/src/go-serviced/pkg/api"
 	"github.com/immutable-os/immutable-os/src/go-serviced/pkg/config"
 	"github.com/immutable-os/immutable-os/src/go-serviced/pkg/supervisor"
 	v1 "github.com/immutable-os/immutable-os/src/go-serviced/proto/service/v1"
@@ -22,6 +24,9 @@ type Daemon struct {
 
 	// cgroup A cgroup representing the system.slice
 	cgroup *cgroup2.Manager
+
+	// api The API server that this daemon is managing
+	api *api.Api
 }
 
 // Load Loads relevant service files from the path passed as an argument
@@ -57,7 +62,7 @@ func (daemon *Daemon) Load() error {
 				return err
 			}
 
-			log.Printf("Service queued for start: %s", path)
+			slog.Debug("Service queued for start:", path)
 			daemon.services[superv.Service.Name] = superv
 		}
 
@@ -80,6 +85,13 @@ func NewDaemon(config config.Config) (*Daemon, error) {
 	if err := daemon.Load(); err != nil {
 		return nil, err
 	}
+
+	grpcServer, err := api.New(&daemon.services)
+	if err != nil {
+		return nil, err
+	}
+	daemon.api = grpcServer
+	defer log.Init()
 
 	return daemon, nil
 }
