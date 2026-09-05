@@ -39,7 +39,7 @@ type Daemon struct {
 //
 // TODO: It would be nice if we could have an abstraction for a service "group". Would make this nice and thin
 func (daemon *Daemon) Load() error {
-	cgroup, err := cgroup2.NewManager(daemon.config.CgroupFilesystem, "system.slice", nil)
+	cgroup, err := cgroup2.NewManager(daemon.config.CgroupFilesystem, "system.slice", &cgroup2.Resources{})
 	if err != nil {
 		return err
 	}
