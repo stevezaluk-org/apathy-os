@@ -2,7 +2,9 @@ package api
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"io/fs"
 	"net"
 	"os"
 	"path/filepath"
@@ -53,8 +55,8 @@ func (a *Api) Serve(path string) error {
 		path = strings.Replace(path, "~", os.Getenv("HOME"), 1)
 	}
 
-	if _, err := os.Stat(path); os.IsNotExist(err) {
-		if err := os.MkdirAll(filepath.Base(path), 0644); err != nil {
+	if _, err := os.Stat(path); errors.Is(err, fs.ErrNotExist) {
+		if err := os.MkdirAll(filepath.Dir(path), 0644); err != nil {
 			return fmt.Errorf("failed to create directory %s: %v", path, err)
 		}
 	}
