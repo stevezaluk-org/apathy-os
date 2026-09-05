@@ -11,6 +11,9 @@ import (
 	"golang.org/x/sys/unix"
 )
 
+// Supervisor An abstraction for controlling the lifecycle of a service. Defines the core functions needed for starting,
+// stopping, restarting, and managing a service. The supervisor structure also directly manages the service's cgroup,
+// usually a child cgroup of the overarching `serviced.slice` cgroup.
 type Supervisor struct {
 	// Service The service that this supervisor is managing
 	Service *v1.Service
@@ -25,6 +28,9 @@ type Supervisor struct {
 // Stop Initiates the stop routine for the given service. When a stop is requested, the supervisor first sends a
 // unix.SIGTERM to the process and waits for a maximum of 20 seconds for the process to gracefully end. If the process
 // fails to respond to this signal, its cgroup is frozen and is unix.SIGKILL'd
+//
+// TODO: The context management is weird here. Kill exec.CommandContext so that all functions can use a child context directly (simplifies mass shutdown)
+// TODO: Unclear when SIGKILL is being sent (since logic for it is buried under supervisor.Start)
 func (supervisor *Supervisor) Stop(ctx context.Context) error {
 	if supervisor.proc.Process == nil {
 		return nil
