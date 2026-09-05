@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"fmt"
+	"net"
 	"os"
 	"path/filepath"
 	"strings"
@@ -17,6 +18,9 @@ type Api struct {
 
 	// services A pointer to a map of service supervisors received from the daemon.Daemon
 	services *map[string]*supervisor.Supervisor
+
+	// server The underlying server for the gRCP API
+	server *grpc.Server
 }
 
 // Get Retrieve a services metadata
@@ -43,21 +47,36 @@ func (a *Api) Stop(ctx context.Context, in *v1.StopServiceRequest, opts ...grpc.
 	panic("implement me")
 }
 
-// New Initializes a new API and serves it through a Unix socket at the specified path
-func New(path string, services *map[string]*supervisor.Supervisor) (*Api, error) {
+// Serve Starts the API server. Blocks the current go-routine.
+func (a *Api) Serve(path string) error {
 	if strings.HasPrefix(path, "~") {
 		path = strings.Replace(path, "~", os.Getenv("HOME"), 1)
 	}
 
 	if _, err := os.Stat(path); os.IsNotExist(err) {
 		if err := os.MkdirAll(filepath.Base(path), 0644); err != nil {
-			return nil, fmt.Errorf("failed to create directory %s: %v", path, err)
+			return fmt.Errorf("failed to create directory %s: %v", path, err)
 		}
 	}
 
-	api := &Api{
-		services: services,
+	listener, err := net.Listen("unix", path)
+	if err != nil {
+		return err
 	}
 
-	return api, nil
+	defer listener.Close()
+
+	if err := a.server.Serve(listener); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// New Initializes a new API and serves it through a Unix socket at the specified path
+func New(services *map[string]*supervisor.Supervisor) (*Api, error) {
+	return &Api{
+		services: services,
+		server:   grpc.NewServer(),
+	}, nil
 }
