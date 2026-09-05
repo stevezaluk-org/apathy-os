@@ -1,8 +1,10 @@
 package daemon
 
 import (
+	"context"
 	"log/slog"
 	"os"
+	"os/signal"
 	"path/filepath"
 	"strings"
 
@@ -12,6 +14,7 @@ import (
 	"github.com/immutable-os/immutable-os/src/go-serviced/pkg/config"
 	"github.com/immutable-os/immutable-os/src/go-serviced/pkg/supervisor"
 	v1 "github.com/immutable-os/immutable-os/src/go-serviced/proto/service/v1"
+	"golang.org/x/sys/unix"
 	"google.golang.org/protobuf/encoding/protojson"
 )
 
@@ -27,6 +30,9 @@ type Daemon struct {
 
 	// api The API server that this daemon is managing
 	api *api.Api
+
+	// signals Channel for receiving unix signals being sent to the daemon
+	signals chan os.Signal
 }
 
 // Load Loads relevant service files from the path passed as an argument
@@ -75,11 +81,43 @@ func (daemon *Daemon) Load() error {
 	return nil
 }
 
+// handleSignals Listens for unix signals sent to the daemon and executes actions when they are received
+func (daemon *Daemon) handleSignals(ctx context.Context) {
+	signal.Notify(daemon.signals, unix.SIGHUP, unix.SIGTERM, unix.SIGINT)
+
+	for {
+		switch {
+		case <-daemon.signals == unix.SIGINT:
+			ctx.Done() // TODO: This needs to actually stop services here
+		case <-daemon.signals == unix.SIGTERM:
+			ctx.Done() // TODO: This needs to actually stop services here
+		case <-daemon.signals == unix.SIGHUP:
+			ctx.Done() // TODO: This needs to reload service files here
+		}
+	}
+}
+
+// Start Starts the daemon service and
+func (daemon *Daemon) Start(ctx context.Context) error {
+	sigCtx, sigCancel := context.WithCancel(ctx)
+	defer sigCancel()
+
+	go daemon.handleSignals(sigCtx)
+
+	// blocks the current go-routine
+	if err := daemon.api.Serve(daemon.config.Socket); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // NewDaemon Initializes a new daemon and returns a pointer to it. Also creates the `system.slice` cgroup
-func NewDaemon(config config.Config) (*Daemon, error) {
+func NewDaemon(config *config.Config) (*Daemon, error) {
 	daemon := &Daemon{
-		config:   &config,
+		config:   config,
 		services: make(map[string]*supervisor.Supervisor),
+		signals:  make(chan os.Signal, 1),
 	}
 
 	if err := daemon.Load(); err != nil {
