@@ -63,7 +63,7 @@ func (config *Config) Load(path string) error {
 func Default() *Config {
 	return &Config{
 		Socket:           "/var/run/go-serviced/sock.socket",
-		ServicePath:      "/etc/go-serviced/services",
+		ServicePath:      "/usr/share/service.d",
 		CgroupFilesystem: "/sys/fs/cgroup",
 	}
 }
