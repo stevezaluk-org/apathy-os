@@ -2,6 +2,10 @@ package factory
 
 import "github.com/immutable-os/immutable-os/src/go-serviced/pkg/config"
 
+var (
+	cachedConfig = config.Default()
+)
+
 type Factory struct {
 	Config func(string) (*config.Config, error)
 }
@@ -9,12 +13,15 @@ type Factory struct {
 func New() *Factory {
 	return &Factory{
 		Config: func(path string) (*config.Config, error) {
-			c := config.Default()
-			if err := c.Load(path); err != nil {
+			if cachedConfig != nil {
+				return cachedConfig, nil
+			}
+
+			if err := cachedConfig.Load(path); err != nil {
 				return nil, err
 			}
 
-			return c, nil
+			return cachedConfig, nil
 		},
 	}
 }
