@@ -31,6 +31,9 @@ message Service {
 
   // updated_at The timestamp of when the service was last updated
   google.protobuf.Timestamp updated_at = 8;
+
+  // priority A number that determines when this service is started in relation to other services
+  uint64 priority = 9;
 }
 
 service Services {
