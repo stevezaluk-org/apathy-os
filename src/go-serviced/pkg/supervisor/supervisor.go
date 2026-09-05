@@ -9,6 +9,7 @@ import (
 	"github.com/containerd/cgroups/v2/cgroup2"
 	v1 "github.com/immutable-os/immutable-os/src/go-serviced/proto/service/v1"
 	"golang.org/x/sys/unix"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 // Supervisor An abstraction for controlling the lifecycle of a service. Defines the core functions needed for starting,
@@ -88,6 +89,10 @@ func (supervisor *Supervisor) Start(ctx context.Context) error {
 	if err := supervisor.proc.Start(); err != nil {
 		return err
 	}
+
+	// timestamps always taken after the service starts successfully
+	supervisor.Service.StartedAt = timestamppb.Now()
+	supervisor.Service.UpdatedAt = timestamppb.Now()
 
 	// migrate the service to its cgroup
 	if err := supervisor.cgroup.AddProc(uint64(supervisor.proc.Process.Pid)); err != nil {
