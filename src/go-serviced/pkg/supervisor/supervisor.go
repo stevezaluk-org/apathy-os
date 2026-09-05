@@ -2,6 +2,7 @@ package supervisor
 
 import (
 	"context"
+	"os"
 	"os/exec"
 	"time"
 
@@ -68,6 +69,15 @@ func (supervisor *Supervisor) Start(ctx context.Context) error {
 	}
 
 	supervisor.proc.Env = append(supervisor.proc.Env, supervisor.Service.Env...)
+
+	// This is kind of a hacky way of doing this and we really should be using something like containerd/console for
+	// creating a proper virtual console. To be replaced in the future
+	// TODO: Replace with github.com/containerd/console
+	if supervisor.Service.AllocateTty {
+		supervisor.proc.Stdout = os.Stdout
+		supervisor.proc.Stdin = os.Stdin
+		supervisor.proc.Stderr = os.Stderr
+	}
 
 	if err := supervisor.proc.Start(); err != nil {
 		return err
