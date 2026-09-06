@@ -9,9 +9,9 @@ import (
 //
 // TODO: Configuration for this needs to be exposed at config.Config
 func Init() {
-	slog.SetLogLoggerLevel(slog.LevelDebug)
-
 	slog.SetDefault(slog.New(
 		slog.NewJSONHandler(os.Stdout, nil),
 	))
+
+	slog.SetLogLoggerLevel(slog.LevelInfo)
 }
