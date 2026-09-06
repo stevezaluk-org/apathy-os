@@ -68,20 +68,16 @@ func (daemon *Daemon) handleSignals(ctx context.Context) {
 
 	for {
 		switch {
-		case <-daemon.signals == unix.SIGINT: // this needs to stop services
+		case <-daemon.signals == unix.SIGINT || <-daemon.signals == unix.SIGTERM: // this needs to stop services
 			if err := daemon.api.CleanUp(); err != nil {
-				slog.Error("failed to clean up resources (SIGINT): ", "err", daemon.api.CleanUp())
-			}
-		case <-daemon.signals == unix.SIGTERM: // this needs to stop services
-			if err := daemon.api.CleanUp(); err != nil {
-				slog.Error("failed to clean up resources (SIGTERM): ", "err", daemon.api.CleanUp())
+				slog.Error("failed to clean up resources (SIGINT/SIGTERM): ", "err", daemon.api.CleanUp())
 			}
 		case <-daemon.signals == unix.SIGHUP: // this needs to reload service files
 		}
 	}
 }
 
-// Start Starts the daemon service and
+// Start Starts the daemon service and any services that it has discovered
 func (daemon *Daemon) Start(ctx context.Context) error {
 	sigCtx, sigCancel := context.WithCancel(ctx)
 	defer sigCancel()
