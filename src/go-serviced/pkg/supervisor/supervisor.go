@@ -2,13 +2,16 @@ package supervisor
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"os/exec"
+	"strings"
 	"time"
 
 	"github.com/containerd/cgroups/v2/cgroup2"
 	v1 "github.com/immutable-os/immutable-os/src/go-serviced/proto/service/v1"
 	"golang.org/x/sys/unix"
+	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -113,4 +116,36 @@ func New(service *v1.Service, parent *cgroup2.Manager) (*Supervisor, error) {
 		Service: service,
 		cgroup:  cgroup,
 	}, nil
+}
+
+// FromFile Initializes a new Service directly from its file definition
+func FromFile(path string, parent *cgroup2.Manager) (*Supervisor, error) {
+	if !strings.HasSuffix(path, ".json") {
+		return nil, fmt.Errorf("service file must be a .json file")
+	}
+
+	file, err := os.OpenFile(path, os.O_RDONLY, 0644)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	stat, err := file.Stat()
+	if err != nil {
+		return nil, err
+	}
+
+	data := make([]byte, stat.Size())
+	n, err := file.Read(data)
+	if err != nil {
+		return nil, err
+	}
+
+	service := new(v1.Service)
+	err = protojson.Unmarshal(data[:n], service)
+	if err != nil {
+		return nil, err
+	}
+
+	return New(service, parent)
 }

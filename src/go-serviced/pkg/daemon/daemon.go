@@ -13,9 +13,7 @@ import (
 	"github.com/immutable-os/immutable-os/src/go-serviced/pkg/api"
 	"github.com/immutable-os/immutable-os/src/go-serviced/pkg/config"
 	"github.com/immutable-os/immutable-os/src/go-serviced/pkg/supervisor"
-	v1 "github.com/immutable-os/immutable-os/src/go-serviced/proto/service/v1"
 	"golang.org/x/sys/unix"
-	"google.golang.org/protobuf/encoding/protojson"
 )
 
 type Daemon struct {
@@ -46,29 +44,12 @@ func (daemon *Daemon) Load() error {
 
 	err = filepath.Walk(daemon.config.ServicePath, func(path string, info os.FileInfo, err error) error {
 		if strings.HasSuffix(path, ".json") {
-			file, err := os.OpenFile(path, os.O_RDONLY, 0644)
+			superv, err := supervisor.FromFile(path, cgroup)
 			if err != nil {
 				return err
 			}
 
-			data := make([]byte, info.Size())
-			n, err := file.Read(data)
-			if err != nil {
-				return err
-			}
-
-			service := &v1.Service{}
-			err = protojson.Unmarshal(data[:n], service)
-			if err != nil {
-				return err
-			}
-
-			superv, err := supervisor.New(service, cgroup)
-			if err != nil {
-				return err
-			}
-
-			slog.Debug("Service queued for start:", path)
+			slog.Info("Discovered service", "svc", superv.Service.Name)
 			daemon.services[superv.Service.Name] = superv
 		}
 
