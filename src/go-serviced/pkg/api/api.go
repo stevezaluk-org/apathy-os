@@ -72,9 +72,9 @@ func (api *Api) Serve(path string) error {
 	if err != nil {
 		return err
 	}
-
 	defer listener.Close()
 
+	v1.RegisterServicesServer(api.server, api)
 	slog.Info("API Server started")
 	if err := api.server.Serve(listener); err != nil {
 		return err
