@@ -60,6 +60,19 @@ func (api *Api) Stop(ctx context.Context, request *v1.StopServiceRequest) (*v1.S
 	panic("implement me")
 }
 
+// CleanUp Removes the dangling socket from /var/run/go-serviced and gracefully stops the gRPC server
+func (api *Api) CleanUp() error {
+	api.server.GracefulStop()
+
+	if _, err := os.Stat(api.config.Socket); !errors.Is(err, os.ErrNotExist) {
+		if err := os.RemoveAll(api.config.Socket); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 // Serve Starts the API server. Blocks the current go-routine.
 func (api *Api) Serve() error {
 	if strings.HasPrefix(api.config.Socket, "~") {
