@@ -87,12 +87,9 @@ func (daemon *Daemon) handleSignals(ctx context.Context) {
 
 	for {
 		switch {
-		case <-daemon.signals == unix.SIGINT:
-			ctx.Done() // TODO: This needs to actually stop services here
-		case <-daemon.signals == unix.SIGTERM:
-			ctx.Done() // TODO: This needs to actually stop services here
-		case <-daemon.signals == unix.SIGHUP:
-			ctx.Done() // TODO: This needs to reload service files here
+		case <-daemon.signals == unix.SIGINT: // this needs to stop services
+		case <-daemon.signals == unix.SIGTERM: // this needs to stop services
+		case <-daemon.signals == unix.SIGHUP: // this needs to reload service files
 		}
 	}
 }
@@ -105,7 +102,7 @@ func (daemon *Daemon) Start(ctx context.Context) error {
 	go daemon.handleSignals(sigCtx)
 
 	// blocks the current go-routine
-	if err := daemon.api.Serve(daemon.config.Socket); err != nil {
+	if err := daemon.api.Serve(); err != nil {
 		return err
 	}
 
@@ -124,7 +121,7 @@ func NewDaemon(config *config.Config) (*Daemon, error) {
 		return nil, err
 	}
 
-	grpcServer, err := api.New(&daemon.services)
+	grpcServer, err := api.New(config, &daemon.services)
 	if err != nil {
 		return nil, err
 	}

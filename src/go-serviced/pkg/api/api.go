@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/immutable-os/immutable-os/src/go-serviced/pkg/config"
 	"github.com/immutable-os/immutable-os/src/go-serviced/pkg/supervisor"
 	v1 "github.com/immutable-os/immutable-os/src/go-serviced/proto/service/v1"
 	"google.golang.org/grpc"
@@ -18,6 +19,9 @@ import (
 
 type Api struct {
 	v1.UnimplementedServicesServer
+
+	// config A pointer to the config file that this API Server was started with
+	config *config.Config
 
 	// services A pointer to a map of service supervisors received from the daemon.Daemon
 	services *map[string]*supervisor.Supervisor
@@ -57,25 +61,25 @@ func (api *Api) Stop(ctx context.Context, request *v1.StopServiceRequest) (*v1.S
 }
 
 // Serve Starts the API server. Blocks the current go-routine.
-func (api *Api) Serve(path string) error {
-	if strings.HasPrefix(path, "~") {
-		path = strings.Replace(path, "~", os.Getenv("HOME"), 1)
+func (api *Api) Serve() error {
+	if strings.HasPrefix(api.config.Socket, "~") {
+		api.config.Socket = strings.Replace(api.config.Socket, "~", os.Getenv("HOME"), 1)
 	}
 
-	if _, err := os.Stat(path); errors.Is(err, fs.ErrNotExist) {
-		if err := os.MkdirAll(filepath.Dir(path), 0644); err != nil {
-			return fmt.Errorf("failed to create directory %s: %v", path, err)
+	if _, err := os.Stat(api.config.Socket); errors.Is(err, fs.ErrNotExist) {
+		if err := os.MkdirAll(filepath.Dir(api.config.Socket), 0644); err != nil {
+			return fmt.Errorf("failed to create directory %s: %v", api.config.Socket, err)
 		}
 	}
 
-	listener, err := net.Listen("unix", path)
+	listener, err := net.Listen("unix", api.config.Socket)
 	if err != nil {
 		return err
 	}
 	defer listener.Close()
 
 	v1.RegisterServicesServer(api.server, api)
-	slog.Info("API Server started")
+	slog.Info("Listening for requests at " + api.config.Socket)
 	if err := api.server.Serve(listener); err != nil {
 		return err
 	}
@@ -84,8 +88,9 @@ func (api *Api) Serve(path string) error {
 }
 
 // New Initializes a new API and serves it through a Unix socket at the specified path
-func New(services *map[string]*supervisor.Supervisor) (*Api, error) {
+func New(config *config.Config, services *map[string]*supervisor.Supervisor) (*Api, error) {
 	return &Api{
+		config:   config,
 		services: services,
 		server:   grpc.NewServer(),
 	}, nil
