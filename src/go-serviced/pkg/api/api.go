@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
+	"log/slog"
 	"net"
 	"os"
 	"path/filepath"
@@ -25,14 +26,24 @@ type Api struct {
 	server *grpc.Server
 }
 
+// Get Fetch a single service by name
 func (api *Api) Get(ctx context.Context, request *v1.GetServiceRequest) (*v1.GetServiceResponse, error) {
-	//TODO implement me
-	panic("implement me")
+	superv, ok := (*api.services)[request.Name]
+	if !ok {
+		return &v1.GetServiceResponse{Service: nil}, nil
+	}
+
+	return &v1.GetServiceResponse{Service: superv.Service}, nil
 }
 
+// List All services the daemon is currently aware of
 func (api *Api) List(ctx context.Context, request *v1.ListServiceRequest) (*v1.ListServiceResponse, error) {
-	//TODO implement me
-	panic("implement me")
+	services := make([]*v1.Service, len(*api.services))
+	for _, val := range *api.services {
+		services = append(services, val.Service)
+	}
+
+	return &v1.ListServiceResponse{Service: services}, nil
 }
 
 func (api *Api) Start(ctx context.Context, request *v1.StartServiceRequest) (*v1.StartServiceResponse, error) {
@@ -64,7 +75,8 @@ func (api *Api) Serve(path string) error {
 
 	defer listener.Close()
 
-	if err := a.server.Serve(listener); err != nil {
+	slog.Info("API Server started")
+	if err := api.server.Serve(listener); err != nil {
 		return err
 	}
 
