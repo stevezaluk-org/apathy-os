@@ -35,7 +35,7 @@ start sooner, higher numbers will start services later, and services with the sa
 				return fmt.Errorf("could not initialize daemon: %v", err)
 			}
 
-			if err := d.Start(context.Background()); err != nil {
+			if err := d.Serve(context.Background()); err != nil {
 				return fmt.Errorf("could not start daemon: %v", err)
 			}
 

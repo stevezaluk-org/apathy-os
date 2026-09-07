@@ -101,8 +101,8 @@ func (daemon *Daemon) StartAll(ctx context.Context) error {
 	return nil
 }
 
-// Start Starts the daemon service and any services that it has discovered
-func (daemon *Daemon) Start(ctx context.Context) error {
+// Serve Starts the daemon service and any services that it has discovered
+func (daemon *Daemon) Serve(ctx context.Context) error {
 	svcCtx := context.Background()
 	sigCtx, sigCancel := context.WithCancel(ctx)
 	defer sigCancel()
