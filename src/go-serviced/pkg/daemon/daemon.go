@@ -94,6 +94,8 @@ func (daemon *Daemon) StartAll(ctx context.Context) error {
 			return err
 		}
 
+		superv.Watch(svcCtx, cancel)
+
 		return nil
 	})
 	if err != nil {

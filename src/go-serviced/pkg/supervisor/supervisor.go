@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
+	"log/slog"
 	"math"
 	"os"
 	"os/exec"
@@ -78,6 +80,34 @@ func (supervisor *Supervisor) Stop(ctx context.Context) error {
 			}
 		}
 	}
+}
+
+// Watch Initiates a Watch loop on the specified service and starts it. Provides an automatic restart loop for the service.
+// A new child context is  derived from the parent context that is passed to this function in order to ensure that
+// services do not attempt to restart after system shutdown has been initiated
+// TODO: Service accepts input (when os.Stdin) is mapped even after Service.Stop is called
+func (supervisor *Supervisor) Watch(ctx context.Context, cancel context.CancelCauseFunc) {
+	for i := range 3 {
+		select {
+		case <-ctx.Done():
+			// TODO: Need to stop here
+			return
+		default:
+			slog.Info("Service started", "svc", supervisor.Service.Name, "pid", supervisor.proc.Process.Pid)
+			if err := supervisor.proc.Wait(); err != nil {
+				log.Printf("Service %s died with error: %v", supervisor.Service.Name, err)
+			}
+
+			slog.Info("Attempting to start service", "svc", supervisor.Service.Name, "count", i+1)
+			if err := supervisor.Start(ctx, cancel); err != nil {
+				log.Printf("Failed to start service %s: %v", supervisor.Service.Name, err)
+			}
+		}
+	}
+
+	// never hit on system shutdown, only ever hit if a service repeatedly refuses to start
+	defer supervisor.cancel(errors.New("service reached its maximum restarts"))
+	log.Printf("Service %s has tried to restart 3 times. Service will not be restarted", supervisor.Service.Name)
 }
 
 // Start Starts the respective service.
