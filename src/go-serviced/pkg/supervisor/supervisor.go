@@ -2,6 +2,7 @@ package supervisor
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"math"
 	"os"
@@ -28,6 +29,9 @@ type Supervisor struct {
 
 	// cgroup The cgroup manager for this specific service. Usually a cgroup under the `serviced` slice
 	cgroup *cgroup2.Manager
+
+	// cancel
+	cancel context.CancelCauseFunc
 }
 
 // PriorityGate Returns the given priority of a service
@@ -55,6 +59,7 @@ func (supervisor *Supervisor) Stop(ctx context.Context) error {
 	if err := supervisor.proc.Process.Signal(unix.SIGTERM); err != nil {
 		return err
 	}
+	defer supervisor.cancel(errors.New("service kill requested"))
 
 	for {
 		select {
@@ -76,7 +81,9 @@ func (supervisor *Supervisor) Stop(ctx context.Context) error {
 }
 
 // Start Starts the respective service.
-func (supervisor *Supervisor) Start(ctx context.Context) error {
+func (supervisor *Supervisor) Start(ctx context.Context, cancel context.CancelCauseFunc) error {
+	supervisor.cancel = cancel
+
 	supervisor.proc = exec.CommandContext(ctx, supervisor.Service.Exec, supervisor.Service.Args...)
 	supervisor.proc.Cancel = func() error {
 		cleanUpCtx, cleanUpCancel := context.WithTimeout(context.Background(), 20*time.Second)

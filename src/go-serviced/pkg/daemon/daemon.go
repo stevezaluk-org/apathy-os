@@ -86,9 +86,11 @@ func (daemon *Daemon) handleSignals(ctx context.Context) {
 // StartAll Starts all services discovered by the daemon
 func (daemon *Daemon) StartAll(ctx context.Context) error {
 	err := daemon.engine.PrioritizedWait(func(superv *supervisor.Supervisor) error {
+		svcCtx, cancel := context.WithCancelCause(ctx)
 
+		slog.Info("Starting service", "svc", superv.Service.Name)
 		// TODO: this needs a child ctx
-		if err := superv.Start(ctx); err != nil {
+		if err := superv.Start(svcCtx, cancel); err != nil {
 			return err
 		}
 
@@ -103,12 +105,11 @@ func (daemon *Daemon) StartAll(ctx context.Context) error {
 
 // Serve Starts the daemon service and any services that it has discovered
 func (daemon *Daemon) Serve(ctx context.Context) error {
-	svcCtx := context.Background()
 	sigCtx, sigCancel := context.WithCancel(ctx)
 	defer sigCancel()
 
 	go daemon.handleSignals(sigCtx)
-	go daemon.StartAll(svcCtx)
+	go daemon.StartAll(context.Background())
 
 	// blocks the current go-routine
 	if err := daemon.api.Serve(); err != nil {
