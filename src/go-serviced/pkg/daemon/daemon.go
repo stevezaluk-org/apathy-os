@@ -3,9 +3,11 @@ package daemon
 import (
 	"context"
 	"log/slog"
+	"maps"
 	"os"
 	"os/signal"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	"github.com/containerd/cgroups/v2/cgroup2"
@@ -13,6 +15,7 @@ import (
 	"github.com/immutable-os/immutable-os/src/go-serviced/pkg/api"
 	"github.com/immutable-os/immutable-os/src/go-serviced/pkg/config"
 	"github.com/immutable-os/immutable-os/src/go-serviced/pkg/supervisor"
+	"github.com/immutable-os/immutable-os/src/go-task/pkg/engine"
 	"golang.org/x/sys/unix"
 )
 
@@ -31,6 +34,9 @@ type Daemon struct {
 
 	// signals Channel for receiving unix signals being sent to the daemon
 	signals chan os.Signal
+
+	// engine The engine responsible for concurrently starting/stopping services
+	engine *engine.Engine[*supervisor.Supervisor]
 }
 
 // Load Loads relevant service files from the path passed as an argument
@@ -77,12 +83,32 @@ func (daemon *Daemon) handleSignals(ctx context.Context) {
 	}
 }
 
+// StartAll Starts all services discovered by the daemon
+func (daemon *Daemon) StartAll(ctx context.Context) error {
+	err := daemon.engine.PrioritizedWait(func(superv *supervisor.Supervisor) error {
+
+		// TODO: this needs a child ctx
+		if err := superv.Start(ctx); err != nil {
+			return err
+		}
+
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // Start Starts the daemon service and any services that it has discovered
 func (daemon *Daemon) Start(ctx context.Context) error {
+	svcCtx := context.Background()
 	sigCtx, sigCancel := context.WithCancel(ctx)
 	defer sigCancel()
 
 	go daemon.handleSignals(sigCtx)
+	go daemon.StartAll(svcCtx)
 
 	// blocks the current go-routine
 	if err := daemon.api.Serve(); err != nil {
@@ -103,6 +129,7 @@ func NewDaemon(config *config.Config) (*Daemon, error) {
 	if err := daemon.Load(); err != nil {
 		return nil, err
 	}
+	daemon.engine = engine.New[*supervisor.Supervisor](slices.Collect(maps.Values(daemon.services)))
 
 	grpcServer, err := api.New(config, &daemon.services)
 	if err != nil {
