@@ -3,6 +3,7 @@ package supervisor
 import (
 	"context"
 	"fmt"
+	"math"
 	"os"
 	"os/exec"
 	"strings"
@@ -27,6 +28,16 @@ type Supervisor struct {
 
 	// cgroup The cgroup manager for this specific service. Usually a cgroup under the `serviced` slice
 	cgroup *cgroup2.Manager
+}
+
+// PriorityGate Returns the given priority of a service
+func (supervisor *Supervisor) PriorityGate() int {
+	// Either the value is too large for a signed integer or this supervisor doesn't have a Service attached to it
+	if supervisor.Service == nil || supervisor.Service.Priority > uint64(math.MaxInt) {
+		return 0
+	}
+
+	return int(supervisor.Service.Priority)
 }
 
 // Stop Initiates the stop routine for the given service. When a stop is requested, the supervisor first sends a
