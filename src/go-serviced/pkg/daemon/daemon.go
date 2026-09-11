@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"slices"
 	"strings"
+	"time"
 
 	"github.com/containerd/cgroups/v2/cgroup2"
 	"github.com/immutable-os/immutable-os/src/go-serviced/internal/log"
@@ -83,13 +84,34 @@ func (daemon *Daemon) handleSignals(ctx context.Context) {
 	}
 }
 
+// StopAll Stops all services discovered by the daemon
+func (daemon *Daemon) StopAll(ctx context.Context) error {
+	err := daemon.engine.PrioritizedWait(func(superv *supervisor.Supervisor) error {
+		slog.Info("Stopping service", "svc", superv.Service.Name)
+
+		// TODO: This is kind of clunky and its exactly what we are doing at supervisor.Start
+		cleanUpCtx, cleanUpCancel := context.WithTimeout(ctx, 20*time.Second)
+		defer cleanUpCancel()
+
+		if err := superv.Stop(cleanUpCtx); err != nil {
+			return err
+		}
+
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // StartAll Starts all services discovered by the daemon
 func (daemon *Daemon) StartAll(ctx context.Context) error {
 	err := daemon.engine.PrioritizedWait(func(superv *supervisor.Supervisor) error {
 		svcCtx, cancel := context.WithCancelCause(ctx)
 
 		slog.Info("Starting service", "svc", superv.Service.Name)
-		// TODO: this needs a child ctx
 		if err := superv.Start(svcCtx, cancel); err != nil {
 			return err
 		}
