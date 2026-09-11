@@ -5,18 +5,19 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"time"
 
 	"github.com/immutable-os/immutable-os/src/go-initd/internal/acpi"
-
 	"github.com/immutable-os/immutable-os/src/go-initd/internal/reaper"
-	"github.com/immutable-os/immutable-os/src/go-initd/internal/service"
+	"github.com/immutable-os/immutable-os/src/go-serviced/pkg/config"
+	"github.com/immutable-os/immutable-os/src/go-serviced/pkg/daemon"
 	"golang.org/x/sys/unix"
 )
 
 // SystemInit An abstraction around the agent as a whole. Manages the state of late PID 1 and service supervisor
 type SystemInit struct {
-	// supervisor Service supervisor for Agent
-	supervisor *service.Supervisor
+	// serviceDaemon Daemon for controlling service execution
+	serviceDaemon *daemon.Daemon
 
 	// sigChild Channel responsible for delivering SIGCHLD signals. Used for reaping processes
 	sigChild chan os.Signal
@@ -40,7 +41,7 @@ func (systemInit *SystemInit) EventLoop() error {
 
 	// start our ACPI event loop
 	go acpi.EventLoop(ctx, systemInit.sigAcpi)
-	go systemInit.supervisor.EventLoop(ctx)
+	go systemInit.serviceDaemon.Serve(ctx)
 
 	for {
 		select {
@@ -68,6 +69,13 @@ func (systemInit *SystemInit) EventLoop() error {
 // TODO: Not remounting (reverse order) filesystems here. Leads to data loss
 // TODO: No real service management here. Basic unix.Kill(-1)
 func (systemInit *SystemInit) Shutdown() error {
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	if err := systemInit.serviceDaemon.StopAll(ctx); err != nil {
+		return err
+	}
+
 	if err := reaper.ReapProcesses(); err != nil {
 		return err
 	}
@@ -82,12 +90,12 @@ func (systemInit *SystemInit) Shutdown() error {
 
 // Start Initial entrypoint for the systemInit Processes system/user manifest files and then moves to the event loop
 func (systemInit *SystemInit) Start() error {
-	supervisor, err := service.NewSupervisor(service.DefaultServicePath)
+	serviceDaemon, err := daemon.NewDaemon(config.Default())
 	if err != nil {
 		return err
 	}
 
-	systemInit.supervisor = supervisor
+	systemInit.serviceDaemon = serviceDaemon
 
 	// blocks forever
 	if err := systemInit.EventLoop(); err != nil {

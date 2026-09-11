@@ -89,7 +89,7 @@ COPY --from=busybox-build /bin/busybox /build/usr/sbin/busybox
 RUN cp /build/usr/sbin/busybox /build/usr/bin/sh
 
 COPY ./usr/share/manifest.d/system.yaml /build/usr/share/manifest.d/system.yaml
-COPY ./usr/share/service.d/*.yaml /build/usr/share/service.d/
+COPY ./usr/share/service.d/*.json /build/usr/share/service.d/
 COPY ./usr/lib/os-release /build/usr/lib/os-release
 
 # Symlink any required system directories
