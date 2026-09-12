@@ -13,8 +13,8 @@ type Mount struct {
 	// MountPoint Where the filesystem should be mounted
 	MountPoint string `yaml:"mountPoint"`
 
-	// ReadOnly If set to true, mount the file system as read-only
-	ReadOnly bool `yaml:"readOnly"`
+	// Flags A list of mount flags to apply to the mount point
+	Flags []string `yaml:"flags"`
 
 	// Priority Controls the order in which mount points are processed. See docs
 	Priority int `yaml:"priority"`
