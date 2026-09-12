@@ -6,6 +6,7 @@ import "golang.org/x/sys/unix"
 var Flags = map[string]uintptr{
 	"ro":      unix.MS_RDONLY,
 	"rw":      unix.MS_RDONLY,
+	"remount": unix.MS_REMOUNT,
 	"noatime": unix.MS_NOATIME,
 	"reltime": unix.MS_RELATIME,
 	"noexec":  unix.MS_NOEXEC,
