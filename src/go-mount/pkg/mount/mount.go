@@ -1,5 +1,7 @@
 package mount
 
+import "github.com/immutable-os/immutable-os/src/go-mount/pkg/overlay"
+
 type Mount struct {
 	// Device Mount based on an absolute path to a Unix block device. Ex: /dev/sda
 	Device string `yaml:"device" json:"device"`
@@ -21,6 +23,9 @@ type Mount struct {
 
 	// Loop If set to true, mount.Device is treated as a backing file and is bound to a free loop device before mounting
 	Loop bool `yaml:"loop" json:"loop"`
+
+	// Overlay Defines an overlayfs you want to lay on top of this mountpoint
+	Overlay *overlay.Overlay `yaml:"overlay" json:"overlay"`
 
 	// Priority Controls the order in which mount points are processed. See docs
 	Priority int `yaml:"priority" json:"priority"`
