@@ -34,7 +34,7 @@ func MountFilesystem(mountPoint *mount.Mount) error {
 		}
 
 		// mountPoint.Device is treated as our backing file here
-		if err := loop.Bind(mountPoint.Device, demountPoint.Devicev); err != nil {
+		if err := loop.Bind(mountPoint.Device, dev); err != nil {
 			return err
 		}
 
