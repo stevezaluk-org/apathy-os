@@ -16,6 +16,9 @@ type Mount struct {
 	// Flags A list of mount flags to apply to the mount point
 	Flags []string `yaml:"flags"`
 
+	// Loop If set to true, mount.Device is treated as a backing file and is bound to a free loop device before mounting
+	Loop bool `yaml:"loop"`
+
 	// Priority Controls the order in which mount points are processed. See docs
 	Priority int `yaml:"priority"`
 }
