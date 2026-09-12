@@ -37,7 +37,7 @@ func MountFilesystem(mountPoint *mount.Mount) error {
 		mountPoint.Device = dev
 	}
 
-	if err := unix.Mount(mountPoint.Device, mountPoint.MountPoint, mountPoint.FilesystemType, flags, ""); err != nil {
+	if err := unix.Mount(mountPoint.Device, mountPoint.MountPoint, mountPoint.FilesystemType, flags, mountPoint.Options); err != nil {
 		return fmt.Errorf("mounting dev %s on %s failed: %v", mountPoint.Device, mountPoint.MountPoint, err)
 	}
 

@@ -16,6 +16,9 @@ type Mount struct {
 	// Flags A list of mount flags to apply to the mount point
 	Flags []string `yaml:"flags"`
 
+	// Options A mount options string passed directly to unix.Mount
+	Options string `yaml:"options"`
+
 	// Loop If set to true, mount.Device is treated as a backing file and is bound to a free loop device before mounting
 	Loop bool `yaml:"loop"`
 
