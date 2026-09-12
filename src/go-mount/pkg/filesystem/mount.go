@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/immutable-os/immutable-os/src/go-mount/pkg/mount"
+	"github.com/immutable-os/immutable-os/src/go-task/pkg/engine"
 	"golang.org/x/sys/unix"
 )
 
@@ -21,6 +22,15 @@ func MountFilesystem(mountPoint *mount.Mount) error {
 
 	if err := unix.Mount(mountPoint.Device, mountPoint.MountPoint, mountPoint.FilesystemType, flags, ""); err != nil {
 		return fmt.Errorf("mounting dev %s on %s failed: %v", mountPoint.Device, mountPoint.MountPoint, err)
+	}
+
+	return nil
+}
+
+// MountAll Mounts multiple filesystems based on the mount.PriorityGate() field
+func MountAll(mounts []*mount.Mount) error {
+	if err := engine.New(mounts).PrioritizedWait(MountFilesystem); err != nil {
+		return err
 	}
 
 	return nil
