@@ -12,6 +12,11 @@ import (
 
 // MountFilesystem Processes a single mount point and returns any errors
 func MountFilesystem(mountPoint *mount.Mount) error {
+	device, err := Find(mountPoint)
+	if err != nil {
+		return fmt.Errorf("failure during filesystem identification: %v", err)
+	}
+
 	flags := uintptr(0)
 	for _, flag := range mountPoint.Flags {
 		flagInt, ok := mount.Flags[flag]
@@ -29,7 +34,7 @@ func MountFilesystem(mountPoint *mount.Mount) error {
 		}
 
 		// mountPoint.Device is treated as our backing file here
-		if err := loop.Bind(mountPoint.Device, dev); err != nil {
+		if err := loop.Bind(mountPoint.Device, demountPoint.Devicev); err != nil {
 			return err
 		}
 
@@ -38,7 +43,7 @@ func MountFilesystem(mountPoint *mount.Mount) error {
 		mountPoint.Device = dev
 	}
 
-	if err := unix.Mount(mountPoint.Device, mountPoint.MountPoint, mountPoint.FilesystemType, flags, mountPoint.Options); err != nil {
+	if err := unix.Mount(device, mountPoint.MountPoint, mountPoint.FilesystemType, flags, mountPoint.Options); err != nil {
 		return fmt.Errorf("mounting dev %s on %s failed: %v", mountPoint.Device, mountPoint.MountPoint, err)
 	}
 
