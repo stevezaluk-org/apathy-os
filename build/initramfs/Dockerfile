@@ -3,10 +3,6 @@ ARG BUSYBOX_VER="1.38.0"
 FROM busybox:$BUSYBOX_VER-musl AS busybox-build
 FROM debian:stable-slim AS initramfs-build
 
-RUN apt-get update \
-    && \
-    apt-get install cpio build-essential tar gzip -y
-
 WORKDIR /build
 RUN bash -c 'mkdir -p /build/{usr/sbin,usr/share/manifest.d,newroot,dev,proc,sys}'
 
