@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/immutable-os/immutable-os/src/go-task/pkg/engine"
 	"golang.org/x/sys/unix"
 )
 
@@ -24,6 +25,14 @@ type Overlay struct {
 
 	// Merged The merged directory of the overlayfs
 	Merged string `yaml:"merged" json:"merged"`
+
+	// Priority Controls the order in which overlays are processed. See docs
+	Priority int `yaml:"priority" json:"priority"`
+}
+
+// PriorityGate Returns the priority of the overlay as defined in the manifest file
+func (overlay *Overlay) PriorityGate() int {
+	return overlay.Priority
 }
 
 // Mount Mounts the overlay filesystem. If upperdir and workdir are omitted, then subdirectories under /tmp are used
@@ -54,6 +63,15 @@ func Mount(overlay *Overlay) error {
 	// source and fstype here are always overlay since we are laying this ontop of an existing mount
 	if err := unix.Mount("overlay", overlay.Merged, "overlay", 0, opts); err != nil {
 		return fmt.Errorf("failed to mount overlayfs: %v", err)
+	}
+
+	return nil
+}
+
+// MountAll Mounts a list of overlays in priority order
+func MountAll(overlay []*Overlay) error {
+	if err := engine.New(overlay).PrioritizedWait(Mount); err != nil {
+		return err
 	}
 
 	return nil
