@@ -40,7 +40,7 @@ func Bind(source string, loop string) error {
 		return fmt.Errorf("loop device %s is not valid", loop)
 	}
 
-	loopDevice, err := os.OpenFile(loop, os.O_RDONLY, 0)
+	loopDevice, err := os.OpenFile(loop, os.O_RDWR, 0)
 	if err != nil {
 		return fmt.Errorf("failed to open loop device: %v", err)
 	}
