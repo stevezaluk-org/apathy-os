@@ -39,7 +39,7 @@ func (overlay *Overlay) PriorityGate() int {
 // instead. This effectively makes the mount read-only with changes being wiped when /tmp is unmounted
 func Mount(overlay *Overlay) error {
 	if overlay.UpperDir == "" {
-		upper := "/tmp/overlay/upperdir/" + overlay.UpperDir
+		upper := "/tmp/overlay/upperdir" + overlay.Merged
 
 		if err := os.MkdirAll(upper, 0600); err != nil {
 			return err
@@ -49,7 +49,7 @@ func Mount(overlay *Overlay) error {
 	}
 
 	if overlay.WorkDir == "" {
-		work := "/tmp/overlay/workdir/" + overlay.WorkDir
+		work := "/tmp/overlay/workdir" + overlay.Merged
 		if err := os.MkdirAll(work, 0600); err != nil {
 			return err
 		}
