@@ -9,10 +9,10 @@ import (
 
 type EnvironmentVariable struct {
 	// Key The name of the environment variable
-	Key string `yaml:"key"`
+	Key string `yaml:"key" json:"key"`
 
 	// Value Values of the environment variable
-	Value string `yaml:"value"`
+	Value string `yaml:"value" json:"value"`
 }
 
 // PriorityGate Always returns 0 on an environment variable since there is no reason that one set of env vars should be
