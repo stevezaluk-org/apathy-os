@@ -3,16 +3,13 @@ package runner
 import (
 	"github.com/immutable-os/immutable-os/src/go-manifest/pkg/env"
 	"github.com/immutable-os/immutable-os/src/go-manifest/pkg/manifest"
-	"github.com/immutable-os/immutable-os/src/go-manifest/pkg/mount"
+	"github.com/immutable-os/immutable-os/src/go-mount/pkg/filesystem"
 )
 
 // Runner Handles actually processing a config file and executing its required steps
 type Runner struct {
 	// config Caller passed config.Config struct.
 	config *manifest.Manifest
-
-	// MountHandler Handles processing the `mount` section of a manifest config
-	MountHandler *mount.Handler
 
 	// EnvHandler Handles processing the `env` section of a manifest config
 	EnvHandler *env.Handler
@@ -24,7 +21,7 @@ func (runner *Runner) Go() error {
 		return err
 	}
 
-	if err := runner.MountHandler.MountAll(false); err != nil {
+	if err := filesystem.MountAll(runner.config.Mounts); err != nil {
 		return err
 	}
 
@@ -34,8 +31,7 @@ func (runner *Runner) Go() error {
 // New Initializes a new Runner and returns a pointer to it
 func New(config *manifest.Manifest) *Runner {
 	return &Runner{
-		config:       config,
-		MountHandler: mount.NewHandler(config.Mounts),
-		EnvHandler:   env.NewHandler(config.Envs),
+		config:     config,
+		EnvHandler: env.NewHandler(config.Envs),
 	}
 }
