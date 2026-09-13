@@ -12,9 +12,14 @@ import (
 
 // MountFilesystem Processes a single mount point and returns any errors
 func MountFilesystem(mountPoint *mount.Mount) error {
-	device, err := Find(mountPoint)
-	if err != nil {
-		return fmt.Errorf("failure during filesystem identification: %v", err)
+	source := mountPoint.Device
+	if mountPoint.FilesystemUUID != "" {
+		device, err := Find(mountPoint)
+		if err != nil {
+			return fmt.Errorf("failure during filesystem identification: %v", err)
+		}
+
+		source = device
 	}
 
 	flags := uintptr(0)
@@ -34,17 +39,17 @@ func MountFilesystem(mountPoint *mount.Mount) error {
 		}
 
 		// mountPoint.Device is treated as our backing file here
-		if err := loop.Bind(mountPoint.Device, dev); err != nil {
+		if err := loop.Bind(source, dev); err != nil {
 			return err
 		}
 
-		// we need to set mountPoint.Device to our loop device here so that we can properly mount. If we leave
-		// this set to our backing file then the below call to unix.Mount would fail
+		// we need to set mountPoint.Device to our loop device here so that we can properly unmount.
 		mountPoint.Device = dev
+		source = dev
 	}
 
-	if err := unix.Mount(device, mountPoint.MountPoint, mountPoint.FilesystemType, flags, mountPoint.Options); err != nil {
-		return fmt.Errorf("mounting dev %s on %s failed: %v", mountPoint.Device, mountPoint.MountPoint, err)
+	if err := unix.Mount(source, mountPoint.MountPoint, mountPoint.FilesystemType, flags, mountPoint.Options); err != nil {
+		return fmt.Errorf("mounting dev %s on %s failed: %v", source, mountPoint.MountPoint, err)
 	}
 
 	// Overlays always need to be processed after the filesystem is mounted
