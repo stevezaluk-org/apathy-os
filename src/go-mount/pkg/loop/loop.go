@@ -11,8 +11,6 @@ import (
 const (
 	// loopControlPath The absolute path to the loop-control character file
 	loopControlPath = "/dev/loop-control"
-
-	LoopCtlGetFree = 0x4C82
 )
 
 // NewDevice Identifies the first free loop device and returns an absolute path to it. `/dev` must be mounted before
@@ -28,7 +26,7 @@ func NewDevice() (string, error) {
 	}
 	defer loopControlDevice.Close()
 
-	nr, err := unix.IoctlRetInt(int(loopControlDevice.Fd()), LoopCtlGetFree)
+	nr, err := unix.IoctlRetInt(int(loopControlDevice.Fd()), unix.LOOP_CTL_GET_FREE)
 	if err != nil {
 		return "", fmt.Errorf("failed to get free loop device index: %v", err)
 	}
@@ -54,7 +52,7 @@ func Bind(source string, loop string) error {
 	}
 	defer backingFile.Close()
 
-	if err := unix.IoctlSetInt(int(loopDevice.Fd()), LoopCtlGetFree, int(backingFile.Fd())); err != nil {
+	if err := unix.IoctlSetInt(int(loopDevice.Fd()), unix.LOOP_SET_FD, int(backingFile.Fd())); err != nil {
 		return fmt.Errorf("failed to bind loop device: %v", err)
 	}
 
