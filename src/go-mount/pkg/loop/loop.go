@@ -38,7 +38,7 @@ func NewDevice() (string, error) {
 
 // Bind Binds a backing file to a valid loop device and returns any errors that arise from the operation
 func Bind(source string, loop string) error {
-	if strings.HasPrefix(loop, "/dev/loop") {
+	if !strings.HasPrefix(loop, "/dev/loop") {
 		return fmt.Errorf("loop device %s is not valid", loop)
 	}
 
