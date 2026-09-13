@@ -62,7 +62,7 @@ func Mount(overlay *Overlay) error {
 
 	// source and fstype here are always overlay since we are laying this ontop of an existing mount
 	if err := unix.Mount("overlay", overlay.Merged, "overlay", 0, opts); err != nil {
-		return fmt.Errorf("failed to mount overlayfs: %v", err)
+		return fmt.Errorf("mounting overlay %s on %s failed: %v", overlay.Merged, overlay.LowerDir, err)
 	}
 
 	return nil
