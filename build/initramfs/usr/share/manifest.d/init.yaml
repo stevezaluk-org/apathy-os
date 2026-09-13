@@ -14,26 +14,12 @@ mounts:
     mountPoint: /proc
     priority: 1
 
-  - filesystemUUID: 94a2aa36-34be-4f9e-9dd7-cd5b8e54c985
-    filesystemType: ext4
+  - device: /rootfs.squashfs
+    filesystemType: squashfs
     mountPoint: /newroot
-    readOnly: true
+    flags: ["ro"]
+    loop: true
     priority: 2
-
-  - filesystemUUID: 4e17b882-66db-4e21-a15c-ea4d24927b1d
-    filesystemType: ext4
-    mountPoint: /newroot/etc
-    priority: 3
-
-  - filesystemUUID: 811d9112-6f02-4086-8777-82386ebeb1f6
-    filesystemType: ext4
-    mountPoint: /newroot/var
-    priority: 3
-
-  - filesystemUUID: 7f801282-4fc2-47d0-b5c8-77d98bba0c4f
-    filesystemType: ext4
-    mountPoint: /newroot/mnt
-    priority: 3
 
 # We don't persist anything on initramfs, so just log to stdout directly
 log:

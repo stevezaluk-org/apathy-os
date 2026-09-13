@@ -10,7 +10,7 @@ FROM debian:stable-slim AS image-build
 ARG BOOT_ARGS
 
 RUN apt-get update && \
-    apt-get install cpio genimage systemd-ukify mtools dosfstools e2fsprogs -y
+    apt-get install cpio genimage systemd-ukify mtools dosfstools e2fsprogs squashfs-tools -y
 
 COPY --from=rootfs-build / /rootfs
 COPY --from=initramfs-build / /initramfs
@@ -18,6 +18,7 @@ COPY --from=kernel-build /boot/vmlinuz /kernel/vmlinuz
 
 WORKDIR /initramfs
 
+RUN mksquashfs /rootfs /initramfs/rootfs.squashfs -comp lz4
 RUN bash -c 'find . | cpio -o -H newc > initrd.img'
 
 WORKDIR /build
