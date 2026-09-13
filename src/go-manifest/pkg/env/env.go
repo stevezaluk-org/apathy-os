@@ -1,5 +1,12 @@
 package env
 
+import (
+	"fmt"
+	"os"
+
+	"github.com/immutable-os/immutable-os/src/go-task/pkg/engine"
+)
+
 type EnvironmentVariable struct {
 	// Key The name of the environment variable
 	Key string `yaml:"key"`
@@ -12,4 +19,22 @@ type EnvironmentVariable struct {
 // created before or after another set
 func (envVar *EnvironmentVariable) PriorityGate() int {
 	return 0
+}
+
+// Set Sets an environment variable and returns a wrapped error from it
+func Set(env *EnvironmentVariable) error {
+	if err := os.Setenv(env.Key, env.Value); err != nil {
+		return fmt.Errorf("failed to set environment variable: %v", err)
+	}
+
+	return nil
+}
+
+// SetAll Sets all environment variables defined. Priority is ignored here.
+func SetAll(env []*EnvironmentVariable) error {
+	if err := engine.New(env).Wait(Set); err != nil {
+		return err
+	}
+
+	return nil
 }

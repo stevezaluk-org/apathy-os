@@ -10,14 +10,11 @@ import (
 type Runner struct {
 	// config Caller passed config.Config struct.
 	config *manifest.Manifest
-
-	// EnvHandler Handles processing the `env` section of a manifest config
-	EnvHandler *env.Handler
 }
 
 // Go Start the runner and process the manifest config
 func (runner *Runner) Go() error {
-	if err := runner.EnvHandler.SetAll(); err != nil {
+	if err := env.SetAll(runner.config.Envs); err != nil {
 		return err
 	}
 
@@ -31,7 +28,6 @@ func (runner *Runner) Go() error {
 // New Initializes a new Runner and returns a pointer to it
 func New(config *manifest.Manifest) *Runner {
 	return &Runner{
-		config:     config,
-		EnvHandler: env.NewHandler(config.Envs),
+		config: config,
 	}
 }
