@@ -4,6 +4,7 @@ import (
 	"github.com/immutable-os/immutable-os/src/go-manifest/pkg/env"
 	"github.com/immutable-os/immutable-os/src/go-manifest/pkg/manifest"
 	"github.com/immutable-os/immutable-os/src/go-mount/pkg/filesystem"
+	"github.com/immutable-os/immutable-os/src/go-mount/pkg/overlay"
 )
 
 // Runner Handles actually processing a config file and executing its required steps
@@ -19,6 +20,10 @@ func (runner *Runner) Go() error {
 	}
 
 	if err := filesystem.MountAll(runner.config.Mounts); err != nil {
+		return err
+	}
+
+	if err := overlay.MountAll(runner.config.Overlays); err != nil {
 		return err
 	}
 
