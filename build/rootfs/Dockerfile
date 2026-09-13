@@ -2,7 +2,6 @@ ARG AGENT_VER="latest"
 ARG INIT_VER="latest"
 ARG INITRAMFS_VER="latest"
 ARG TOOLCHAIN_VER="latest"
-ARG LINUX_VER="6.19"
 ARG COREUTILS_VER="0.9.0"
 ARG BUSYBOX_VER="1.38.0"
 ARG UTILLINUX_VER="2.42.2"
@@ -15,8 +14,6 @@ ARG UTILLINUX_VER="2.42.2"
 FROM ghcr.io/immutable-os/toolchain:$TOOLCHAIN_VER AS toolchain-build
 FROM ghcr.io/immutable-os/go-initd:$INIT_VER AS initd-build
 FROM ghcr.io/immutable-os/go-agentd:$AGENT_VER AS agentd-build
-FROM ghcr.io/immutable-os/kernel:$LINUX_VER AS kernel-build
-FROM ghcr.io/immutable-os/initramfs:$INITRAMFS_VER AS initramfs-build
 FROM busybox:$BUSYBOX_VER-musl AS busybox-build
 
 # This needs to be re-done to support our toolchain
@@ -118,8 +115,6 @@ ARG LINUX_VER
 ARG INITRAMFS_VER
 
 COPY --from=rootfs-build /build /
-COPY --from=kernel-build /boot/vmlinuz /boot/vmlinuz
-COPY --from=initramfs-build /boot/initrd.cpio /boot/initrd.img
 
 SHELL ["/usr/sbin/busybox", "sh"]
 
