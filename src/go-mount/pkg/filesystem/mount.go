@@ -5,7 +5,6 @@ import (
 
 	"github.com/immutable-os/immutable-os/src/go-mount/pkg/loop"
 	"github.com/immutable-os/immutable-os/src/go-mount/pkg/mount"
-	"github.com/immutable-os/immutable-os/src/go-mount/pkg/overlay"
 	"github.com/immutable-os/immutable-os/src/go-task/pkg/engine"
 	"golang.org/x/sys/unix"
 )
@@ -50,25 +49,6 @@ func MountFilesystem(mountPoint *mount.Mount) error {
 
 	if err := unix.Mount(source, mountPoint.MountPoint, mountPoint.FilesystemType, flags, mountPoint.Options); err != nil {
 		return fmt.Errorf("mounting dev %s on %s failed: %v", source, mountPoint.MountPoint, err)
-	}
-
-	// Overlays always need to be processed after the filesystem is mounted
-	if mountPoint.Overlay != nil {
-		// We are setting these to mountPoint.MountPoint here so that if the user doesn't pass them
-		// the overlay mount can still succeed. This will effectively create a writable overlay that gets
-		// its contents wiped on reboot if mountPoint.Overlay.WorkDir and mountPoint.Overlay.UpperDir are
-		// also not passed
-		if mountPoint.Overlay.Merged == "" {
-			mountPoint.Overlay.Merged = mountPoint.MountPoint
-		}
-
-		if mountPoint.Overlay.LowerDir == "" {
-			mountPoint.Overlay.LowerDir = mountPoint.MountPoint
-		}
-
-		if err := overlay.Mount(mountPoint.Overlay); err != nil {
-			return err
-		}
 	}
 
 	return nil

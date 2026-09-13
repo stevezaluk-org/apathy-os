@@ -7,6 +7,7 @@ import (
 	"github.com/goccy/go-yaml"
 	"github.com/immutable-os/immutable-os/src/go-manifest/pkg/env"
 	"github.com/immutable-os/immutable-os/src/go-mount/pkg/mount"
+	"github.com/immutable-os/immutable-os/src/go-mount/pkg/overlay"
 )
 
 // Manifest An abstraction of a manifest file
@@ -17,6 +18,9 @@ type Manifest struct {
 
 	// Envs EnvironmentVariables that should be created
 	Envs []*env.EnvironmentVariable `yaml:"env" json:"env"`
+
+	// Overlays Overlay mounts that should be created
+	Overlays []*overlay.Overlay `yaml:"overlays" json:"overlays"`
 }
 
 // Read Reads a manifest config file at the specified Unix path, unmarshalls it into Config, and returns a pointer to it

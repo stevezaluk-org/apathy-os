@@ -31,6 +31,15 @@ mounts:
     mountPoint: /sys/fs/cgroup
     priority: 2
 
+overlays:
+  - priority: 1
+    lowerdir: /etc
+    merged: /etc
+
+  - priority: 1
+    lowerdir: /var
+    merged: /var
+
 # Always try to initialize a NIC
 network:
   - auto: true
