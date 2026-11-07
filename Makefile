@@ -19,13 +19,25 @@ snapshot:
 image:
 	docker buildx bake image
 
-.PHONY: rootfs
-rootfs:
-	docker buildx bake rootfs
+.PHONY: initd
+initd:
+	docker buildx bake go-initd
 
 .PHONY: initramfs
 initramfs:
 	docker buildx bake initramfs
+
+.PHONY: kernel
+kernel:
+	docker buildx bake kernel
+
+.PHONY: rootfs
+rootfs:
+	docker buildx bake rootfs
+
+.PHONY: serviced
+serviced:
+	docker buildx bake go-serviced
 
 .PHONY: toolchain
 toolchain:
