@@ -1,7 +1,3 @@
-ARG AGENT_VER="latest"
-ARG INIT_VER="latest"
-ARG INITRAMFS_VER="latest"
-ARG TOOLCHAIN_VER="latest"
 ARG COREUTILS_VER="0.9.0"
 ARG BUSYBOX_VER="1.38.0"
 ARG UTILLINUX_VER="2.42.2"
@@ -11,9 +7,6 @@ ARG UTILLINUX_VER="2.42.2"
 # way of doing this.
 #
 # See here: https://github.com/moby/buildkit/pull/3551
-FROM ghcr.io/immutable-os/toolchain:$TOOLCHAIN_VER AS toolchain-build
-FROM ghcr.io/immutable-os/go-initd:$INIT_VER AS initd-build
-FROM ghcr.io/immutable-os/go-agentd:$AGENT_VER AS agentd-build
 FROM busybox:$BUSYBOX_VER-musl AS busybox-build
 
 # This needs to be re-done to support our toolchain
@@ -60,16 +53,12 @@ RUN DESTDIR=/build/util-linux/out meson install -C build/
 
 FROM debian:stable-slim AS rootfs-build
 ARG BUSYBOX_VER
-ARG AGENT_VER
-ARG INIT_VER
-ARG INITRAMFS_VER
-ARG LINUX_VER
 
 WORKDIR /build
 
 RUN bash -c 'mkdir -p /build/{usr/bin,usr/sbin,etc,sys,dev,proc,tmp,boot,var,mnt}'
 
-COPY --from=toolchain-build / /build
+COPY --from=toolchain / /build
 COPY --from=uutils-build /build/coreutils/bin/* /build/usr/bin
 COPY --from=shadow-build /build/shadow-rs/bin/* /build/usr/bin
 
@@ -77,7 +66,7 @@ COPY --from=utillinux-build /build/util-linux/out/usr/bin/* /build/usr/bin
 COPY --from=utillinux-build /build/util-linux/out/usr/sbin/* /build/usr/sbin
 COPY --from=utillinux-build /build/util-linux/out/usr/lib/* /build/usr/lib
 
-COPY --from=initd-build /app/init /build/init
+COPY --from=initd /app/init /build/init
 
 # this must stay until we include /usr/bin/bash
 COPY --from=busybox-build /bin/busybox /build/usr/sbin/busybox
@@ -111,8 +100,6 @@ WORKDIR /build
 RUN bash -c 'for prog in $(./usr/bin/coreutils --list); do ln -s ./coreutils usr/bin/$prog; done'
 
 FROM scratch
-ARG LINUX_VER
-ARG INITRAMFS_VER
 
 COPY --from=rootfs-build /build /
 

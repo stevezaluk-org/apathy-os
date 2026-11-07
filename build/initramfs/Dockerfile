@@ -9,8 +9,8 @@ RUN bash -c 'mkdir -p /build/{usr/sbin,usr/share/manifest.d,newroot,dev,proc,sys
 COPY --from=busybox-build /bin/busybox /build/usr/sbin/busybox
 
 # This creates a confusing initramfs environment as agent is renamed to init, however this is a hard requirement of switch_root
-COPY --from=ghcr.io/immutable-os/go-initd:latest /app/init /build/init
-COPY --from=ghcr.io/immutable-os/go-initd:latest /app/init /build/usr/sbin/init
+COPY --from=initd /app/init /build/init
+COPY --from=initd /app/init /build/usr/sbin/init
 COPY ./usr/share/manifest.d/init.yaml /build/usr/share/manifest.d/init.yaml
 
 RUN chmod +x usr/sbin/busybox && \
