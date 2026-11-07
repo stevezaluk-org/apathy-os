@@ -1,11 +1,15 @@
 RELEASE ?= "release"
 
-DIST=$(shell pwd)/dist
+DIST=$(shell pwd)/out/apathy-os
 
 .PHONY: clean
 .SILENT:
 clean:
 	rm -rf $(DIST)/image
+
+.PHONY: snapshot
+snapshot:
+	goreleaser release --clean --snapshot
 
 .PHONY: clean-uefi
 .SILENT:
