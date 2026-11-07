@@ -3,6 +3,21 @@ variable "TAG" {
   default = "latest"
 }
 
+// SEMVER Semantic version to inject at build time
+variable "SEMVER" {
+  default = "undefined-docker"
+}
+
+// COMMITSHA Commit SHA to inject at build time
+variable "COMMITSHA" {
+  default = "undefined-docker"
+}
+
+// BUILDTIME Build time to inject at build time
+variable "BUILDTIME" {
+  default = "undefined-docker"
+}
+
 // TARGET The build target for the toolchain
 variable "TARGET" {
   default = "x86_64-unknown-linux-gnu"
@@ -45,6 +60,16 @@ variable "INIT_BUILDFLAGS" {
 
 // INIT_LDFLAGS The flags to pass to the Go linker when building go-initd
 variable "INIT_LDFLAGS" {
+  default = "-s -w"
+}
+
+// SERVICED_BUILDFLAGS The flags to pass to the Go compiler when building go-serviced
+variable "SERVICED_BUILDFLAGS" {
+  default = "-v"
+}
+
+// SERVICED_INITFLAGS The flags to pass to the Go linker when building go-serviced
+variable "SERVICED_INITFLAGS" {
   default = "-s -w"
 }
 
@@ -168,5 +193,28 @@ target "go-initd" {
   args = {
     INIT_BUILDFLAGS = INIT_BUILDFLAGS
     INIT_LDFLAGS = INIT_LDFLAGS
+    SEMVER = SEMVER
+    COMMITSHA = COMMITSHA
+    BUILDTIME = BUILDTIME
+  }
+}
+
+target "go-serviced" {
+  inherits = ["_common"]
+
+  dockerfile = "./build/serviced/Dockerfile"
+  context = "."
+  tags = ["ghcr.io/apathy-os/go-serviced:${TAG}"]
+
+  labels = {
+    "org.opencontainers.title" = "go-serviced"
+  }
+
+  args = {
+    SERVICED_BUILDFLAGS = SERVICED_BUILDFLAGS
+    SERVICED_INITFLAGS = SERVICED_INITFLAGS
+    SEMVER = SEMVER
+    COMMITSHA = COMMITSHA
+    BUILDTIME = BUILDTIME
   }
 }
