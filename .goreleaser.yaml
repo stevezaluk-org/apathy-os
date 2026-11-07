@@ -1,0 +1,57 @@
+version: 2
+
+project_name: "apathy-os"
+
+builds:
+  - id: apathy-os-initd
+    binary: "initd"
+    main: "./build/initd/main.go"
+    goos: [linux]
+    goarch: [arm64, amd64]
+    env: [CGO_ENABLED=0]
+    flags: ["-v"]
+    ldflags:
+      - "-s -w"
+      - -X github.com/stevezaluk-org/apathy-os/internal/version.SemVer={{.Version}}
+      - -X github.com/stevezaluk-org/apathy-os/internal/version.CommitSHA={{.ShortCommit}}
+      - -X github.com/stevezaluk-org/apathy-os/internal/version.BuildDate={{.Date}}
+
+  - id: apathy-os-serviced
+    binary: "servicectl"
+    main: "./build/serviced/main.go"
+    goos: [linux]
+    goarch: [arm64, amd64]
+    env: [CGO_ENABLED=0]
+    flags: ["-v"]
+    ldflags:
+      - "-s -w"
+      - -X github.com/stevezaluk-org/apathy-os/internal/version.SemVer={{.Version}}
+      - -X github.com/stevezaluk-org/apathy-os/internal/version.CommitSHA={{.ShortCommit}}
+      - -X github.com/stevezaluk-org/apathy-os/internal/version.BuildDate={{.Date}}
+
+archives:
+  - id: apathy-os
+    ids: [apathy-os-serviced, apathy-os-initd]
+    formats: [tar.gz]
+    name_template: "apathy-os_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    wrap_in_directory: true
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+      - "^chore:"
+      - "^build:"
+      - "^ci:"
+
+snapshot:
+  version_template: "0.0.0-SNAPSHOT-{{ .ShortCommit }}"
+
+release:
+  footer: >-
+
+    ---
+
+    This project is licensed under the GNU GPL v3 License. THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.

@@ -1,0 +1,122 @@
+package initd
+
+import (
+	"context"
+	"log"
+	"os"
+	"os/signal"
+	"time"
+
+	"github.com/stevezaluk-org/apathy-os/internal/initd/acpi"
+	"github.com/stevezaluk-org/apathy-os/internal/initd/reaper"
+	"github.com/stevezaluk-org/apathy-os/internal/service/config"
+	"github.com/stevezaluk-org/apathy-os/internal/service/daemon"
+	"golang.org/x/sys/unix"
+)
+
+// SystemInit An abstraction around the agent as a whole. Manages the state of late PID 1 and service supervisor
+type SystemInit struct {
+	// reaper The process reaper for PID 1
+	reaper *reaper.Reaper
+
+	// serviceDaemon Daemon for controlling service execution
+	serviceDaemon *daemon.Daemon
+
+	// sigChild Channel responsible for delivering SIGCHLD signals. Used for reaping processes
+	sigChild chan os.Signal
+
+	// sigTerm Channel responsible for delivering SIGTERM events, an alternative way of initiating a shutdown
+	sigTerm chan os.Signal
+
+	// sigAcpi Channel responsible for receiving ACPI events, indicating that the system should shutdown
+	sigAcpi chan bool
+}
+
+// EventLoop Starts the core agent event loop
+// TODO: Both the process reaper and service shutdown is occurring at the same time.
+func (systemInit *SystemInit) EventLoop() error {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	// Establish notifications for the signals that we need to catch
+	signal.Notify(systemInit.sigChild, unix.SIGCHLD)
+	signal.Notify(systemInit.sigTerm, unix.SIGTERM, unix.SIGINT)
+
+	// start our ACPI event loop
+	go acpi.EventLoop(ctx, systemInit.sigAcpi)
+	go systemInit.serviceDaemon.Serve(ctx)
+
+	for {
+		select {
+		case <-systemInit.sigChild:
+			log.Println("got sigchld")
+
+			if err := systemInit.reaper.Reap(); err != nil {
+				log.Printf("got fatal error trying to reap processes: %v", err)
+			}
+		case <-systemInit.sigAcpi:
+			log.Println("got ACPI power off event. Shutting down system")
+			cancel()
+			if err := systemInit.Shutdown(); err != nil {
+				return err
+			}
+		case <-systemInit.sigTerm:
+			log.Println("got sigterm")
+			cancel()
+			if err := systemInit.Shutdown(); err != nil {
+				return err
+			}
+		}
+	}
+}
+
+// Shutdown Initiates shutdown logic
+//
+// TODO: Not remounting (reverse order) filesystems here. Leads to data loss
+// TODO: No real service management here. Basic unix.Kill(-1)
+func (systemInit *SystemInit) Shutdown() error {
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	if err := systemInit.serviceDaemon.StopAll(ctx); err != nil {
+		return err
+	}
+
+	if err := systemInit.reaper.Fallback(); err != nil {
+		return err
+	}
+
+	// actually shutdown the system
+	if err := unix.Reboot(unix.LINUX_REBOOT_CMD_POWER_OFF); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// Start Initial entrypoint for the systemInit Processes system/user manifest files and then moves to the event loop
+func (systemInit *SystemInit) Start() error {
+	serviceDaemon, err := daemon.NewDaemon(config.Default())
+	if err != nil {
+		return err
+	}
+
+	systemInit.serviceDaemon = serviceDaemon
+
+	// blocks forever
+	if err := systemInit.EventLoop(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// New Initializes a new Agent and returns a pointer to it
+func New() *SystemInit {
+	return &SystemInit{
+		reaper:   reaper.New(),
+		sigChild: make(chan os.Signal, 1),
+		sigTerm:  make(chan os.Signal, 1),
+		sigAcpi:  make(chan bool),
+	}
+}

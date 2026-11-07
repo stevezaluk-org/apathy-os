@@ -3,6 +3,21 @@ variable "TAG" {
   default = "latest"
 }
 
+// SEMVER Semantic version to inject at build time
+variable "SEMVER" {
+  default = "undefined-docker"
+}
+
+// COMMITSHA Commit SHA to inject at build time
+variable "COMMITSHA" {
+  default = "undefined-docker"
+}
+
+// BUILDTIME Build time to inject at build time
+variable "BUILDTIME" {
+  default = "undefined-docker"
+}
+
 // TARGET The build target for the toolchain
 variable "TARGET" {
   default = "x86_64-unknown-linux-gnu"
@@ -10,7 +25,7 @@ variable "TARGET" {
 
 // BOOT_ARGS The boot arguments to bake into the UKI when generating an image
 variable "BOOT_ARGS" {
-  default = "debug root=87965c58-36e0-11f1-8de9-0242ac120002 console=ttyS0 rdinit=/usr/sbin/init"
+  default = "debug console=ttyS0 rdinit=/usr/sbin/init"
 }
 
 // CROSSTOOLS_VER The version of crosstool-ng to use for building the toolchain
@@ -38,26 +53,6 @@ variable "SHADOW_VER" {
   default = "0.2.1"
 }
 
-// TOOLCHAIN_VER The toolchain version to use when building the rootfs
-variable "TOOLCHAIN_VER" {
-  default = "latest"
-}
-
-// INITRAMFS_VER The version of the initramfs to use when building the rootfs
-variable "INITRAMFS_VER" {
-  default = "latest"
-}
-
-// ROOTFS_VER The version of the rootfs to use when building images
-variable "ROOTFS_VER" {
-  default = "latest"
-}
-
-// INIT_VER The version of go-initd to use when building the rootfs
-variable "INIT_VER" {
-  default = "latest"
-}
-
 // INIT_BUILDFLAGS The flags to pass to the Go compiler when building go-initd
 variable "INIT_BUILDFLAGS" {
   default = "-v"
@@ -68,13 +63,23 @@ variable "INIT_LDFLAGS" {
   default = "-s -w"
 }
 
+// SERVICED_BUILDFLAGS The flags to pass to the Go compiler when building go-serviced
+variable "SERVICED_BUILDFLAGS" {
+  default = "-v"
+}
+
+// SERVICED_INITFLAGS The flags to pass to the Go linker when building go-serviced
+variable "SERVICED_INITFLAGS" {
+  default = "-s -w"
+}
+
 target "_common" {
   platforms = ["linux/amd64"]
   output = ["type=docker"]
   labels = {
-    "org.opencontainers.image.authors" = "Steven A. Zaluk <stevezaluk@gmail.com>"
-    "org.opencontainers.image.source" = "https://github.com/immutable-os/immutable-os"
-    "org.opencontainers.image.url" = "https://github.com/immutable-os/immutable-os"
+    "org.opencontainers.image.authors" = "Steven A. Zaluk <szaluk@stevenzaluk.com>"
+    "org.opencontainers.image.source" = "https://github.com/stevezaluk-org/apathy-os"
+    "org.opencontainers.image.url" = "https://github.com/stevezaluk-org/apathy-os"
     "org.opencontainers.image.version" = TAG
   }
 }
@@ -84,9 +89,9 @@ target "toolchain" {
 
   dockerfile = "Dockerfile"
   context = "./build/toolchain"
-  tags = ["ghcr.io/immutable-os/toolchain:${TAG}"]
+  tags = ["ghcr.io/apathy-os/toolchain:${TAG}"]
   labels = {
-    "org.opencontainers.title" = "immutable-os - toolchain"
+    "org.opencontainers.title" = "cloud-host - toolchain"
   }
 
   args = {
@@ -100,9 +105,9 @@ target "kernel" {
 
   dockerfile = "Dockerfile"
   context = "./build/kernel"
-  tags = ["ghcr.io/immutable-os/kernel:${TAG}"]
+  tags = ["ghcr.io/apathy-os/kernel:${TAG}"]
   labels = {
-    "org.opencontainers.title" = "immutable-os - kernel"
+    "org.opencontainers.title" = "cloud-host - kernel"
   }
 
   args = {
@@ -116,14 +121,13 @@ target "initramfs" {
   dockerfile = "Dockerfile"
   context = "./build/initramfs"
 
-  # We override locally here since we want to build "from scratch" when invoking through buildx bake
   contexts = {
-    "ghcr.io/immutable-os/go-initd:latest" = "docker-image://ghcr.io/immutable-os/go-initd:latest"
+    "initd" = "target:go-initd"
   }
 
-  tags = ["ghcr.io/immutable-os/initramfs:${TAG}"]
+  tags = ["ghcr.io/apathy-os/initramfs:${TAG}"]
   labels = {
-    "org.opencontainers.title" = "immutable-os - initramfs"
+    "org.opencontainers.title" = "cloud-host - initramfs"
   }
 
   args = {
@@ -139,23 +143,19 @@ target "rootfs" {
 
   # We override locally here since we want to build "from scratch" when invoking through buildx bake
   contexts = {
-    "ghcr.io/immutable-os/go-initd:latest" = "docker-image://ghcr.io/immutable-os/go-initd:latest"
-    "ghcr.io/immutable-os/kernel:latest" = "docker-image://ghcr.io/immutable-os/kernel:latest"
-    "ghcr.io/immutable-os/initramfs:latest" = "docker-image://ghcr.io/immutable-os/initramfs:latest"
-    "ghcr.io/immutable-os/toolchain:latest" = "docker-image://ghcr.io/immutable-os/toolchain:latest"
+    "toolchain" = "target:toolchain"
+    "kernel" = "target:kernel"
+    "initd" = "target:go-initd"
+    "initramfs" = "target:initramfs"
   }
 
-  tags = ["ghcr.io/immutable-os/rootfs:${TAG}"]
+  tags = ["ghcr.io/apathy-os/rootfs:${TAG}"]
   labels = {
-    "org.opencontainers.title" = "immutable-os - rootfs"
+    "org.opencontainers.title" = "cloud-host - rootfs"
   }
 
   args = {
     BUSYBOX_VER = BUSYBOX_VER
-    LINUX_VER = LINUX_VER
-    INIT_VER = INIT_VER
-    INITRAMFS_VER = INITRAMFS_VER
-    TOOLCHAIN_VER = TOOLCHAIN_VER
     COREUTILS_VER = COREUTILS_VER
     SHADOW_VER = SHADOW_VER
   }
@@ -166,21 +166,25 @@ target "image" {
 
   dockerfile = "Dockerfile"
   context = "./build/image"
+  contexts = {
+    "kernel" = "target:kernel"
+    "rootfs" = "target:rootfs"
+    "initramfs" = "target:initramfs"
+  }
 
-  output = ["type=local,dest=dist/image/"]
+  output = ["type=local,dest=out/apathy-os/image/"]
 
   args = {
     BOOT_ARGS = BOOT_ARGS
-    ROOTFS_VER = ROOTFS_VER
   }
 }
 
 target "go-initd" {
   inherits = ["_common"]
 
-  dockerfile = "go-initd/Dockerfile"
-  context = "./src"
-  tags = ["ghcr.io/immutable-os/go-initd:${TAG}"]
+  dockerfile = "./build/initd/Dockerfile"
+  context = "."
+  tags = ["ghcr.io/apathy-os/go-initd:${TAG}"]
 
   labels = {
     "org.opencontainers.title" = "go-initd"
@@ -189,5 +193,28 @@ target "go-initd" {
   args = {
     INIT_BUILDFLAGS = INIT_BUILDFLAGS
     INIT_LDFLAGS = INIT_LDFLAGS
+    SEMVER = SEMVER
+    COMMITSHA = COMMITSHA
+    BUILDTIME = BUILDTIME
+  }
+}
+
+target "go-serviced" {
+  inherits = ["_common"]
+
+  dockerfile = "./build/serviced/Dockerfile"
+  context = "."
+  tags = ["ghcr.io/apathy-os/go-serviced:${TAG}"]
+
+  labels = {
+    "org.opencontainers.title" = "go-serviced"
+  }
+
+  args = {
+    SERVICED_BUILDFLAGS = SERVICED_BUILDFLAGS
+    SERVICED_INITFLAGS = SERVICED_INITFLAGS
+    SEMVER = SEMVER
+    COMMITSHA = COMMITSHA
+    BUILDTIME = BUILDTIME
   }
 }

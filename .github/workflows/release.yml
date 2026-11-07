@@ -1,0 +1,17 @@
+name: Release
+
+on:
+  push:
+    branches: ["main"]
+
+permissions:
+  contents: read
+
+jobs:
+  tag:
+    uses: stevezaluk-org/workflows/.github/workflows/tag.yml@1705e9426d7d31b63de6a66652182f96f0214960
+    with:
+      release_branch: "main"
+
+  release:
+    uses: stevezaluk-org/workflows/.github/workflows/goreleaser-release.yml@1705e9426d7d31b63de6a66652182f96f0214960

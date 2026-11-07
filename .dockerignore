@@ -1,0 +1,16 @@
+# Git/GitHub
+.git/
+.github/
+.gitignore
+
+# Build Artifacts
+dist/
+docker-bake.hcl
+.goreleaser.yaml
+
+# Documentation
+*.md
+LICENSE
+
+# Misc
+.DS_Store
