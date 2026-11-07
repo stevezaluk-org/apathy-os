@@ -1,3 +1,5 @@
+github.com/containerd/cgroups/v2 v2.0.0-20221109034041-cc78c6c1e32d h1:gfwJ/MHZGr5PdfUf2oMZjbJyPhKIIN1m46Sdm1FIodM=
+github.com/containerd/cgroups/v2 v2.0.0-20221109034041-cc78c6c1e32d/go.mod h1:nno7catpBPPU5fP1B4f1c1B5B5v8VTs+U2z62ZsTzSE=
 github.com/cpuguy83/go-md2man/v2 v2.0.6/go.mod h1:oOW0eioCTA6cOiMLiUPZOpcVxMig6NIQQ7OS05n1F4g=
 github.com/fsnotify/fsnotify v1.9.0 h1:2Ml+OJNzbYCTzsxtv8vKSFD9PbJjmhYF14k/jKC7S9k=
 github.com/fsnotify/fsnotify v1.9.0/go.mod h1:8jBTzvmWwFyi3Pb8djgCCO5IBqzKJ/Jwo8TRcHyHii0=

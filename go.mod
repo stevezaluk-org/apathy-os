@@ -3,6 +3,7 @@ module github.com/stevezaluk-org/apathy-os
 go 1.26.1
 
 require (
+	github.com/containerd/cgroups/v2 v2.0.0-20221109034041-cc78c6c1e32d // indirect
 	github.com/fsnotify/fsnotify v1.9.0 // indirect
 	github.com/go-viper/mapstructure/v2 v2.4.0 // indirect
 	github.com/google/go-cmp v0.7.0 // indirect
