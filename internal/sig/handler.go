@@ -2,7 +2,6 @@ package sig
 
 import (
 	"context"
-	"fmt"
 	"log/slog"
 	"os"
 	"sync"
@@ -26,17 +25,15 @@ type Handler struct {
 
 // RegisterSignal Creates a new SignalRegistration and registers it with the handler. Error is returned if you pass
 // no signal handler functions. Go-routine safe
-func (handler *Handler) RegisterSignal(sig syscall.Signal, f ...HandlerFunc) error {
-	if len(f) == 0 {
-		return fmt.Errorf("must register at least one handler a signal")
-	}
-
+func (handler *Handler) RegisterSignal(sig syscall.Signal, f ...HandlerFunc) {
 	handler.mu.Lock()
 	defer handler.mu.Unlock()
 
-	handler.signals = append(handler.signals, NewRegistration(sig, f))
+	if len(f) == 0 {
+		f = make([]HandlerFunc, 0)
+	}
 
-	return nil
+	handler.signals = append(handler.signals, NewRegistration(sig, f))
 }
 
 // HandleSignals Spawns a new go-routine per-unique signal that has been registered with the signal handler. If a signal
