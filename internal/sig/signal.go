@@ -7,8 +7,8 @@ import (
 	"syscall"
 )
 
-// SignalRegistration Represents a signal that should be caught and reacted to
-type SignalRegistration struct {
+// Registration Represents a signal that should be caught and reacted to
+type Registration struct {
 	// C Channel that signals will be received at
 	C chan os.Signal
 
@@ -16,11 +16,11 @@ type SignalRegistration struct {
 	Sig syscall.Signal
 
 	// handlers Any handlers that need to be executed when this signal is received
-	handlers []SignalHandlerFunc
+	handlers []HandlerFunc
 }
 
-// Execute Notify SignalRegistration.C when a signal is received and execute its list of handlers
-func (registration *SignalRegistration) Execute(ctx context.Context) {
+// Execute Notify Registration.C when a signal is received and execute its list of handlers
+func (registration *Registration) Execute(ctx context.Context) {
 	signal.Notify(registration.C, registration.Sig)
 
 	for {
@@ -35,9 +35,9 @@ func (registration *SignalRegistration) Execute(ctx context.Context) {
 	}
 }
 
-// NewRegistration Creates a new SignalRegistration and returns a pointer to it
-func NewRegistration(sig syscall.Signal, handlers []SignalHandlerFunc) *SignalRegistration {
-	return &SignalRegistration{
+// NewRegistration Creates a new Registration and returns a pointer to it
+func NewRegistration(sig syscall.Signal, handlers []HandlerFunc) *Registration {
+	return &Registration{
 		C:        make(chan os.Signal, 1),
 		Sig:      sig,
 		handlers: handlers,
