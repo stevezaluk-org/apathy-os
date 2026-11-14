@@ -89,7 +89,7 @@ target "toolchain" {
 
   dockerfile = "Dockerfile"
   context = "./build/toolchain"
-  tags = ["ghcr.io/apathy-os/toolchain:${TAG}"]
+  tags = ["ghcr.io/stevezaluk-org/apathy-os/toolchain:${TAG}"]
   labels = {
     "org.opencontainers.title" = "cloud-host - toolchain"
   }
@@ -105,7 +105,7 @@ target "kernel" {
 
   dockerfile = "Dockerfile"
   context = "./build/kernel"
-  tags = ["ghcr.io/apathy-os/kernel:${TAG}"]
+  tags = ["ghcr.io/stevezaluk-org/apathy-os/kernel:${TAG}"]
   labels = {
     "org.opencontainers.title" = "cloud-host - kernel"
   }
@@ -125,7 +125,7 @@ target "initramfs" {
     "initd" = "target:go-initd"
   }
 
-  tags = ["ghcr.io/apathy-os/initramfs:${TAG}"]
+  tags = ["ghcr.io/stevezaluk-org/apathy-os/initramfs:${TAG}"]
   labels = {
     "org.opencontainers.title" = "cloud-host - initramfs"
   }
@@ -149,7 +149,7 @@ target "rootfs" {
     "initramfs" = "target:initramfs"
   }
 
-  tags = ["ghcr.io/apathy-os/rootfs:${TAG}"]
+  tags = ["ghcr.io/stevezaluk-org/apathy-os/rootfs:${TAG}"]
   labels = {
     "org.opencontainers.title" = "cloud-host - rootfs"
   }
@@ -184,7 +184,7 @@ target "go-initd" {
 
   dockerfile = "./build/initd/Dockerfile"
   context = "."
-  tags = ["ghcr.io/apathy-os/go-initd:${TAG}"]
+  tags = ["ghcr.io/stevezaluk-org/apathy-os/go-initd:${TAG}"]
 
   labels = {
     "org.opencontainers.title" = "go-initd"
@@ -204,7 +204,7 @@ target "go-serviced" {
 
   dockerfile = "./build/serviced/Dockerfile"
   context = "."
-  tags = ["ghcr.io/apathy-os/go-serviced:${TAG}"]
+  tags = ["ghcr.io/stevezaluk-org/apathy-os/go-serviced:${TAG}"]
 
   labels = {
     "org.opencontainers.title" = "go-serviced"
