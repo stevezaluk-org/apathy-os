@@ -53,6 +53,11 @@ variable "SHADOW_VER" {
   default = "0.2.1"
 }
 
+// TOOLCHAIN_VER The tag of the toolchain that you want to build against
+variable "TOOLCHAIN_VER" {
+  default = "2.42"
+}
+
 // INIT_BUILDFLAGS The flags to pass to the Go compiler when building go-initd
 variable "INIT_BUILDFLAGS" {
   default = "-v"
@@ -143,8 +148,6 @@ target "rootfs" {
 
   # We override locally here since we want to build "from scratch" when invoking through buildx bake
   contexts = {
-    "toolchain" = "target:toolchain"
-    "kernel" = "target:kernel"
     "initd" = "target:go-initd"
     "initramfs" = "target:initramfs"
   }
@@ -157,6 +160,7 @@ target "rootfs" {
   args = {
     BUSYBOX_VER = BUSYBOX_VER
     COREUTILS_VER = COREUTILS_VER
+    TOOLCHAIN_VER = TOOLCHAIN_VER
     SHADOW_VER = SHADOW_VER
   }
 }
@@ -167,7 +171,6 @@ target "image" {
   dockerfile = "Dockerfile"
   context = "./build/image"
   contexts = {
-    "kernel" = "target:kernel"
     "rootfs" = "target:rootfs"
     "initramfs" = "target:initramfs"
   }
@@ -176,6 +179,7 @@ target "image" {
 
   args = {
     BOOT_ARGS = BOOT_ARGS
+    LINUX_VER = LINUX_VER
   }
 }
 

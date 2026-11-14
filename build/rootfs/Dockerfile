@@ -1,3 +1,4 @@
+ARG TOOLCHAIN_VER="2.42"
 ARG COREUTILS_VER="0.9.0"
 ARG BUSYBOX_VER="1.38.0"
 ARG UTILLINUX_VER="2.42.2"
@@ -8,6 +9,7 @@ ARG UTILLINUX_VER="2.42.2"
 #
 # See here: https://github.com/moby/buildkit/pull/3551
 FROM busybox:$BUSYBOX_VER-musl AS busybox-build
+FROM ghcr.io/stevezaluk-org/apathy-os/toolchain:$TOOLCHAIN_VER AS toolchain-build
 
 # This needs to be re-done to support our toolchain
 FROM rust:1.96.0 AS  uutils-build
@@ -58,7 +60,7 @@ WORKDIR /build
 
 RUN bash -c 'mkdir -p /build/{usr/bin,usr/sbin,etc,sys,dev,proc,tmp,boot,var,mnt}'
 
-COPY --from=toolchain / /build
+COPY --from=toolchain-build / /build
 COPY --from=uutils-build /build/coreutils/bin/* /build/usr/bin
 COPY --from=shadow-build /build/shadow-rs/bin/* /build/usr/bin
 

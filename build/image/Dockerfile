@@ -1,5 +1,7 @@
 ARG BOOT_ARGS="debug console=ttyS0 rdinit=/usr/sbin/init"
+ARG LINUX_VER="6.19"
 
+FROM ghcr.io/stevezaluk-org/apathy-os/kernel:$LINUX_VER AS kernel-build
 FROM debian:stable-slim AS image-build
 ARG BOOT_ARGS
 
@@ -15,7 +17,7 @@ COPY ./release.cfg /build
 
 COPY --from=rootfs / /rootfs
 COPY --from=initramfs / /initramfs
-COPY --from=kernel /boot/vmlinuz /kernel/vmlinuz
+COPY --from=kernel-build /boot/vmlinuz /kernel/vmlinuz
 
 WORKDIR /initramfs
 
