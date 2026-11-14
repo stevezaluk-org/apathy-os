@@ -1,7 +1,9 @@
 ARG TOOLCHAIN_VER="2.42"
+ARG RUST_VER="1.96.0"
 
 FROM ghcr.io/stevezaluk-org/apathy-os/toolchain:$TOOLCHAIN_VER AS toolchain-build
 FROM debian:trixie-slim@sha256:a72b4433de1cf7d6bae0c4cee74d0547f58601a643b3375f070c51600d63b6b2
+ARG RUST_VER
 
 # ca-certificates required as a pre-req for using the snapshot archive
 RUN apt-get update -y && \
@@ -12,7 +14,11 @@ RUN rm -rf /etc/apt/sources.list.d/*
 COPY etc/apt/sources.list.d/* /etc/apt/sources.list.d/
 
 RUN apt-get update -y && \
-    apt-get install gcc g++ pkg-config meson -y
+    apt-get install gcc g++ pkg-config meson tar unzip rustup -y
+
+# Install our rust compiler for other dependencies that depend on this
+RUN rustup toolchain install $RUST_VER --profile=minimal && \
+    rustup default $RUST_VER
 
 # Always ensure that we have our custom toolchain built so that we can build our components against it
 COPY --from=toolchain-build / /opt/sysroot
