@@ -3,14 +3,14 @@ package initd
 import (
 	"context"
 	"log"
-	"os"
-	"os/signal"
+	"log/slog"
 	"time"
 
 	"github.com/stevezaluk-org/apathy-os/internal/initd/acpi"
 	"github.com/stevezaluk-org/apathy-os/internal/initd/reaper"
 	"github.com/stevezaluk-org/apathy-os/internal/service/config"
 	"github.com/stevezaluk-org/apathy-os/internal/service/daemon"
+	"github.com/stevezaluk-org/apathy-os/internal/sig"
 	"golang.org/x/sys/unix"
 )
 
@@ -19,14 +19,11 @@ type SystemInit struct {
 	// reaper The process reaper for PID 1
 	reaper *reaper.Reaper
 
+	// signalHandler Signal handler for reacting to signals received by initd
+	signalHandler *sig.Handler
+
 	// serviceDaemon Daemon for controlling service execution
 	serviceDaemon *daemon.Daemon
-
-	// sigChild Channel responsible for delivering SIGCHLD signals. Used for reaping processes
-	sigChild chan os.Signal
-
-	// sigTerm Channel responsible for delivering SIGTERM events, an alternative way of initiating a shutdown
-	sigTerm chan os.Signal
 
 	// sigAcpi Channel responsible for receiving ACPI events, indicating that the system should shutdown
 	sigAcpi chan bool
@@ -34,34 +31,38 @@ type SystemInit struct {
 
 // EventLoop Starts the core agent event loop
 // TODO: Both the process reaper and service shutdown is occurring at the same time.
+// TODO: Bad context handling here
 func (systemInit *SystemInit) EventLoop() error {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	// Establish notifications for the signals that we need to catch
-	signal.Notify(systemInit.sigChild, unix.SIGCHLD)
-	signal.Notify(systemInit.sigTerm, unix.SIGTERM, unix.SIGINT)
+	// Register the signals that PID1 is responsible for handling
+	systemInit.signalHandler.RegisterSignal(unix.SIGCHLD, func() {
+		if err := systemInit.reaper.Reap(); err != nil {
+			slog.Error("Got error trying to reap proccess. This can indicate that zombie's are accumulating", "err", err)
+			cancel()
+		}
+	})
+
+	systemInit.signalHandler.RegisterSignal(unix.SIGTERM, func() {
+		if err := systemInit.Shutdown(); err != nil {
+			slog.Error("Got error when trying to shutdown the system", "err", err)
+			cancel()
+		}
+	})
 
 	// start our ACPI event loop
 	go acpi.EventLoop(ctx, systemInit.sigAcpi)
+	go systemInit.signalHandler.HandleSignals(ctx)
 	go systemInit.serviceDaemon.Serve(ctx)
 
 	for {
 		select {
-		case <-systemInit.sigChild:
-			log.Println("got sigchld")
-
-			if err := systemInit.reaper.Reap(); err != nil {
-				log.Printf("got fatal error trying to reap processes: %v", err)
-			}
+		case <-ctx.Done():
+			cancel()
+			return nil
 		case <-systemInit.sigAcpi:
 			log.Println("got ACPI power off event. Shutting down system")
-			cancel()
-			if err := systemInit.Shutdown(); err != nil {
-				return err
-			}
-		case <-systemInit.sigTerm:
-			log.Println("got sigterm")
 			cancel()
 			if err := systemInit.Shutdown(); err != nil {
 				return err
@@ -114,9 +115,8 @@ func (systemInit *SystemInit) Start() error {
 // New Initializes a new Agent and returns a pointer to it
 func New() *SystemInit {
 	return &SystemInit{
-		reaper:   reaper.New(),
-		sigChild: make(chan os.Signal, 1),
-		sigTerm:  make(chan os.Signal, 1),
-		sigAcpi:  make(chan bool),
+		reaper:        reaper.New(),
+		signalHandler: sig.New(),
+		sigAcpi:       make(chan bool),
 	}
 }
