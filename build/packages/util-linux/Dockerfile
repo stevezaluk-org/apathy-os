@@ -35,3 +35,6 @@ RUN meson setup build \
     --native-file /opt/conf/meson-sysroot.ini
 
 RUN DESTDIR=/build/util-linux/out meson install -C build/
+
+FROM scratch
+COPY --from=builder /build/util-linux/out /
