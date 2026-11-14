@@ -15,7 +15,7 @@ COPY --from=libcrypt-build /usr/lib/* /opt/sysroot/usr/lib
 COPY --from=libcrypt-build /usr/include/* /opt/sysroot/usr/include
 
 RUN mkdir build && \
-    meson setup -Dsecuredir=/usr/lib/security build/ --native-file /opt/conf/meson-sysroot.ini
+    meson setup -Daudit=disabled -Dsecuredir=/usr/lib/security build/ --native-file /opt/conf/meson-sysroot.ini
 
 RUN meson compile -C build/ && \
     DESTDIR=/build/libpam/out meson install -C build
