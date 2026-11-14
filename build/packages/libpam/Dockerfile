@@ -13,10 +13,9 @@ RUN tar -xvf libpam.tar.gz -C . --strip-components=1 && rm -rf libpam.tar.gz
 
 COPY --from=libcrypt-build /usr/lib/* /opt/sysroot/usr/lib
 COPY --from=libcrypt-build /usr/include/* /opt/sysroot/usr/include
-COPY ./meson-sysroot.ini sysroot.ini
 
 RUN mkdir build && \
-    meson setup -Dsecuredir=/usr/lib/security build/ --native-file sysroot.ini
+    meson setup -Dsecuredir=/usr/lib/security build/ --native-file /opt/conf/meson-sysroot.ini
 
 RUN meson compile -C build/ && \
     DESTDIR=/build/libpam/out meson install -C build

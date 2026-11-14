@@ -17,11 +17,15 @@ RUN apt-get update -y && \
 # Always ensure that we have our custom toolchain built so that we can build our components against it
 COPY --from=toolchain-build / /opt/sysroot
 
+# Configuration files for: meson, cargo
+COPY opt/sysroot/conf/ /opt/conf
+
 # environment variables required so that the C compiler picks up our sysroot
 ENV CC="gcc --sysroot=/opt/sysroot"
 ENV CXX="g++ --sysroot=/opt/sysroot"
 ENV CPPFLAGS="-I/opt/sysroot/usr/include"
 ENV LDFLAGS="-L/opt/sysroot/usr/lib -Wl,-rpath-link,/opt/sysroot/usr/lib"
+ENV BINDGEN_EXTRA_CLANG_ARGS="--sysroot=/opt/sysroot"
 ENV PKG_CONFIG_SYSROOT_DIR="/opt/sysroot"
 ENV PKG_CONFIG_LIBDIR="/opt/sysroot/usr/lib/pkgconfig"
 
