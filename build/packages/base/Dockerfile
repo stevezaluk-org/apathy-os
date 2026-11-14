@@ -1,0 +1,28 @@
+ARG TOOLCHAIN_VER="2.42"
+
+FROM ghcr.io/stevezaluk-org/apathy-os/toolchain:$TOOLCHAIN_VER AS toolchain-build
+FROM debian:trixie-slim@sha256:a72b4433de1cf7d6bae0c4cee74d0547f58601a643b3375f070c51600d63b6b2
+
+# ca-certificates required as a pre-req for using the snapshot archive
+RUN apt-get update -y && \
+    apt-get install ca-certificates -y
+
+# Remove any old sources that exist for APT so that we can use our snapshot
+RUN rm -rf /etc/apt/sources.list.d/*
+COPY etc/apt/sources.list.d/* /etc/apt/sources.list.d/
+
+RUN apt-get update -y && \
+    apt-get install gcc g++ pkg-config meson -y
+
+# Always ensure that we have our custom toolchain built so that we can build our components against it
+COPY --from=toolchain-build / /opt/sysroot
+
+# environment variables required so that the C compiler picks up our sysroot
+ENV CC="gcc --sysroot=/opt/sysroot"
+ENV CXX="g++ --sysroot=/opt/sysroot"
+ENV CPPFLAGS="-I/opt/sysroot/usr/include"
+ENV LDFLAGS="-L/opt/sysroot/usr/lib -Wl,-rpath-link,/opt/sysroot/usr/lib"
+ENV PKG_CONFIG_SYSROOT_DIR="/opt/sysroot"
+ENV PKG_CONFIG_LIBDIR="/opt/sysroot/usr/lib/pkgconfig"
+
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
