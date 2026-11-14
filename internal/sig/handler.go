@@ -47,7 +47,7 @@ func (handler *Handler) HandleSignals(ctx context.Context) {
 
 	wg := new(sync.WaitGroup)
 	for _, handler := range handler.signals {
-		slog.Info("starting handler", "sig", handler.Sig, "f", handler.handlers)
+		slog.Info("starting signal handler", "nr", handler.Sig, "name", handler.Sig.String())
 		wg.Go(func() {
 			handler.Execute(ctx)
 		})
