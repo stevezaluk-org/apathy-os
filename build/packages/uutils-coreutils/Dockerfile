@@ -23,7 +23,7 @@ COPY --from=libpam-build /usr/sbin /opt/sysroot/usr/sbin
 
 RUN tar -xvf coreutils.tar.gz -C . --strip-components=1 && rm -rf coreutils.tar.gz
 RUN cargo install \
-        --config /opt/conf/cargo.toml \
+        --config /etc/cargo/config.toml \
         --locked \
         --path . \
         --bins \

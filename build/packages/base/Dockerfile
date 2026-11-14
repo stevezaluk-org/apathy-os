@@ -24,7 +24,8 @@ RUN rustup toolchain install $RUST_VER --profile=minimal && \
 COPY --from=toolchain-build / /opt/sysroot
 
 # Configuration files for: meson, cargo
-COPY opt/sysroot/conf/ /opt/conf
+COPY opt/sysroot/conf/meson-sysroot.ini /opt/conf
+COPY opt/sysroot/conf/cargo.toml /etc/cargo/config.toml
 
 # environment variables required so that the C compiler picks up our sysroot
 ENV CC="gcc --sysroot=/opt/sysroot"
@@ -34,5 +35,6 @@ ENV LDFLAGS="-L/opt/sysroot/usr/lib -Wl,-rpath-link,/opt/sysroot/usr/lib"
 ENV BINDGEN_EXTRA_CLANG_ARGS="--sysroot=/opt/sysroot"
 ENV PKG_CONFIG_SYSROOT_DIR="/opt/sysroot"
 ENV PKG_CONFIG_LIBDIR="/opt/sysroot/usr/lib/pkgconfig"
+ENV CARGO_HOME="/etc/cargo"
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
