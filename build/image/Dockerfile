@@ -2,7 +2,7 @@ ARG BOOT_ARGS="debug console=ttyS0 rdinit=/usr/sbin/init"
 ARG LINUX_VER="6.19"
 
 FROM ghcr.io/stevezaluk-org/apathy-os/kernel:$LINUX_VER AS kernel-build
-FROM debian:stable-slim AS image-build
+FROM ghcr.io/stevezaluk-org/apathy-os/base:latest AS image-build
 ARG BOOT_ARGS
 
 RUN apt-get update && \
@@ -44,3 +44,6 @@ RUN	genimage \
 FROM scratch
 
 COPY --from=image-build /build/image/disk.img /
+COPY --from=image-build /build/initrd.img /
+COPY --from=image-build /initramfs/rootfs.squashfs /
+COPY --from=image-build /kernel/vmlinuz /

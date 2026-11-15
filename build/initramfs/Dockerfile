@@ -1,7 +1,7 @@
 ARG BUSYBOX_VER="1.38.0"
 
 FROM busybox:$BUSYBOX_VER-musl AS busybox-build
-FROM debian:stable-slim AS initramfs-build
+FROM ghcr.io/stevezaluk-org/apathy-os/base:latest AS initramfs-build
 
 WORKDIR /build
 RUN bash -c 'mkdir -p /build/{usr/sbin,usr/share/manifest.d,newroot,dev,proc,sys}'
