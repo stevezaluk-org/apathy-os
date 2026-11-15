@@ -1,0 +1,6 @@
+Types: deb
+URIs: https://snapshot.debian.org/archive/debian/20261113T203523Z
+Suites: trixie trixie-updates
+Components: main contrib non-free non-free-firmware
+Signed-By: /usr/share/keyrings/debian-archive-keyring.gpg
+Check-Valid-Until: no

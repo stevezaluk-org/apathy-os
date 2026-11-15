@@ -53,6 +53,26 @@ variable "SHADOW_VER" {
   default = "0.2.1"
 }
 
+// TOOLCHAIN_VER The tag of the toolchain that you want to build against
+variable "TOOLCHAIN_VER" {
+  default = "2.42"
+}
+
+// UTILLINUX_VER The tag of the verison of util-linux you want to build against
+variable "UTILLINUX_VER" {
+  default = "2.42.2"
+}
+
+// LIBPAM_VER The version of libpam you want to build for
+variable "LIBPAM_VER" {
+  default = "1.7.2"
+}
+
+// LIBCRYPT_VER The version of libcrypt you want to build for
+variable "LIBCRYPT_VER" {
+  default = "4.5.2"
+}
+
 // INIT_BUILDFLAGS The flags to pass to the Go compiler when building go-initd
 variable "INIT_BUILDFLAGS" {
   default = "-v"
@@ -89,7 +109,7 @@ target "toolchain" {
 
   dockerfile = "Dockerfile"
   context = "./build/toolchain"
-  tags = ["ghcr.io/apathy-os/toolchain:${TAG}"]
+  tags = ["ghcr.io/stevezaluk-org/apathy-os/toolchain:${TAG}"]
   labels = {
     "org.opencontainers.title" = "cloud-host - toolchain"
   }
@@ -105,7 +125,7 @@ target "kernel" {
 
   dockerfile = "Dockerfile"
   context = "./build/kernel"
-  tags = ["ghcr.io/apathy-os/kernel:${TAG}"]
+  tags = ["ghcr.io/stevezaluk-org/apathy-os/kernel:${TAG}"]
   labels = {
     "org.opencontainers.title" = "cloud-host - kernel"
   }
@@ -125,7 +145,7 @@ target "initramfs" {
     "initd" = "target:go-initd"
   }
 
-  tags = ["ghcr.io/apathy-os/initramfs:${TAG}"]
+  tags = ["ghcr.io/stevezaluk-org/apathy-os/initramfs:${TAG}"]
   labels = {
     "org.opencontainers.title" = "cloud-host - initramfs"
   }
@@ -143,21 +163,22 @@ target "rootfs" {
 
   # We override locally here since we want to build "from scratch" when invoking through buildx bake
   contexts = {
-    "toolchain" = "target:toolchain"
-    "kernel" = "target:kernel"
     "initd" = "target:go-initd"
-    "initramfs" = "target:initramfs"
   }
 
-  tags = ["ghcr.io/apathy-os/rootfs:${TAG}"]
+  tags = ["ghcr.io/stevezaluk-org/apathy-os/rootfs:${TAG}"]
   labels = {
     "org.opencontainers.title" = "cloud-host - rootfs"
   }
 
   args = {
-    BUSYBOX_VER = BUSYBOX_VER
+    TOOLCHAIN_VER = TOOLCHAIN_VER
     COREUTILS_VER = COREUTILS_VER
+    BUSYBOX_VER = BUSYBOX_VER
+    UTILLINUX_VER = UTILLINUX_VER
     SHADOW_VER = SHADOW_VER
+    LIBPAM_VER = LIBPAM_VER
+    LIBCRYPT_VER = LIBCRYPT_VER
   }
 }
 
@@ -167,7 +188,6 @@ target "image" {
   dockerfile = "Dockerfile"
   context = "./build/image"
   contexts = {
-    "kernel" = "target:kernel"
     "rootfs" = "target:rootfs"
     "initramfs" = "target:initramfs"
   }
@@ -176,6 +196,7 @@ target "image" {
 
   args = {
     BOOT_ARGS = BOOT_ARGS
+    LINUX_VER = LINUX_VER
   }
 }
 
@@ -184,7 +205,7 @@ target "go-initd" {
 
   dockerfile = "./build/initd/Dockerfile"
   context = "."
-  tags = ["ghcr.io/apathy-os/go-initd:${TAG}"]
+  tags = ["ghcr.io/stevezaluk-org/apathy-os/go-initd:${TAG}"]
 
   labels = {
     "org.opencontainers.title" = "go-initd"
@@ -204,7 +225,7 @@ target "go-serviced" {
 
   dockerfile = "./build/serviced/Dockerfile"
   context = "."
-  tags = ["ghcr.io/apathy-os/go-serviced:${TAG}"]
+  tags = ["ghcr.io/stevezaluk-org/apathy-os/go-serviced:${TAG}"]
 
   labels = {
     "org.opencontainers.title" = "go-serviced"

@@ -6,6 +6,7 @@ DIST=$(shell pwd)/out/apathy-os
 .SILENT:
 clean:
 	rm -rf $(DIST)/image
+	rm -rf $(shell pwd)/dist
 
 .PHONY: snapshot
 snapshot:
