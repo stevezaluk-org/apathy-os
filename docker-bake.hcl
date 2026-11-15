@@ -58,6 +58,21 @@ variable "TOOLCHAIN_VER" {
   default = "2.42"
 }
 
+// UTILLINUX_VER The tag of the verison of util-linux you want to build against
+variable "UTILLINUX_VER" {
+  default = "2.42.2"
+}
+
+// LIBPAM_VER The version of libpam you want to build for
+variable "LIBPAM_VER" {
+  default = "1.7.2"
+}
+
+// LIBCRYPT_VER The version of libcrypt you want to build for
+variable "LIBCRYPT_VER" {
+  default = "4.5.2"
+}
+
 // INIT_BUILDFLAGS The flags to pass to the Go compiler when building go-initd
 variable "INIT_BUILDFLAGS" {
   default = "-v"
@@ -157,10 +172,13 @@ target "rootfs" {
   }
 
   args = {
-    BUSYBOX_VER = BUSYBOX_VER
-    COREUTILS_VER = COREUTILS_VER
     TOOLCHAIN_VER = TOOLCHAIN_VER
+    COREUTILS_VER = COREUTILS_VER
+    BUSYBOX_VER = BUSYBOX_VER
+    UTILLINUX_VER = UTILLINUX_VER
     SHADOW_VER = SHADOW_VER
+    LIBPAM_VER = LIBPAM_VER
+    LIBCRYPT_VER = LIBCRYPT_VER
   }
 }
 
