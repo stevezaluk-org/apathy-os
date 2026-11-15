@@ -30,4 +30,4 @@ RUN cargo install \
         --root /build/coreutils
 
 FROM scratch
-COPY --from=builder /build/coreutils/bin/* /build/usr/bin
+COPY --from=builder /build/coreutils/bin/* /usr/bin
