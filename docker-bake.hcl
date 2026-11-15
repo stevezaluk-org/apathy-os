@@ -149,7 +149,6 @@ target "rootfs" {
   # We override locally here since we want to build "from scratch" when invoking through buildx bake
   contexts = {
     "initd" = "target:go-initd"
-    "initramfs" = "target:initramfs"
   }
 
   tags = ["ghcr.io/stevezaluk-org/apathy-os/rootfs:${TAG}"]
