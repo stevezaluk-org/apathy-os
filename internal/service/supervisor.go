@@ -8,6 +8,7 @@ import (
 	"os/exec"
 
 	"github.com/containerd/cgroups/v2/cgroup2"
+
 	"golang.org/x/sys/unix"
 )
 
@@ -71,21 +72,27 @@ func (supervisor *Supervisor) Stop(ctx context.Context) {
 	}
 }
 
-// Start Starts the service and moves the service to a watch loop
-func (supervisor *Supervisor) Start(ctx context.Context) {
+// buildProc Builds a cmd.Execute for a given service and returns a pointer to it
+func (supervisor *Supervisor) buildProc() *exec.Cmd {
 	slog.Info("Attempting service start", "svc", supervisor.service.Name)
-	supervisor.proc = exec.Command(supervisor.service.Exec, supervisor.service.Args...)
-	supervisor.proc.Env = append(supervisor.proc.Env, supervisor.service.Env...)
+
+	proc := exec.Command(supervisor.service.Exec, supervisor.service.Args...)
+	proc.Env = append(proc.Env, supervisor.service.Env...)
 
 	// This is kind of a hacky way of doing this and we really should be using something like containerd/console for
 	// creating a proper virtual console. To be replaced in the future
 	// TODO: Replace with github.com/containerd/console
 	if supervisor.service.AllocateTty {
-		supervisor.proc.Stdout = os.Stdout
-		supervisor.proc.Stdin = os.Stdin
-		supervisor.proc.Stderr = os.Stderr
+		proc.Stdout = os.Stdout
+		proc.Stdin = os.Stdin
+		proc.Stderr = os.Stderr
 	}
 
+	return proc
+}
+
+// Start Starts the service and moves the service to a watch loop
+func (supervisor *Supervisor) Start(ctx context.Context) {
 	childCtx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
@@ -93,27 +100,26 @@ func (supervisor *Supervisor) Start(ctx context.Context) {
 	supervisor.cancel = cancel
 
 	for i := range supervisor.service.MaxRestartCount {
-		for {
-			select {
-			case <-childCtx.Done():
-				slog.Info("Service stop requested (context cancelled)", "svc", supervisor.service.Name)
-				return
-			default:
-				if err := supervisor.proc.Start(); err != nil {
-					slog.Error("Failed to start service", "svc", supervisor.service.Name, "err", err)
-					continue // TODO: Failed to restart service here. Infinite loop
-				}
+		select {
+		case <-childCtx.Done():
+			slog.Info("Service stop requested (context cancelled)", "svc", supervisor.service.Name)
+			return
+		default:
+			supervisor.proc = supervisor.buildProc()
+			if err := supervisor.proc.Start(); err != nil {
+				slog.Error("Failed to start service", "svc", supervisor.service.Name, "err", err)
+				continue
+			}
 
-				slog.Info("Service has been started", "svc", supervisor.service.Name, "count", i)
-				if err := supervisor.cgroup.AddProc(uint64(supervisor.proc.Process.Pid)); err != nil {
-					slog.Error("Failed to migrate service to cgroup", "svc", supervisor.service.Name, "err", err)
-					continue
-				}
+			slog.Info("Service has been started", "svc", supervisor.service.Name, "count", i)
+			if err := supervisor.cgroup.AddProc(uint64(supervisor.proc.Process.Pid)); err != nil {
+				slog.Error("Failed to migrate service to cgroup", "svc", supervisor.service.Name, "err", err)
+				continue
+			}
 
-				// wait for the process to complete
-				if err := supervisor.proc.Wait(); err != nil {
-					slog.Error("Failed to wait for process to complete", "svc", supervisor.service.Name, "err", err)
-				}
+			// wait for the process to complete
+			if err := supervisor.proc.Wait(); err != nil {
+				slog.Error("Failed to wait for process to complete", "svc", supervisor.service.Name, "err", err)
 			}
 		}
 	}
