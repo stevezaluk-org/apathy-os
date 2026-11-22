@@ -12,5 +12,7 @@
     "ansi"
   ],
   "env":["PS1=(debug) [$PWD] $"],
-  "allocate_tty":true
+  "priority":1,
+  "allocate_tty":true,
+  "max_restart_count":3
 }
