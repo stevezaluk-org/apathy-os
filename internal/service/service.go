@@ -33,6 +33,10 @@ func (service *Service) String() string {
 		service.Name, service.Priority, service.Exec, service.Args)
 }
 
+func (service *Service) PriorityGate() int {
+	return service.Priority
+}
+
 // FromFile Reads a JSON file at its respective path and unmarshals it to a service
 func FromFile(path string) (*Service, error) {
 	contents, err := os.ReadFile(path)
