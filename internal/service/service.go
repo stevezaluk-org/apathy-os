@@ -25,6 +25,9 @@ type Service struct {
 
 	// AllocateTty If set to true, provide the service a TTY and map it to stdin
 	AllocateTty bool `json:"allocate_tty"`
+
+	// MaxRestartCount The maximum number of times that this service will be autoamtically restarted on crash
+	MaxRestartCount int `json:"max_restart_count"`
 }
 
 // String Returns the service represented as a string
@@ -33,6 +36,8 @@ func (service *Service) String() string {
 		service.Name, service.Priority, service.Exec, service.Args)
 }
 
+// PriorityGate Returns the priority of the service. Lower number means the service starts sooner, higher means later,
+// and services with the same number are started concurrently
 func (service *Service) PriorityGate() int {
 	return service.Priority
 }
