@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io/fs"
@@ -8,10 +9,15 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/containerd/cgroups/v2/cgroup2"
+	"github.com/stevezaluk-org/apathy-os/internal/machinery/task"
 )
 
+// TODO: These should be exteralized
 const (
-	ServicePath = "/usr/share/service.d"
+	ServicePath      = "/usr/share/service.d"
+	CgroupMountPoint = "/sys/fs/cgroup"
 )
 
 // Manager Global manager for all services running on the systems. Each manager is associated with one or more services, named by its
@@ -21,7 +27,13 @@ type Manager struct {
 	namespace string
 
 	// services A slice of services that the manager has enumerated
-	services []*Service
+	services []*Supervisor
+
+	// engine The task engine responsible for starting services concurrently according to there priority
+	engine *task.Engine[*Supervisor]
+
+	// parent The parent cgroup for all services controlled by this manager
+	parent *cgroup2.Manager
 }
 
 // LoadAll Walks the root service path and enumerates all services and there respective groups
@@ -52,7 +64,13 @@ func (manager *Manager) LoadAll() error {
 					return nil
 				}
 
-				manager.services = append(manager.services, service)
+				superv, err := NewSupervisor(service, manager.parent)
+				if err != nil {
+					slog.Error("failed to create supervisor for service, will be skipped", "err", err, "path", path)
+					return nil
+				}
+
+				manager.services = append(manager.services, superv)
 			}
 		}
 
@@ -66,9 +84,28 @@ func (manager *Manager) LoadAll() error {
 	return nil
 }
 
+// StartAll Starts all services the manager has enumerated in priority order
+func (manager *Manager) StartAll(ctx context.Context) {
+	manager.engine = task.New(manager.services)
+
+	if err := manager.engine.PrioritizedWait(func(elem *Supervisor) error {
+		elem.Start(ctx)
+		return nil
+	}); err != nil {
+		slog.Error("Got error when trying to start all services", "err", err) // will never hit
+	}
+}
+
 // New Initializes a new service.Manager and returns a pointer to it
-func New(namespace string) *Manager {
+func New(namespace string) (*Manager, error) {
+	parent, err := cgroup2.NewManager(CgroupMountPoint, fmt.Sprintf("/%s.slice", namespace), new(cgroup2.Resources))
+	if err != nil {
+		return nil, err
+	}
+
 	return &Manager{
 		namespace: namespace,
-	}
+		services:  make([]*Supervisor, 0),
+		parent:    parent,
+	}, nil
 }

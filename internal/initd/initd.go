@@ -2,14 +2,13 @@ package initd
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"log/slog"
-	"time"
 
 	"github.com/stevezaluk-org/apathy-os/internal/initd/acpi"
 	"github.com/stevezaluk-org/apathy-os/internal/initd/reaper"
-	"github.com/stevezaluk-org/apathy-os/internal/service/config"
-	"github.com/stevezaluk-org/apathy-os/internal/service/daemon"
+	"github.com/stevezaluk-org/apathy-os/internal/service"
 	"github.com/stevezaluk-org/apathy-os/internal/sig"
 	"golang.org/x/sys/unix"
 )
@@ -22,8 +21,8 @@ type SystemInit struct {
 	// signalHandler Signal handler for reacting to signals received by initd
 	signalHandler *sig.Handler
 
-	// serviceDaemon Daemon for controlling service execution
-	serviceDaemon *daemon.Daemon
+	// manager The service manager for the "system" namespace
+	manager *service.Manager
 
 	// sigAcpi Channel responsible for receiving ACPI events, indicating that the system should shutdown
 	sigAcpi chan bool
@@ -54,7 +53,7 @@ func (systemInit *SystemInit) EventLoop() error {
 	// start our ACPI event loop
 	go acpi.EventLoop(ctx, systemInit.sigAcpi)
 	go systemInit.signalHandler.HandleSignals(ctx)
-	go systemInit.serviceDaemon.Serve(ctx)
+	go systemInit.manager.StartAll(ctx)
 
 	for {
 		select {
@@ -76,13 +75,6 @@ func (systemInit *SystemInit) EventLoop() error {
 // TODO: Not remounting (reverse order) filesystems here. Leads to data loss
 // TODO: No real service management here. Basic unix.Kill(-1)
 func (systemInit *SystemInit) Shutdown() error {
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel()
-
-	if err := systemInit.serviceDaemon.StopAll(ctx); err != nil {
-		return err
-	}
-
 	if err := systemInit.reaper.Fallback(); err != nil {
 		return err
 	}
@@ -97,12 +89,15 @@ func (systemInit *SystemInit) Shutdown() error {
 
 // Start Initial entrypoint for the systemInit Processes system/user manifest files and then moves to the event loop
 func (systemInit *SystemInit) Start() error {
-	serviceDaemon, err := daemon.NewDaemon(config.Default())
+	manager, err := service.New("system")
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to initalize service manager: %v", err)
 	}
 
-	systemInit.serviceDaemon = serviceDaemon
+	systemInit.manager = manager
+	if err := systemInit.manager.LoadAll(); err != nil {
+		return fmt.Errorf("failed to load service files: %v", err)
+	}
 
 	// blocks forever
 	if err := systemInit.EventLoop(); err != nil {
