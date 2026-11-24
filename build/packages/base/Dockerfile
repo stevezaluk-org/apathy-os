@@ -24,7 +24,7 @@ RUN rustup toolchain install $RUST_VER --profile=minimal && \
 COPY --from=toolchain-build / /opt/sysroot
 
 # Configuration files for: meson, cargo
-COPY opt/sysroot/conf/meson-sysroot.ini /opt/conf
+COPY opt/sysroot/conf/meson-sysroot.ini /opt/conf/meson-sysroot.ini
 COPY opt/sysroot/conf/cargo.toml /etc/cargo/config.toml
 
 # environment variables required so that the C compiler picks up our sysroot
