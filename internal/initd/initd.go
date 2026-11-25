@@ -75,6 +75,8 @@ func (systemInit *SystemInit) EventLoop() error {
 // TODO: Not remounting (reverse order) filesystems here. Leads to data loss
 // TODO: No real service management here. Basic unix.Kill(-1)
 func (systemInit *SystemInit) Shutdown() error {
+	systemInit.manager.StopAll(context.Background())
+
 	if err := systemInit.reaper.Fallback(); err != nil {
 		return err
 	}

@@ -96,6 +96,18 @@ func (manager *Manager) StartAll(ctx context.Context) {
 	}
 }
 
+// StopAll Stops all services the manager has enumerated in priority order
+//
+// TODO: This should be reverse priority order
+func (manager *Manager) StopAll(ctx context.Context) {
+	if err := manager.engine.PrioritizedWait(func(elem *Supervisor) error {
+		elem.Stop(ctx)
+		return nil
+	}); err != nil {
+		slog.Error("Got error when trying to stop all services", "err", err)
+	}
+}
+
 // New Initializes a new service.Manager and returns a pointer to it
 func New(namespace string) (*Manager, error) {
 	parent, err := cgroup2.NewManager(CgroupMountPoint, fmt.Sprintf("/%s.slice", namespace), new(cgroup2.Resources))
