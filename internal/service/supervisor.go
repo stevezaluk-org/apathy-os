@@ -119,7 +119,7 @@ func (supervisor *Supervisor) Start(ctx context.Context) {
 
 			// wait for the process to complete
 			if err := supervisor.proc.Wait(); err != nil {
-				slog.Error("Failed to wait for process to complete", "svc", supervisor.service.Name, "err", err)
+				slog.Info("Service exited with", "svc", supervisor.service.Name, "err", err)
 			}
 		}
 	}
