@@ -83,16 +83,6 @@ variable "INIT_LDFLAGS" {
   default = "-s -w"
 }
 
-// SERVICED_BUILDFLAGS The flags to pass to the Go compiler when building go-serviced
-variable "SERVICED_BUILDFLAGS" {
-  default = "-v"
-}
-
-// SERVICED_INITFLAGS The flags to pass to the Go linker when building go-serviced
-variable "SERVICED_INITFLAGS" {
-  default = "-s -w"
-}
-
 target "_common" {
   platforms = ["linux/amd64"]
   output = ["type=docker"]
@@ -214,26 +204,6 @@ target "go-initd" {
   args = {
     INIT_BUILDFLAGS = INIT_BUILDFLAGS
     INIT_LDFLAGS = INIT_LDFLAGS
-    SEMVER = SEMVER
-    COMMITSHA = COMMITSHA
-    BUILDTIME = BUILDTIME
-  }
-}
-
-target "go-serviced" {
-  inherits = ["_common"]
-
-  dockerfile = "./build/serviced/Dockerfile"
-  context = "."
-  tags = ["ghcr.io/stevezaluk-org/apathy-os/go-serviced:${TAG}"]
-
-  labels = {
-    "org.opencontainers.title" = "go-serviced"
-  }
-
-  args = {
-    SERVICED_BUILDFLAGS = SERVICED_BUILDFLAGS
-    SERVICED_INITFLAGS = SERVICED_INITFLAGS
     SEMVER = SEMVER
     COMMITSHA = COMMITSHA
     BUILDTIME = BUILDTIME

@@ -1,9 +1,9 @@
 package main
 
-import cmd "github.com/stevezaluk-org/apathy-os/internal/cmd/initd"
+import "github.com/stevezaluk-org/apathy-os/internal/cmd/initd/rootcmd"
 
 func main() {
-	if err := cmd.NewRootCmd().Execute(); err != nil {
+	if err := rootcmd.NewRootCmd().Execute(); err != nil {
 		panic(err)
 	}
 }
